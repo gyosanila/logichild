@@ -8,7 +8,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +40,7 @@ import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,17 +51,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -264,40 +273,68 @@ private fun DrawScope.drawBoard(level: Level, cell: Float, ox: Float, oy: Float)
 }
 
 private fun DrawScope.drawKart(cell: Float) {
-    val w = cell * 0.72f
-    val h = cell * 0.72f
+    val w = cell * 0.66f   // lebar body
+    val h = cell * 0.82f   // tinggi body (orientasi: atas = depan)
     val left = -w / 2f
     val top = -h / 2f
-    // bayangan
+    val wheelColor = Color(0xFF37474F)
+
+    // bayangan lembut
     drawRoundRect(
         ShadowColor,
-        topLeft = Offset(left + 2f, top + 3f),
-        size = Size(w, h),
-        cornerRadius = CornerRadius(w * 0.25f),
+        topLeft = Offset(left + 2f, top + 4f),
+        size = Size(w, h + 2f),
+        cornerRadius = CornerRadius(w * 0.3f),
     )
-    // badan kart
+
+    // 4 roda (menonjol keluar body)
+    val wheelW = w * 0.16f
+    val wheelH = h * 0.24f
+    val wx = w * 0.34f
+    val wheelYFront = top - wheelH * 0.18f
+    val wheelYBack = h * 0.60f
+    drawRoundRect(wheelColor, Offset(-wx - wheelW / 2f, wheelYFront), Size(wheelW, wheelH), CornerRadius(wheelW * 0.4f))
+    drawRoundRect(wheelColor, Offset(wx - wheelW / 2f, wheelYFront), Size(wheelW, wheelH), CornerRadius(wheelW * 0.4f))
+    drawRoundRect(wheelColor, Offset(-wx - wheelW / 2f, wheelYBack), Size(wheelW, wheelH), CornerRadius(wheelW * 0.4f))
+    drawRoundRect(wheelColor, Offset(wx - wheelW / 2f, wheelYBack), Size(wheelW, wheelH), CornerRadius(wheelW * 0.4f))
+
+    // body gradien merah
+    val bodyBrush = Brush.verticalGradient(listOf(Color(0xFFFF6B70), KartRed, Color(0xFFE53935)))
+    drawRoundRect(bodyBrush, Offset(left, top), Size(w, h), CornerRadius(w * 0.32f))
+
+    // garis balap putih di tengah
     drawRoundRect(
-        KartRed,
-        topLeft = Offset(left, top),
-        size = Size(w, h),
-        cornerRadius = CornerRadius(w * 0.25f),
+        Color.White.copy(alpha = 0.9f),
+        topLeft = Offset(left, top + h * 0.42f),
+        size = Size(w, h * 0.09f),
+        cornerRadius = CornerRadius(w * 0.05f),
     )
-    // kaca depan
+
+    // kaca kokpit
     drawRoundRect(
-        Color.White.copy(alpha = 0.85f),
-        topLeft = Offset(left + w * 0.25f, top + h * 0.12f),
-        size = Size(w * 0.5f, h * 0.28f),
-        cornerRadius = CornerRadius(w * 0.1f),
+        Color(0xFFB3E5FC),
+        topLeft = Offset(left + w * 0.24f, top + h * 0.10f),
+        size = Size(w * 0.52f, h * 0.26f),
+        cornerRadius = CornerRadius(w * 0.14f),
     )
-    // panah arah
+
+    // spoiler belakang
+    drawRoundRect(
+        Color(0xFFC62828),
+        topLeft = Offset(left + w * 0.06f, h * 0.58f),
+        size = Size(w * 0.88f, h * 0.18f),
+        cornerRadius = CornerRadius(w * 0.10f),
+    )
+
+    // panah arah kuning — penunjuk arah utama
     val arrow = Path().apply {
-        moveTo(0f, -h * 0.58f)
-        lineTo(w * 0.28f, -h * 0.12f)
-        lineTo(w * 0.1f, -h * 0.12f)
-        lineTo(w * 0.1f, h * 0.55f)
-        lineTo(-w * 0.1f, h * 0.55f)
-        lineTo(-w * 0.1f, -h * 0.12f)
-        lineTo(-w * 0.28f, -h * 0.12f)
+        moveTo(0f, -h * 0.50f)
+        lineTo(w * 0.28f, -h * 0.08f)
+        lineTo(w * 0.09f, -h * 0.08f)
+        lineTo(w * 0.09f, h * 0.50f)
+        lineTo(-w * 0.09f, h * 0.50f)
+        lineTo(-w * 0.09f, -h * 0.08f)
+        lineTo(-w * 0.28f, -h * 0.08f)
         close()
     }
     drawPath(arrow, SunYellow)
@@ -485,94 +522,147 @@ private fun ControlTray(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        // Baris 1: arah permainan
+    Column(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.18f), RoundedCornerShape(26.dp))
+            .padding(horizontal = 10.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Baris 1: arah permainan — grup rapat di tengah, gak nyebar ke tepi
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            InstrButton(
+            Spacer(Modifier.weight(1f))
+            BigRoundButton(
                 label = "Maju",
                 color = KartRed,
+                darker = Color(0xFFE53935),
                 icon = Icons.Filled.ArrowUpward,
                 enabled = enabled,
+                size = 76.dp,
                 onClick = { onAdd(Instruction.FORWARD) },
             )
-            InstrButton(
+            Spacer(Modifier.width(22.dp))
+            BigRoundButton(
                 label = "Kiri",
                 color = OceanBlue,
+                darker = Color(0xFF1E88E5),
                 icon = Icons.Filled.RotateLeft,
                 enabled = enabled,
+                size = 76.dp,
                 onClick = { onAdd(Instruction.LEFT) },
             )
-            InstrButton(
+            Spacer(Modifier.width(22.dp))
+            BigRoundButton(
                 label = "Kanan",
                 color = BerryPurple,
+                darker = Color(0xFF7B4FD8),
                 icon = Icons.Filled.RotateRight,
                 enabled = enabled,
+                size = 76.dp,
                 onClick = { onAdd(Instruction.RIGHT) },
             )
+            Spacer(Modifier.weight(1f))
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(14.dp))
         // Baris 2: play & reset — terpisah dari arah
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = Color(0xFF4CAF50),
-                modifier = Modifier.size(84.dp),
-                onClick = { if (enabled && hasInstructions) onPlay() },
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Filled.PlayArrow,
-                        "Main",
-                        tint = Color.White,
-                        modifier = Modifier.size(52.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.width(20.dp))
-            InstrButton(
+            Spacer(Modifier.weight(1f))
+            BigRoundButton(
+                label = "Main!",
+                color = Color(0xFF66BB6A),
+                darker = Color(0xFF2E7D32),
+                icon = Icons.Filled.PlayArrow,
+                enabled = enabled && hasInstructions,
+                size = 96.dp,
+                iconSize = 58.dp,
+                shadow = 10.dp,
+                fontSize = 15.sp,
+                onClick = onPlay,
+            )
+            Spacer(Modifier.width(26.dp))
+            BigRoundButton(
                 label = "Ulang",
                 color = Color(0xFF90A4AE),
+                darker = Color(0xFF607D8B),
                 icon = Icons.Filled.Refresh,
                 enabled = enabled,
+                size = 64.dp,
+                iconSize = 32.dp,
+                shadow = 5.dp,
                 onClick = onReset,
             )
+            Spacer(Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun InstrButton(
+private fun BigRoundButton(
     label: String,
     color: Color,
+    darker: Color,
     icon: ImageVector,
-    enabled: Boolean,
+    enabled: Boolean = true,
+    size: Dp = 72.dp,
+    iconSize: Dp = 36.dp,
+    shadow: Dp = 6.dp,
+    fontSize: TextUnit = 12.sp,
     onClick: () -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            shape = CircleShape,
-            color = if (enabled) color else color.copy(alpha = 0.45f),
-            modifier = Modifier.size(64.dp),
-            onClick = { if (enabled) onClick() },
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.90f else 1f,
+        animationSpec = tween(90),
+        label = "btnScale",
+    )
+    val bg = Brush.verticalGradient(listOf(color, darker))
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        },
+    ) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .shadow(shadow, CircleShape)
+                .background(if (enabled) bg else Brush.verticalGradient(listOf(Color(0xFFB0BEC5), Color(0xFF90A4AE))), CircleShape)
+                .border(
+                    width = if (enabled) 0.dp else 2.dp,
+                    color = Color.White.copy(alpha = 0.35f),
+                    shape = CircleShape,
+                )
+                .clickable(
+                    interactionSource = interaction,
+                    indication = ripple(color = Color.White.copy(alpha = 0.35f)),
+                    enabled = enabled,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, label, tint = Color.White, modifier = Modifier.size(32.dp))
-            }
+            Icon(
+                icon,
+                label,
+                tint = Color.White,
+                modifier = Modifier.size(iconSize),
+            )
         }
         Spacer(Modifier.height(4.dp))
         Text(
             label,
             color = Color.White,
-            fontSize = 12.sp,
+            fontSize = fontSize,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
         )
     }
 }
