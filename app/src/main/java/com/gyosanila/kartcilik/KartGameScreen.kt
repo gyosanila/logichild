@@ -11,14 +11,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -42,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,7 +55,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -152,91 +150,82 @@ private fun GameBoard(
     crashCell: Pos?,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
-        val cell = min(
-            (maxWidth.value - 8f) / level.width,
-            (maxHeight.value - 8f) / level.height
-        ).dp
-        val boardW = level.width * cell.value
-        val boardH = level.height * cell.value
-
-        val targetOffset = Offset(
-            kart.pos.x * cell.value + cell.value / 2f,
-            kart.pos.y * cell.value + cell.value / 2f
-        )
-        val animatedOffset by animateOffsetAsState(
-            targetValue = targetOffset,
-            animationSpec = tween(durationMillis = 380, easing = FastOutSlowInEasing),
-            label = "kartPos",
-        )
-        val targetAngle = kart.dir.angleDeg
-        val animatedAngle by animateFloatAsState(
-            targetValue = targetAngle,
-            animationSpec = tween(200),
-            label = "kartAngle",
-        )
-
-        var shake by remember(crashed) { mutableStateOf(0f) }
-        LaunchedEffect(crashed) {
-            if (crashed) {
-                repeat(5) {
-                    shake = if (it % 2 == 0) -4f else 4f
-                    delay(60)
-                }
-                shake = 0f
+    var shake by remember(crashed) { mutableStateOf(0f) }
+    LaunchedEffect(crashed) {
+        if (crashed) {
+            repeat(5) {
+                shake = if (it % 2 == 0) -3f else 3f
+                delay(60)
             }
+            shake = 0f
         }
+    }
 
-        // Kotak ukuran persis papan — emoji 💥 & kart di-posisikan dari sini
-        Box(
-            modifier = Modifier.size(boardW.dp, boardH.dp),
-            contentAlignment = Alignment.TopStart,
-        ) {
-            Canvas(modifier = Modifier.size(boardW.dp, boardH.dp)) {
-                drawBoard(level, cell.value)
-                crashCell?.let { c ->
-                    val cx = c.x * cell.value + cell.value / 2f
-                    val cy = c.y * cell.value + cell.value / 2f
-                    drawCircle(Color(0xFFFF5252), cell.value * 0.55f, Offset(cx, cy))
-                    drawCircle(Color.White, cell.value * 0.28f, Offset(cx, cy))
-                }
-                translate(animatedOffset.x, animatedOffset.y) {
-                    rotate(animatedAngle) {
-                        drawKart(cell.value)
-                    }
-                }
-            }
+    // Posisi mobil dalam UNIT SEL (0..width, 0..height, +0.5 = tengah sel).
+    // Scale-invariant: tidak pernah tercampur dp/px.
+    val targetCell = Offset(kart.pos.x + 0.5f, kart.pos.y + 0.5f)
+    val animCell by animateOffsetAsState(
+        targetValue = targetCell,
+        animationSpec = tween(durationMillis = 380, easing = FastOutSlowInEasing),
+        label = "kartCell",
+    )
+    val targetAngle = kart.dir.angleDeg
+    val animAngle by animateFloatAsState(
+        targetValue = targetAngle,
+        animationSpec = tween(200),
+        label = "kartAngle",
+    )
+
+    // key(level.index): ganti level = Canvas baru, mobil tidak "meluncur"
+    // dari posisi level sebelumnya.
+    key(level.index) {
+        Canvas(modifier = modifier.fillMaxSize()) {
+            val pad = 10f
+            val cell = min(
+                (size.width - pad * 2f) / level.width,
+                (size.height - pad * 2f) / level.height,
+            )
+            val ox = (size.width - cell * level.width) / 2f
+            val oy = (size.height - cell * level.height) / 2f
+
+            drawBoard(level, cell, ox, oy)
+
             crashCell?.let { c ->
-                Text(
-                    "💥",
-                    fontSize = (cell.value * 1.05f).sp,
-                    modifier = Modifier
-                        .offset(
-                            x = (c.x * cell.value).dp,
-                            y = (c.y * cell.value).dp
-                        )
-                        .graphicsLayer { translationX = shake.dp.toPx() },
-                )
+                val cx = ox + (c.x + 0.5f) * cell
+                val cy = oy + (c.y + 0.5f) * cell
+                drawCircle(Color(0xFFFF5252), cell * 0.5f, Offset(cx, cy))
+                // tanda silang putih
+                val t = cell * 0.16f
+                drawLine(Color.White, Offset(cx - t, cy - t), Offset(cx + t, cy + t), strokeWidth = cell * 0.09f)
+                drawLine(Color.White, Offset(cx + t, cy - t), Offset(cx - t, cy + t), strokeWidth = cell * 0.09f)
+            }
+
+            val cx = ox + animCell.x * cell
+            val cy = oy + animCell.y * cell
+            translate(cx + shake, cy) {
+                rotate(animAngle) {
+                    drawKart(cell)
+                }
             }
         }
     }
 }
 
-private fun DrawScope.drawBoard(level: Level, cell: Float) {
+private fun DrawScope.drawBoard(level: Level, cell: Float, ox: Float, oy: Float) {
     for (y in 0 until level.height) {
         for (x in 0 until level.width) {
             val color = if ((x + y) % 2 == 0) GrassGreen else GrassDark
             drawRoundRect(
                 color = color,
-                topLeft = Offset(x * cell + 2f, y * cell + 2f),
+                topLeft = Offset(ox + x * cell + 2f, oy + y * cell + 2f),
                 size = Size(cell - 4f, cell - 4f),
                 cornerRadius = CornerRadius(10f),
             )
         }
     }
     // Finish: pola bendera catur
-    val fx = level.finish.x * cell
-    val fy = level.finish.y * cell
+    val fx = ox + level.finish.x * cell
+    val fy = oy + level.finish.y * cell
     val seg = cell / 4f
     for (i in 0 until 4) {
         for (j in 0 until 4) {
@@ -246,8 +235,8 @@ private fun DrawScope.drawBoard(level: Level, cell: Float) {
     }
     // Cone
     for (c in level.cones) {
-        val cx = c.x * cell + cell / 2f
-        val cy = c.y * cell + cell / 2f
+        val cx = ox + (c.x + 0.5f) * cell
+        val cy = oy + (c.y + 0.5f) * cell
         val r = cell * 0.38f
         drawCircle(ShadowColor, r, Offset(cx, cy + r * 0.15f))
         val cone = Path().apply {
@@ -260,8 +249,8 @@ private fun DrawScope.drawBoard(level: Level, cell: Float) {
         drawCircle(Color.White, r * 0.28f, Offset(cx, cy + r * 0.1f))
     }
     // Penanda start
-    val sx = level.start.x * cell + cell / 2f
-    val sy = level.start.y * cell + cell / 2f
+    val sx = ox + (level.start.x + 0.5f) * cell
+    val sy = oy + (level.start.y + 0.5f) * cell
     drawCircle(
         Color.White.copy(alpha = 0.55f),
         cell * 0.42f,

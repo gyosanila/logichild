@@ -168,8 +168,8 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                     is StepResult.Crashed -> {
                         sounds.crash()
                         _uiState.update { it.copy(running = false, crashed = true, crashCell = result.at) }
-                        delay(500)
-                        _uiState.update { it.copy(crashed = false) }
+                        delay(600)
+                        _uiState.update { it.copy(crashed = false, crashCell = null) }
                         return@launch
                     }
                     is StepResult.Won -> {
