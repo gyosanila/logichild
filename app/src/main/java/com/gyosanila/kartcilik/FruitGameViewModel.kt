@@ -9,6 +9,7 @@ import com.gyosanila.kartcilik.game.FruitCommand
 import com.gyosanila.kartcilik.game.FruitLevel
 import com.gyosanila.kartcilik.game.FruitLevelGen
 import com.gyosanila.kartcilik.game.Pos
+import com.gyosanila.kartcilik.game.Reward
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ data class FruitUiState(
     val won: Boolean = false,
     val crashed: Boolean = false,
     val exhausted: Boolean = false,
+    val reward: Reward = Reward.NONE,
 )
 
 class FruitGameViewModel(application: Application) : AndroidViewModel(application) {
@@ -42,7 +44,6 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
     val uiState: StateFlow<FruitUiState> = _uiState.asStateFlow()
 
     private var runJob: Job? = null
-    private val rng = Random(System.currentTimeMillis())
 
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
@@ -52,7 +53,8 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun newLevel(level: Int) {
-        val lv: FruitLevel = FruitLevelGen.generate(level, rng)
+        // Deterministik per level: level yang sama selalu layout yang sama.
+        val lv: FruitLevel = FruitLevelGen.generate(level, Random(level * 104729L))
         _uiState.update {
             it.copy(
                 level = level,
@@ -64,6 +66,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                 size = lv.size,
                 maxCommands = lv.maxCommands,
                 running = false, won = false, crashed = false, exhausted = false,
+                reward = Reward.NONE,
             )
         }
     }
@@ -165,9 +168,19 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
             val after = _uiState.value
             if (!after.crashed) {
                 if (after.fruitsLeft.isEmpty()) {
-                    sounds.win()
+                    // Reward: level kelipatan 10 = besar, kelipatan 5 = kecil
+                    val reward = when {
+                        after.level % 10 == 0 -> Reward.BIG
+                        after.level % 10 == 5 -> Reward.SMALL
+                        else -> Reward.NONE
+                    }
+                    when (reward) {
+                        Reward.BIG -> sounds.bigWin()
+                        Reward.SMALL -> sounds.clap()
+                        Reward.NONE -> sounds.win()
+                    }
                     prefs.edit().putInt("fruit_level", after.level + 1).apply()
-                    _uiState.update { it.copy(running = false, won = true) }
+                    _uiState.update { it.copy(running = false, won = true, reward = reward) }
                 } else {
                     _uiState.update { it.copy(running = false, exhausted = true) }
                 }

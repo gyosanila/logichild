@@ -52,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gyosanila.kartcilik.game.Dir
 import com.gyosanila.kartcilik.game.FruitCommand
 import com.gyosanila.kartcilik.game.Pos
+import com.gyosanila.kartcilik.game.Reward
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.ConeOrange
 import com.gyosanila.kartcilik.ui.GrassDark
@@ -163,11 +164,13 @@ fun FruitGameScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
         )
+        AdBanner()
     }
 
     if (state.won) {
         FruitWinOverlay(
             level = state.level,
+            reward = state.reward,
             onNext = vm::nextLevel,
         )
     }
@@ -459,7 +462,17 @@ private fun FruitControlTray(
 // ─── Overlay menang ───────────────────────────────────────────────
 
 @Composable
-private fun FruitWinOverlay(level: Int, onNext: () -> Unit) {
+private fun FruitWinOverlay(level: Int, reward: Reward, onNext: () -> Unit) {
+    val title = when (reward) {
+        Reward.BIG -> "🎉🎉 LEVEL $level!"
+        Reward.SMALL -> "🎉 LEVEL $level!"
+        Reward.NONE -> "Level $level Selesai!"
+    }
+    val sub = when (reward) {
+        Reward.BIG -> "LUAR BIASA! 10 level beres! 👏👏👏"
+        Reward.SMALL -> "Hebat! Semakin jago! 👏"
+        Reward.NONE -> "Semua buah kepetik! Keren!"
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -475,15 +488,15 @@ private fun FruitWinOverlay(level: Int, onNext: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 24.dp),
             ) {
-                Text("🎉", fontSize = 48.sp)
+                Text(if (reward == Reward.BIG) "🎉🎊🎉" else "🎉", fontSize = if (reward == Reward.BIG) 60.sp else 48.sp)
                 Text(
-                    "Hore!",
-                    fontSize = 26.sp,
+                    title,
+                    fontSize = if (reward == Reward.BIG) 26.sp else 22.sp,
                     fontWeight = FontWeight.Black,
                     color = TextDark,
                 )
                 Text(
-                    "Level $level selesai! Semua buah kepetik.",
+                    sub,
                     color = TextDark,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )

@@ -17,6 +17,9 @@ enum class Dir(val dx: Int, val dy: Int) {
 
 enum class Instruction { FORWARD, LEFT, RIGHT }
 
+/** Reward saat menang: level kelipatan 10 = besar, kelipatan 5 = kecil. */
+enum class Reward { NONE, SMALL, BIG }
+
 data class KartState(val pos: Pos, val dir: Dir)
 
 data class Level(

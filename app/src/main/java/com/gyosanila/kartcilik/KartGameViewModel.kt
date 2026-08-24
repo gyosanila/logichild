@@ -10,7 +10,8 @@ import com.gyosanila.kartcilik.game.GameEngine
 import com.gyosanila.kartcilik.game.Instruction
 import com.gyosanila.kartcilik.game.KartState
 import com.gyosanila.kartcilik.game.Level
-import com.gyosanila.kartcilik.game.Levels
+import com.gyosanila.kartcilik.game.LevelGen
+import com.gyosanila.kartcilik.game.Reward
 import com.gyosanila.kartcilik.game.StepResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,7 +24,7 @@ import kotlinx.coroutines.launch
 data class KartGameUiState(
     val levelIndex: Int = 0,
     val instructions: List<Instruction> = emptyList(),
-    val kart: KartState = KartState(Levels.all[0].start, Levels.all[0].startDir),
+    val kart: KartState = KartState(LevelGen.generate(0).start, LevelGen.generate(0).startDir),
     val running: Boolean = false,
     val won: Boolean = false,
     val crashed: Boolean = false,
@@ -32,6 +33,7 @@ data class KartGameUiState(
     val stars: Map<Int, Int> = emptyMap(),
     val soundOn: Boolean = true,
     val confettiTick: Int = 0,
+    val reward: Reward = Reward.NONE,
 )
 
 /** Bunyi-bunyian pakai ToneGenerator — tanpa file asset sama sekali. */
@@ -68,6 +70,38 @@ class GameSounds(context: Context) {
         }.start()
     }
 
+    /** Tepuk tangan: 3 ketukan cepat. */
+    fun clap() {
+        if (!enabled) return
+        Thread {
+            try {
+                repeat(3) { i ->
+                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
+                    Thread.sleep(110)
+                }
+            } catch (_: InterruptedException) {
+            }
+        }.start()
+    }
+
+    /** Fanfare reward besar: nada naik + tepuk. */
+    fun bigWin() {
+        if (!enabled) return
+        Thread {
+            try {
+                intArrayOf(ToneGenerator.TONE_PROP_BEEP, ToneGenerator.TONE_PROP_BEEP2, ToneGenerator.TONE_PROP_ACK).forEach {
+                    tone.startTone(it, 110)
+                    Thread.sleep(150)
+                }
+                repeat(4) { i ->
+                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
+                    Thread.sleep(100)
+                }
+            } catch (_: InterruptedException) {
+            }
+        }.start()
+    }
+
     fun release() = tone.release()
 }
 
@@ -90,15 +124,17 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
-        _uiState.update { it.copy(soundOn = sounds.enabled) }
-        resetLevel(0)
+        val lastLevel = prefs.getInt("kart_last_level", 0)
+        _uiState.update { it.copy(soundOn = sounds.enabled, levelIndex = lastLevel) }
+        resetLevel(lastLevel)
     }
 
-    val level: Level get() = Levels.all[_uiState.value.levelIndex]
+    val level: Level get() = LevelGen.generate(_uiState.value.levelIndex)
 
     fun selectLevel(index: Int) {
         if (index > _uiState.value.unlocked) return
         runJob?.cancel()
+        prefs.edit().putInt("kart_last_level", index).apply()
         _uiState.update { it.copy(levelIndex = index) }
         resetLevel(index)
     }
@@ -146,8 +182,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     fun nextLevel() {
         val s = _uiState.value
-        val next = s.levelIndex + 1
-        if (next < Levels.all.size) selectLevel(next)
+        selectLevel(s.levelIndex + 1)
     }
 
     fun play() {
@@ -173,13 +208,24 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                         return@launch
                     }
                     is StepResult.Won -> {
-                        sounds.win()
                         val lv = level
                         val prevStars = _uiState.value.stars[lv.index] ?: 0
                         // Star 1 = menang. (v1: 1 bintang; nanti bisa 3 kalau pakai
                         // instruksi lebih sedikit dari minimum.)
                         val newStars = maxOf(prevStars, 1)
                         val newUnlocked = maxOf(_uiState.value.unlocked, lv.index + 1)
+                        // Reward: level kelipatan 10 = besar, kelipatan 5 = kecil
+                        val levelNumber = lv.index + 1
+                        val reward = when {
+                            levelNumber % 10 == 0 -> Reward.BIG
+                            levelNumber % 10 == 5 -> Reward.SMALL
+                            else -> Reward.NONE
+                        }
+                        when (reward) {
+                            Reward.BIG -> sounds.bigWin()
+                            Reward.SMALL -> sounds.clap()
+                            Reward.NONE -> sounds.win()
+                        }
                         prefs.edit()
                             .putInt("star_${lv.index}", newStars)
                             .putInt("unlocked", newUnlocked)
@@ -190,6 +236,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                                 stars = it.stars + (lv.index to newStars),
                                 unlocked = newUnlocked,
                                 confettiTick = it.confettiTick + 1,
+                                reward = reward,
                             )
                         }
                         return@launch
@@ -202,7 +249,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun resetLevel(index: Int) {
-        val lv = Levels.all[index]
+        val lv = LevelGen.generate(index)
         _uiState.update {
             it.copy(
                 kart = KartState(lv.start, lv.startDir),

@@ -14,20 +14,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,26 +41,44 @@ import com.gyosanila.kartcilik.ui.OceanBlue
 import com.gyosanila.kartcilik.ui.SkyBlue
 import com.gyosanila.kartcilik.ui.SunYellow
 import com.gyosanila.kartcilik.ui.TextDark
+import kotlinx.coroutines.delay
 
 enum class GameChoice { Menu, Kart, Fruit }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initAds(applicationContext)
         setContent {
             KartCilikTheme {
-                var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
-                BackHandler(enabled = game != GameChoice.Menu) { game = GameChoice.Menu }
-                when (game) {
-                    GameChoice.Menu -> MainMenuScreen(
-                        onKart = { game = GameChoice.Kart },
-                        onFruit = { game = GameChoice.Fruit },
-                    )
-                    GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
-                    GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
+                var splash by remember { mutableStateOf(true) }
+                if (splash) {
+                    SplashView()
+                    LaunchedEffect(Unit) {
+                        loadInterstitial(this@MainActivity)
+                        delay(2200)
+                        showInterstitialIfReady(this@MainActivity)
+                        splash = false
+                    }
+                } else {
+                    MainNav()
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MainNav() {
+    var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
+    BackHandler(enabled = game != GameChoice.Menu) { game = GameChoice.Menu }
+    when (game) {
+        GameChoice.Menu -> MainMenuScreen(
+            onKart = { game = GameChoice.Kart },
+            onFruit = { game = GameChoice.Fruit },
+        )
+        GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
+        GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
     }
 }
 
@@ -70,7 +91,7 @@ fun KartCilikTheme(content: @Composable () -> Unit) {
         tertiary = BerryPurple,
         background = SkyBlue,
         surface = GrassGreen,
-        onPrimary = androidx.compose.ui.graphics.Color.White,
+        onPrimary = Color.White,
         onBackground = TextDark,
         onSurface = TextDark,
     )
@@ -78,6 +99,35 @@ fun KartCilikTheme(content: @Composable () -> Unit) {
         colorScheme = colors,
         content = content,
     )
+}
+
+@Composable
+private fun SplashView() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SkyBlue),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("🎮", fontSize = 72.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Logichild",
+                color = Color.White,
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Black,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Belajar logika sambil main!",
+                color = Color.White,
+                fontSize = 15.sp,
+            )
+            Spacer(Modifier.height(32.dp))
+            CircularProgressIndicator(color = Color.White)
+        }
+    }
 }
 
 @Composable
@@ -96,15 +146,15 @@ private fun MainMenuScreen(
         Text("🎮", fontSize = 56.sp)
         Spacer(Modifier.height(4.dp))
         Text(
-            "Kart Cilik",
-            color = androidx.compose.ui.graphics.Color.White,
+            "Logichild",
+            color = Color.White,
             fontSize = 34.sp,
             fontWeight = FontWeight.Black,
         )
         Spacer(Modifier.height(4.dp))
         Text(
             "Pilih game-nya!",
-            color = androidx.compose.ui.graphics.Color.White,
+            color = Color.White,
             fontSize = 16.sp,
         )
         Spacer(Modifier.height(32.dp))
@@ -171,9 +221,11 @@ private fun MainMenuScreen(
         }
         Spacer(Modifier.height(32.dp))
         Text(
-            "Tanpa iklan • Tanpa internet • Untuk balita 3+",
-            color = androidx.compose.ui.graphics.Color.White,
+            "Tanpa internet • Untuk balita 3+",
+            color = Color.White,
             fontSize = 12.sp,
         )
+        Spacer(Modifier.height(12.dp))
+        AdBanner()
     }
 }

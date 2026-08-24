@@ -30,6 +30,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -74,8 +76,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gyosanila.kartcilik.game.Instruction
 import com.gyosanila.kartcilik.game.KartState
 import com.gyosanila.kartcilik.game.Level
-import com.gyosanila.kartcilik.game.Levels
+import com.gyosanila.kartcilik.game.LevelGen
 import com.gyosanila.kartcilik.game.Pos
+import com.gyosanila.kartcilik.game.Reward
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.ConeOrange
 import com.gyosanila.kartcilik.ui.FinishBlack
@@ -89,6 +92,7 @@ import com.gyosanila.kartcilik.ui.SkyBlue
 import com.gyosanila.kartcilik.ui.SunYellow
 import com.gyosanila.kartcilik.ui.TextDark
 import kotlinx.coroutines.delay
+import kotlin.math.max
 import kotlin.math.min
 
 @Composable
@@ -97,7 +101,7 @@ fun KartGameScreen(
     vm: KartGameViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
-    val level = Levels.all[state.levelIndex]
+    val level = LevelGen.generate(state.levelIndex)
 
     Column(
         modifier = Modifier
@@ -142,13 +146,15 @@ fun KartGameScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
         )
+        AdBanner()
     }
 
     if (state.won) {
         WinOverlay(
             levelIndex = state.levelIndex,
-            hasNext = state.levelIndex < Levels.all.size - 1,
+            hasNext = true,
             confettiTick = state.confettiTick,
+            reward = state.reward,
             onNext = vm::nextLevel,
             onReplay = vm::resetKart,
         )
@@ -363,7 +369,7 @@ private fun LevelSelector(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "Kart Cilik",
+                "🚗 Main Mobil",
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
@@ -408,20 +414,34 @@ private fun LevelSelector(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Levels.all.forEachIndexed { i, lv ->
-                val isLocked = i > unlocked
+            // Level tak terbatas → tampilkan jendela 8 level di sekitar level aktif.
+            val window = 8
+            val total = unlocked + 1
+            val start = max(0, min(current - window / 2, total - window))
+            val end = min(total, start + window)
+
+            Surface(
+                shape = CircleShape,
+                color = Color.White.copy(alpha = if (start > 0) 0.9f else 0.35f),
+                onClick = { if (start > 0) onSelect(start - 1) },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.KeyboardArrowLeft, "Mundur", tint = TextDark)
+                }
+            }
+            (start until end).forEach { i ->
                 val starCount = stars[i] ?: 0
                 val isCurrent = i == current
                 val bg = when {
                     isCurrent -> SunYellow
-                    isLocked -> Color(0xFFB9C4CE)
                     starCount > 0 -> Color(0xFFFFF3B0)
                     else -> Color.White.copy(alpha = 0.85f)
                 }
                 Surface(
                     shape = CircleShape,
                     color = bg,
-                    onClick = { if (!isLocked) onSelect(i) },
+                    onClick = { onSelect(i) },
                     modifier = Modifier
                         .size(if (isCurrent) 40.dp else 32.dp)
                         .border(
@@ -431,22 +451,23 @@ private fun LevelSelector(
                         ),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        if (isLocked) {
-                            Icon(
-                                Icons.Filled.Lock,
-                                null,
-                                tint = Color.Gray,
-                                modifier = Modifier.size(14.dp),
-                            )
-                        } else {
-                            Text(
-                                "${lv.index + 1}",
-                                fontSize = if (isCurrent) 16.sp else 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextDark,
-                            )
-                        }
+                        Text(
+                            "${i + 1}",
+                            fontSize = if (isCurrent) 16.sp else 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextDark,
+                        )
                     }
+                }
+            }
+            Surface(
+                shape = CircleShape,
+                color = Color.White.copy(alpha = if (end < total) 0.9f else 0.35f),
+                onClick = { if (end < total) onSelect(end) },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.KeyboardArrowRight, "Maju", tint = TextDark)
                 }
             }
         }
@@ -716,16 +737,33 @@ private fun WinOverlay(
     levelIndex: Int,
     hasNext: Boolean,
     confettiTick: Int,
+    reward: Reward,
     onNext: () -> Unit,
     onReplay: () -> Unit,
 ) {
+    val levelNumber = levelIndex + 1
+    val title = when (reward) {
+        Reward.BIG -> "🎉🎉 LEVEL $levelNumber!"
+        Reward.SMALL -> "🎉 LEVEL $levelNumber!"
+        Reward.NONE -> "Level $levelNumber Selesai!"
+    }
+    val sub = when (reward) {
+        Reward.BIG -> "LUAR BIASA! 10 level beres! 👏👏👏"
+        Reward.SMALL -> "Hebat! Semakin jago! 👏"
+        Reward.NONE -> "Keren! Lanjut ya!"
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0x99000000)),
         contentAlignment = Alignment.Center,
     ) {
-        Confetti(seed = confettiTick)
+        if (reward == Reward.BIG) {
+            Confetti(seed = confettiTick * 7)
+            Confetti(seed = confettiTick * 7 + 3)
+        } else {
+            Confetti(seed = confettiTick * (if (reward == Reward.SMALL) 3 else 1))
+        }
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = Color.White,
@@ -735,12 +773,18 @@ private fun WinOverlay(
                 modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("🎉", fontSize = 56.sp)
+                Text(if (reward == Reward.BIG) "🎉🎊🎉" else "🎉", fontSize = if (reward == Reward.BIG) 64.sp else 56.sp)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Level ${levelIndex + 1} Selesai!",
-                    fontSize = 24.sp,
+                    title,
+                    fontSize = if (reward == Reward.BIG) 28.sp else 24.sp,
                     fontWeight = FontWeight.Black,
+                    color = TextDark,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    sub,
+                    fontSize = 15.sp,
                     color = TextDark,
                 )
                 Spacer(Modifier.height(6.dp))
