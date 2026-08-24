@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -91,7 +92,10 @@ import kotlinx.coroutines.delay
 import kotlin.math.min
 
 @Composable
-fun KartGameScreen(vm: KartGameViewModel = viewModel()) {
+fun KartGameScreen(
+    onBack: (() -> Unit)? = null,
+    vm: KartGameViewModel = viewModel(),
+) {
     val state by vm.uiState.collectAsState()
     val level = Levels.all[state.levelIndex]
 
@@ -107,6 +111,7 @@ fun KartGameScreen(vm: KartGameViewModel = viewModel()) {
             soundOn = state.soundOn,
             onSelect = vm::selectLevel,
             onToggleSound = vm::toggleSound,
+            onBack = onBack,
         )
         GameBoard(
             level = level,
@@ -350,6 +355,7 @@ private fun LevelSelector(
     soundOn: Boolean,
     onSelect: (Int) -> Unit,
     onToggleSound: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Row(
@@ -363,6 +369,23 @@ private fun LevelSelector(
                 fontWeight = FontWeight.Black,
                 modifier = Modifier.weight(1f),
             )
+            if (onBack != null) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(40.dp),
+                    onClick = onBack,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Filled.Home,
+                            contentDescription = "Menu",
+                            tint = TextDark,
+                        )
+                    }
+                }
+                Spacer(Modifier.width(6.dp))
+            }
             Surface(
                 shape = CircleShape,
                 color = Color.White.copy(alpha = 0.9f),
