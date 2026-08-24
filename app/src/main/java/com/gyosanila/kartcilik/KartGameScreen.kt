@@ -381,9 +381,9 @@ private fun LevelSelector(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Levels.all.forEachIndexed { i, lv ->
                 val isLocked = i > unlocked
@@ -400,7 +400,7 @@ private fun LevelSelector(
                     color = bg,
                     onClick = { if (!isLocked) onSelect(i) },
                     modifier = Modifier
-                        .size(if (isCurrent) 44.dp else 36.dp)
+                        .size(if (isCurrent) 40.dp else 32.dp)
                         .border(
                             width = if (isCurrent) 3.dp else 0.dp,
                             color = Color.White,
@@ -413,12 +413,12 @@ private fun LevelSelector(
                                 Icons.Filled.Lock,
                                 null,
                                 tint = Color.Gray,
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(14.dp),
                             )
                         } else {
                             Text(
                                 "${lv.index + 1}",
-                                fontSize = if (isCurrent) 18.sp else 15.sp,
+                                fontSize = if (isCurrent) 16.sp else 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextDark,
                             )
@@ -487,10 +487,18 @@ private fun InstructionStrip(
             }
         }
         IconButton(enabled = enabled && instructions.isNotEmpty(), onClick = onRemoveLast) {
-            Icon(Icons.AutoMirrored.Filled.Backspace, "Hapus satu", tint = Color.White)
+            Icon(
+                Icons.AutoMirrored.Filled.Backspace,
+                "Hapus satu",
+                tint = if (enabled && instructions.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
+            )
         }
         IconButton(enabled = enabled && instructions.isNotEmpty(), onClick = onClear) {
-            Icon(Icons.Filled.Refresh, "Hapus semua", tint = Color.White)
+            Icon(
+                Icons.Filled.Refresh,
+                "Hapus semua",
+                tint = if (enabled && instructions.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
+            )
         }
     }
 }
@@ -522,83 +530,94 @@ private fun ControlTray(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .background(Color.White.copy(alpha = 0.18f), RoundedCornerShape(26.dp))
-            .padding(horizontal = 10.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // Baris 1: arah permainan — grup rapat di tengah, gak nyebar ke tepi
-        Row(
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        // Panel 1: arah permainan
+        Surface(
+            shape = RoundedCornerShape(26.dp),
+            color = Color.White.copy(alpha = 0.18f),
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Spacer(Modifier.weight(1f))
-            BigRoundButton(
-                label = "Maju",
-                color = KartRed,
-                darker = Color(0xFFE53935),
-                icon = Icons.Filled.ArrowUpward,
-                enabled = enabled,
-                size = 76.dp,
-                onClick = { onAdd(Instruction.FORWARD) },
-            )
-            Spacer(Modifier.width(22.dp))
-            BigRoundButton(
-                label = "Kiri",
-                color = OceanBlue,
-                darker = Color(0xFF1E88E5),
-                icon = Icons.Filled.RotateLeft,
-                enabled = enabled,
-                size = 76.dp,
-                onClick = { onAdd(Instruction.LEFT) },
-            )
-            Spacer(Modifier.width(22.dp))
-            BigRoundButton(
-                label = "Kanan",
-                color = BerryPurple,
-                darker = Color(0xFF7B4FD8),
-                icon = Icons.Filled.RotateRight,
-                enabled = enabled,
-                size = 76.dp,
-                onClick = { onAdd(Instruction.RIGHT) },
-            )
-            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Spacer(Modifier.weight(1f))
+                BigRoundButton(
+                    label = "Maju",
+                    color = KartRed,
+                    darker = Color(0xFFE53935),
+                    icon = Icons.Filled.ArrowUpward,
+                    enabled = enabled,
+                    size = 76.dp,
+                    onClick = { onAdd(Instruction.FORWARD) },
+                )
+                Spacer(Modifier.width(22.dp))
+                BigRoundButton(
+                    label = "Kiri",
+                    color = OceanBlue,
+                    darker = Color(0xFF1E88E5),
+                    icon = Icons.Filled.RotateLeft,
+                    enabled = enabled,
+                    size = 76.dp,
+                    onClick = { onAdd(Instruction.LEFT) },
+                )
+                Spacer(Modifier.width(22.dp))
+                BigRoundButton(
+                    label = "Kanan",
+                    color = BerryPurple,
+                    darker = Color(0xFF7B4FD8),
+                    icon = Icons.Filled.RotateRight,
+                    enabled = enabled,
+                    size = 76.dp,
+                    onClick = { onAdd(Instruction.RIGHT) },
+                )
+                Spacer(Modifier.weight(1f))
+            }
         }
-        Spacer(Modifier.height(14.dp))
-        // Baris 2: play & reset — terpisah dari arah
-        Row(
+        Spacer(Modifier.height(12.dp))
+        // Panel 2: action (play & reset) — panel terpisah, beda warna
+        Surface(
+            shape = RoundedCornerShape(26.dp),
+            color = Color.White.copy(alpha = 0.26f),
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Spacer(Modifier.weight(1f))
-            BigRoundButton(
-                label = "Main!",
-                color = Color(0xFF66BB6A),
-                darker = Color(0xFF2E7D32),
-                icon = Icons.Filled.PlayArrow,
-                enabled = enabled && hasInstructions,
-                size = 96.dp,
-                iconSize = 58.dp,
-                shadow = 10.dp,
-                fontSize = 15.sp,
-                onClick = onPlay,
-            )
-            Spacer(Modifier.width(26.dp))
-            BigRoundButton(
-                label = "Ulang",
-                color = Color(0xFF90A4AE),
-                darker = Color(0xFF607D8B),
-                icon = Icons.Filled.Refresh,
-                enabled = enabled,
-                size = 64.dp,
-                iconSize = 32.dp,
-                shadow = 5.dp,
-                onClick = onReset,
-            )
-            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Spacer(Modifier.weight(1f))
+                BigRoundButton(
+                    label = "Main!",
+                    color = Color(0xFF66BB6A),
+                    darker = Color(0xFF2E7D32),
+                    icon = Icons.Filled.PlayArrow,
+                    enabled = enabled && hasInstructions,
+                    size = 96.dp,
+                    iconSize = 58.dp,
+                    shadow = 10.dp,
+                    fontSize = 15.sp,
+                    onClick = onPlay,
+                )
+                Spacer(Modifier.width(26.dp))
+                BigRoundButton(
+                    label = "Ulang",
+                    color = Color(0xFF90A4AE),
+                    darker = Color(0xFF607D8B),
+                    icon = Icons.Filled.Refresh,
+                    enabled = enabled,
+                    size = 64.dp,
+                    iconSize = 32.dp,
+                    shadow = 5.dp,
+                    onClick = onReset,
+                )
+                Spacer(Modifier.weight(1f))
+            }
         }
     }
 }
