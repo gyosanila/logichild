@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -202,8 +203,11 @@ private fun GameBoard(
 
             val cx = ox + animCell.x * cell
             val cy = oy + animCell.y * cell
-            translate(cx + shake, cy) {
-                rotate(animAngle) {
+            // PENTING: pivot rotasi = pusat mobil, BUKAN pusat canvas.
+            // Default DrawScope.rotate = canvas center → mobil yang menghadap
+            // E/S/W terlempar keluar sel (bahkan keluar layar).
+            rotate(animAngle, pivot = Offset(cx, cy)) {
+                translate(cx + shake, cy) {
                     drawKart(cell)
                 }
             }
@@ -481,54 +485,66 @@ private fun ControlTray(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        InstrButton(
-            label = "Maju",
-            color = KartRed,
-            icon = Icons.Filled.ArrowUpward,
-            enabled = enabled,
-            onClick = { onAdd(Instruction.FORWARD) },
-        )
-        InstrButton(
-            label = "Kiri",
-            color = OceanBlue,
-            icon = Icons.Filled.RotateLeft,
-            enabled = enabled,
-            onClick = { onAdd(Instruction.LEFT) },
-        )
-        Surface(
-            shape = CircleShape,
-            color = Color(0xFF4CAF50),
-            modifier = Modifier.size(84.dp),
-            onClick = { if (enabled && hasInstructions) onPlay() },
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        // Baris 1: arah permainan
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    Icons.Filled.PlayArrow,
-                    "Main",
-                    tint = Color.White,
-                    modifier = Modifier.size(52.dp),
-                )
-            }
+            InstrButton(
+                label = "Maju",
+                color = KartRed,
+                icon = Icons.Filled.ArrowUpward,
+                enabled = enabled,
+                onClick = { onAdd(Instruction.FORWARD) },
+            )
+            InstrButton(
+                label = "Kiri",
+                color = OceanBlue,
+                icon = Icons.Filled.RotateLeft,
+                enabled = enabled,
+                onClick = { onAdd(Instruction.LEFT) },
+            )
+            InstrButton(
+                label = "Kanan",
+                color = BerryPurple,
+                icon = Icons.Filled.RotateRight,
+                enabled = enabled,
+                onClick = { onAdd(Instruction.RIGHT) },
+            )
         }
-        InstrButton(
-            label = "Kanan",
-            color = BerryPurple,
-            icon = Icons.Filled.RotateRight,
-            enabled = enabled,
-            onClick = { onAdd(Instruction.RIGHT) },
-        )
-        InstrButton(
-            label = "Ulang",
-            color = Color(0xFF90A4AE),
-            icon = Icons.Filled.Refresh,
-            enabled = enabled,
-            onClick = onReset,
-        )
+        Spacer(Modifier.height(10.dp))
+        // Baris 2: play & reset — terpisah dari arah
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = Color(0xFF4CAF50),
+                modifier = Modifier.size(84.dp),
+                onClick = { if (enabled && hasInstructions) onPlay() },
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Filled.PlayArrow,
+                        "Main",
+                        tint = Color.White,
+                        modifier = Modifier.size(52.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.width(20.dp))
+            InstrButton(
+                label = "Ulang",
+                color = Color(0xFF90A4AE),
+                icon = Icons.Filled.Refresh,
+                enabled = enabled,
+                onClick = onReset,
+            )
+        }
     }
 }
 
