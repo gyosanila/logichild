@@ -146,7 +146,6 @@ fun KartGameScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
         )
-        AdBanner()
     }
 
     if (state.won) {

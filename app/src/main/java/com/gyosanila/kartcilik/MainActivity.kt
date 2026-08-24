@@ -31,9 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.GrassGreen
 import com.gyosanila.kartcilik.ui.KartRed
@@ -55,9 +59,11 @@ class MainActivity : ComponentActivity() {
                 if (splash) {
                     SplashView()
                     LaunchedEffect(Unit) {
+                        // Logo tampil minimal 1.5s, lalu tunggu interstitial siap
+                        // (maks 2.5s) — pastikan iklan muncul di setiap buka app.
                         loadInterstitial(this@MainActivity)
-                        delay(2200)
-                        showInterstitialIfReady(this@MainActivity)
+                        delay(1500)
+                        awaitAndShowInterstitial(this@MainActivity, 2500)
                         splash = false
                     }
                 } else {
@@ -72,14 +78,38 @@ class MainActivity : ComponentActivity() {
 private fun MainNav() {
     var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
     BackHandler(enabled = game != GameChoice.Menu) { game = GameChoice.Menu }
-    when (game) {
-        GameChoice.Menu -> MainMenuScreen(
-            onKart = { game = GameChoice.Kart },
-            onFruit = { game = GameChoice.Fruit },
-        )
-        GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
-        GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f)) {
+            when (game) {
+                GameChoice.Menu -> MainMenuScreen(
+                    onKart = { game = GameChoice.Kart },
+                    onFruit = { game = GameChoice.Fruit },
+                )
+                GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
+                GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
+            }
+        }
+        // Satu banner permanen — AdView yang SAMA stay di menu & semua game,
+        // gak di-reload tiap pindah screen (impression kehitung lama).
+        PersistentBanner()
     }
+}
+
+/** Banner tunggal yang dibuat sekali dan tetap hidup sepanjang app. */
+@Composable
+private fun PersistentBanner() {
+    val context = LocalContext.current
+    val adView = remember(context) {
+        AdView(context).apply {
+            setAdSize(AdSize.BANNER)
+            adUnitId = AD_UNIT_BANNER
+            loadAd(childSafeAdRequest())
+        }
+    }
+    AndroidView(
+        factory = { adView },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -225,7 +255,5 @@ private fun MainMenuScreen(
             color = Color.White,
             fontSize = 12.sp,
         )
-        Spacer(Modifier.height(12.dp))
-        AdBanner()
     }
 }

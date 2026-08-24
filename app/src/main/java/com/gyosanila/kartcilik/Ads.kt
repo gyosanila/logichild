@@ -2,23 +2,19 @@ package com.gyosanila.kartcilik
 
 import android.app.Activity
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeoutOrNull
 
 // ─── TEST IDs (AdMob). Ganti dengan ID asli dari akun AdMob sebelum rilis. ───
 const val AD_UNIT_BANNER = "ca-app-pub-3940256099942544/6300978111"
 const val AD_UNIT_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
 
 private var interstitial: InterstitialAd? = null
+private var interstitialLoading = CompletableDeferred<Unit>()
 
 /**
  * Konfigurasi iklan aman untuk aplikasi anak (COPPA):
@@ -29,6 +25,7 @@ private var interstitial: InterstitialAd? = null
 fun childSafeAdRequest(): AdRequest = AdRequest.Builder().build()
 
 fun loadInterstitial(activity: Activity) {
+    interstitialLoading = CompletableDeferred()
     InterstitialAd.load(
         activity,
         AD_UNIT_INTERSTITIAL,
@@ -36,32 +33,30 @@ fun loadInterstitial(activity: Activity) {
         object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(ad: InterstitialAd) {
                 interstitial = ad
+                interstitialLoading.complete(Unit)
+            }
+
+            override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
+                interstitialLoading.complete(Unit) // lepas penunggu walau gagal
             }
         },
     )
+}
+
+/** Tunggu interstitial siap (maks timeoutMs); true = siap & langsung tampil. */
+suspend fun awaitAndShowInterstitial(activity: Activity, timeoutMs: Long): Boolean {
+    val ready = withTimeoutOrNull(timeoutMs) { interstitialLoading.await() } != null
+    if (ready && interstitial != null) {
+        showInterstitialIfReady(activity)
+        return true
+    }
+    return false
 }
 
 fun showInterstitialIfReady(activity: Activity) {
     val ad = interstitial ?: return
     interstitial = null
     ad.show(activity)
-}
-
-/** Banner adaptif di bawah layar (test unit). */
-@Composable
-fun AdBanner(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val adView = remember(context) {
-        AdView(context).apply {
-            setAdSize(AdSize.BANNER)
-            adUnitId = AD_UNIT_BANNER
-        }
-    }
-    AndroidView(
-        factory = { adView },
-        modifier = modifier,
-        update = { it.loadAd(childSafeAdRequest()) },
-    )
 }
 
 /** Init AdMob — panggil sekali di Application/Activity. */
