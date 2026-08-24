@@ -1,9 +1,10 @@
 package com.gyosanila.kartcilik
 
+import android.app.Application
 import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gyosanila.kartcilik.game.GameEngine
 import com.gyosanila.kartcilik.game.Instruction
@@ -70,10 +71,10 @@ class GameSounds(context: Context) {
     fun release() = tone.release()
 }
 
-class KartGameViewModel(context: Context) : ViewModel() {
+class KartGameViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val prefs = context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
-    val sounds = GameSounds(context.applicationContext)
+    private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+    val sounds = GameSounds(application)
 
     private val _uiState = MutableStateFlow(
         KartGameUiState(
