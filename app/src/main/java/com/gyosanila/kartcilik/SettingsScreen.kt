@@ -45,6 +45,7 @@ fun SettingsScreen(
     var lang by remember { mutableStateOf(prefs.getString("lang", "id") ?: "id") }
     var controller by remember { mutableStateOf(prefs.getString("controller_type", "kart") ?: "kart") }
     var timerMin by remember { mutableStateOf(prefs.getInt("timer_minutes", 0)) }
+    var shadowOn by remember { mutableStateOf(prefs.getBoolean("shadow_preview", true)) }
 
     Column(
         modifier = Modifier
@@ -130,6 +131,19 @@ fun SettingsScreen(
                 strings.timerNote,
                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
                 fontSize = 13.sp,
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+
+        // ── Shadow preview ──
+        SettingSection(strings.shadowLabel) {
+            OptionRow(
+                options = listOf(strings.shadowOn to "true", strings.shadowOff to "false"),
+                selected = shadowOn.toString(),
+                onSelect = { v ->
+                    shadowOn = v.toBoolean()
+                    prefs.edit().putBoolean("shadow_preview", v.toBoolean()).apply()
+                },
             )
         }
     }

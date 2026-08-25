@@ -69,6 +69,10 @@ data class AppStrings(
     val praise3: String,
     val praise4: String,
     val praise5: String,
+    // Shadow preview
+    val shadowLabel: String,
+    val shadowOn: String,
+    val shadowOff: String,
 )
 
 val StringsId = AppStrings(
@@ -130,6 +134,9 @@ val StringsId = AppStrings(
     praise3 = "Keren! Terus berlatih ya!",
     praise4 = "Hebat! Hampir sempurna!",
     praise5 = "Luar biasa! Sempurna! 👏👏👏",
+    shadowLabel = "Bayangan Preview",
+    shadowOn = "Aktif (level 1-5)",
+    shadowOff = "Mati",
 )
 
 val StringsEn = AppStrings(
@@ -191,6 +198,9 @@ val StringsEn = AppStrings(
     praise3 = "Cool! Keep practicing!",
     praise4 = "Great! Almost perfect!",
     praise5 = "Amazing! Perfect! 👏👏👏",
+    shadowLabel = "Shadow Preview",
+    shadowOn = "On (levels 1-5)",
+    shadowOff = "Off",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }

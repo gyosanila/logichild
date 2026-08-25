@@ -137,8 +137,8 @@ fun KartGameScreen(
             crashed = state.crashed,
             crashCell = state.crashCell,
             instructions = state.instructions,
-            // Ghost cuma di level awal (1-5) sebagai alat belajar; setelah itu anak nyusun sendiri.
-            showGhost = !state.running && !state.won && state.levelIndex < 5,
+            // Ghost cuma level awal (1-5) & hanya kalau aktif di Pengaturan.
+            showGhost = !state.running && !state.won && rememberShadowEnabled() && state.levelIndex < 5,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()

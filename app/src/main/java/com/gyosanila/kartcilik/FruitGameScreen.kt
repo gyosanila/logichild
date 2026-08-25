@@ -156,8 +156,8 @@ fun FruitGameScreen(
 
         FruitBoard(
             state = state,
-            // Ghost cuma di level awal (1-5) sebagai alat belajar.
-            showGhost = !state.running && !state.won && state.level <= 5,
+            // Ghost cuma level awal (1-5) & hanya kalau aktif di Pengaturan.
+            showGhost = !state.running && !state.won && rememberShadowEnabled() && state.level <= 5,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()

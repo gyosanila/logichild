@@ -46,7 +46,8 @@ object FruitLevelGen {
                     fruits = fruits.toList(),
                     rocks = rocks.toList(),
                     start = start,
-                    maxCommands = minOf(1000, 5 + level * 2),
+                    // Input langkah bebas (efektif tanpa batas).
+                    maxCommands = 1000,
                 )
             }
         }

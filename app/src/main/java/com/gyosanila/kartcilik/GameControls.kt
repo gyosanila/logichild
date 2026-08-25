@@ -60,6 +60,16 @@ fun rememberControllerType(): String {
     }
 }
 
+/** Shadow preview ON/OFF dari Pengaturan. */
+@Composable
+fun rememberShadowEnabled(): Boolean {
+    val context = LocalContext.current
+    return remember {
+        context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+            .getBoolean("shadow_preview", true)
+    }
+}
+
 /** Spesifikasi satu tombol perintah. */
 data class CmdSpec(
     val label: String,
