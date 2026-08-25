@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,8 +42,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -410,8 +413,14 @@ private fun SplashView() {
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("🎮", fontSize = 72.sp)
-            Spacer(Modifier.height(8.dp))
+            Image(
+                painter = painterResource(R.drawable.ic_app_logo),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(RoundedCornerShape(32.dp)),
+            )
+            Spacer(Modifier.height(14.dp))
             Text(
                 strings.appName,
                 color = Color.White,
@@ -495,8 +504,14 @@ private fun MainMenuScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("🎮", fontSize = 56.sp)
-        Spacer(Modifier.height(4.dp))
+        Image(
+            painter = painterResource(R.drawable.ic_app_logo),
+            contentDescription = null,
+            modifier = Modifier
+                .size(110.dp)
+                .clip(RoundedCornerShape(26.dp)),
+        )
+        Spacer(Modifier.height(10.dp))
         Text(
             strings.appName,
             color = Color.White,
