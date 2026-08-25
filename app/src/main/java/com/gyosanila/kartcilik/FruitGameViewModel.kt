@@ -23,7 +23,7 @@ data class FruitUiState(
     val level: Int = 1,
     val commands: List<FruitCommand> = emptyList(),
     val robot: Pos = Pos(0, 0),
-    val dir: Dir = Dir.N,
+    val dir: Dir = Dir.S,
     val fruitsLeft: List<Pos> = emptyList(),
     val rocks: List<Pos> = emptyList(),
     val size: Int = 5,
@@ -60,7 +60,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                 level = level,
                 commands = emptyList(),
                 robot = lv.start,
-                dir = Dir.N,
+                dir = Dir.S,
                 fruitsLeft = lv.fruits,
                 rocks = lv.rocks,
                 size = lv.size,
@@ -99,7 +99,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.update {
             it.copy(
                 robot = Pos(0, 0),
-                dir = Dir.N,
+                dir = Dir.S,
                 crashed = false, exhausted = false, won = false,
             )
         }
@@ -111,7 +111,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
             it.copy(
                 commands = emptyList(),
                 robot = Pos(0, 0),
-                dir = Dir.N,
+                dir = Dir.S,
                 crashed = false, exhausted = false,
             )
         }
@@ -128,7 +128,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
         if (s.running || s.won || s.commands.isEmpty()) return
         runJob = viewModelScope.launch {
             _uiState.update {
-                it.copy(running = true, crashed = false, exhausted = false, robot = Pos(0, 0), dir = Dir.N)
+                it.copy(running = true, crashed = false, exhausted = false, robot = Pos(0, 0), dir = Dir.S)
             }
             delay(250)
             val cmds = _uiState.value.commands

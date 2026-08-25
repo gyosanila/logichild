@@ -41,9 +41,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -241,33 +244,18 @@ private fun DrawScope.drawFruitBoard(state: FruitUiState, cell: Float, ox: Float
             )
         }
     }
-    // Batu
+    // Batu — bongkahan batu dengan sisi-sisi (facets)
     for (r in state.rocks) {
         val cx = ox + (r.x + 0.5f) * cell
         val cy = oy + (r.y + 0.5f) * cell
-        drawRoundRect(
-            ShadowColor,
-            Offset(cx - cell * 0.3f + 2f, cy - cell * 0.3f + 4f),
-            Size(cell * 0.6f, cell * 0.6f),
-            CornerRadius(cell * 0.12f),
-        )
-        drawRoundRect(
-            RoadGray,
-            Offset(cx - cell * 0.3f, cy - cell * 0.3f),
-            Size(cell * 0.6f, cell * 0.6f),
-            CornerRadius(cell * 0.12f),
-        )
-        // kilau kecil
-        drawCircle(Color.White.copy(alpha = 0.55f), cell * 0.08f, Offset(cx - cell * 0.12f, cy - cell * 0.12f))
+        drawRock(cx, cy, cell)
     }
-    // Buah (warna per urutan: merah, kuning, ungu, oranye)
+    // Buah — bentuk buah beneran (badan + tangkai + daun)
     val fruitColors = listOf(KartRed, SunYellow, BerryPurple, ConeOrange)
     state.fruitsLeft.forEachIndexed { i, f ->
         val cx = ox + (f.x + 0.5f) * cell
         val cy = oy + (f.y + 0.5f) * cell
-        drawCircle(ShadowColor, cell * 0.24f, Offset(cx, cy + cell * 0.06f))
-        drawCircle(fruitColors[i % fruitColors.size], cell * 0.22f, Offset(cx, cy))
-        drawCircle(Color.White.copy(alpha = 0.7f), cell * 0.07f, Offset(cx - cell * 0.08f, cy - cell * 0.09f))
+        drawFruit(cx, cy, cell, fruitColors[i % fruitColors.size])
     }
     // Penanda start
     val sx = ox + 0.5f * cell
@@ -280,27 +268,154 @@ private fun DrawScope.drawFruitBoard(state: FruitUiState, cell: Float, ox: Float
     )
 }
 
+/** Batu: poligon tidak beraturan + sisi terang, keliatan kayak bongkahan. */
+private fun DrawScope.drawRock(cx: Float, cy: Float, cell: Float) {
+    val r = cell * 0.30f
+    // bayangan di tanah
+    drawOval(
+        ShadowColor,
+        topLeft = Offset(cx - r * 0.85f, cy + r * 0.55f),
+        size = Size(r * 1.7f, r * 0.5f),
+    )
+    val rock = Path().apply {
+        moveTo(cx - r, cy - r * 0.15f)
+        lineTo(cx - r * 0.55f, cy - r * 0.75f)
+        lineTo(cx + r * 0.25f, cy - r * 0.85f)
+        lineTo(cx + r * 0.85f, cy - r * 0.25f)
+        lineTo(cx + r * 0.75f, cy + r * 0.55f)
+        lineTo(cx + r * 0.1f, cy + r * 0.8f)
+        lineTo(cx - r * 0.7f, cy + r * 0.6f)
+        close()
+    }
+    drawPath(rock, RoadGray)
+    // sisi atas yang kena cahaya
+    val facet = Path().apply {
+        moveTo(cx - r * 0.55f, cy - r * 0.75f)
+        lineTo(cx - r * 0.05f, cy - r * 0.35f)
+        lineTo(cx + r * 0.15f, cy + r * 0.2f)
+        lineTo(cx - r * 0.7f, cy + r * 0.05f)
+        close()
+    }
+    drawPath(facet, Color(0xFFB0BEC5))
+}
+
+/** Buah: badan bulat + tangkai + daun — jelas kebaca buah, bukan dot. */
+private fun DrawScope.drawFruit(cx: Float, cy: Float, cell: Float, color: Color) {
+    val r = cell * 0.21f
+    // bayangan
+    drawOval(
+        ShadowColor,
+        topLeft = Offset(cx - r, cy + r * 0.55f),
+        size = Size(r * 2f, r * 0.6f),
+    )
+    // badan buah
+    drawCircle(color, r, Offset(cx, cy))
+    // tangkai
+    drawLine(
+        Color(0xFF795548),
+        Offset(cx, cy - r * 0.75f),
+        Offset(cx + r * 0.22f, cy - r * 1.15f),
+        strokeWidth = cell * 0.045f,
+    )
+    // daun
+    drawOval(
+        Color(0xFF66BB6A),
+        topLeft = Offset(cx + r * 0.35f, cy - r * 1.25f),
+        size = Size(r * 0.75f, r * 0.42f),
+    )
+    // kilau
+    drawCircle(Color.White.copy(alpha = 0.75f), r * 0.28f, Offset(cx - r * 0.38f, cy - r * 0.42f))
+}
+
+/** Robot pemetik: antena, badan metalik, wajah putih, mata besar, senyum, panah arah. */
 private fun DrawScope.drawFruitRobot(cell: Float, dir: Dir) {
-    val s = cell * 0.62f
-    // Bayangan
+    val s = cell * 0.58f          // setengah lebar body
+    val w = s * 2f
+    val bodyH = s * 1.75f
+    val top = -bodyH * 0.5f
+    val metal = Color(0xFF64B5F6)
+    val metalDark = Color(0xFF42A5F5)
+
+    // antena
+    drawLine(
+        metalDark,
+        Offset(0f, top),
+        Offset(0f, top - s * 0.5f),
+        strokeWidth = cell * 0.05f,
+    )
+    drawCircle(Color(0xFFEF5350), cell * 0.07f, Offset(0f, top - s * 0.55f))
+
+    // bayangan
     drawRoundRect(
         ShadowColor,
-        Offset(-s / 2f + 2f, -s / 2f + 4f),
-        Size(s, s),
-        CornerRadius(s * 0.3f),
+        Offset(-s + 2f, top + 4f),
+        Size(w, bodyH),
+        CornerRadius(s * 0.35f),
     )
-    // Body kuning
+
+    // body metalik
     drawRoundRect(
-        SunYellow,
-        Offset(-s / 2f, -s / 2f),
-        Size(s, s),
+        Brush.verticalGradient(listOf(metal, metalDark)),
+        Offset(-s, top),
+        Size(w, bodyH),
+        CornerRadius(s * 0.35f),
+    )
+
+    // panel perut putih + tombol
+    drawRoundRect(
+        Color.White.copy(alpha = 0.85f),
+        Offset(-s * 0.55f, top + bodyH * 0.60f),
+        Size(w * 0.55f, bodyH * 0.24f),
+        CornerRadius(s * 0.12f),
+    )
+    drawCircle(Color(0xFFEF5350), s * 0.09f, Offset(-s * 0.42f, top + bodyH * 0.76f))
+    drawCircle(Color(0xFF66BB6A), s * 0.09f, Offset(s * 0.42f, top + bodyH * 0.76f))
+
+    // wajah putih
+    val faceY = top + s * 0.22f
+    drawRoundRect(
+        Color.White,
+        Offset(-s * 0.72f, faceY),
+        Size(w * 0.72f, s * 0.95f),
         CornerRadius(s * 0.3f),
     )
-    // Mata hitam — posisi sesuai arah hadap
-    val d = cell * 0.16f
-    val e = cell * 0.11f
-    drawCircle(TextDark, cell * 0.07f, Offset(dir.dx * d - dir.dy * e, dir.dy * d - dir.dx * e))
-    drawCircle(TextDark, cell * 0.07f, Offset(dir.dx * d + dir.dy * e, dir.dy * d + dir.dx * e))
+
+    // mata besar — pupil mengikuti arah hadap
+    val eyeY = faceY + s * 0.30f
+    val ex = s * 0.24f
+    drawCircle(Color.White, s * 0.20f, Offset(-ex, eyeY))
+    drawCircle(Color.White, s * 0.20f, Offset(ex, eyeY))
+    val pr = s * 0.10f
+    val look = s * 0.10f
+    drawCircle(TextDark, pr, Offset(-ex + dir.dx * look, eyeY + dir.dy * look))
+    drawCircle(TextDark, pr, Offset(ex + dir.dx * look, eyeY + dir.dy * look))
+
+    // senyum
+    drawArc(
+        Color(0xFFEF5350),
+        startAngle = 20f,
+        sweepAngle = 140f,
+        useCenter = false,
+        topLeft = Offset(-s * 0.22f, eyeY + s * 0.16f),
+        size = Size(s * 0.44f, s * 0.30f),
+        style = Stroke(cell * 0.04f),
+    )
+
+    // panah arah kuning di atas — jelas menunjuk ke mana robot menghadap
+    val a = cell * 0.22f
+    val arrow = Path().apply {
+        moveTo(0f, top - s * 1.35f)
+        lineTo(a, top - s * 0.95f)
+        lineTo(a * 0.45f, top - s * 0.95f)
+        lineTo(a * 0.45f, top - s * 0.62f)
+        lineTo(-a * 0.45f, top - s * 0.62f)
+        lineTo(-a * 0.45f, top - s * 0.95f)
+        lineTo(-a, top - s * 0.95f)
+        close()
+    }
+    rotate(dir.angleDeg, pivot = Offset(0f, 0f)) {
+        drawPath(arrow, SunYellow)
+    }
 }
 
 // ─── Strip perintah ───────────────────────────────────────────────
