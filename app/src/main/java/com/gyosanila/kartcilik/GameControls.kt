@@ -93,11 +93,13 @@ data class StepSpec(
 )
 
 /**
- * Panel input lengkap (SAMA di semua game): strip langkah + controller.
- * Strip langkah memang bagian dari controller — satu kesatuan di sini.
+ * Controller (SAMA di semua game) — satu kesatuan:
+ * 1. input langkah (strip blok perintah)
+ * 2. navigasi (arah: kiri / maju / kanan + action seperti petik)
+ * 3. start & reset
  */
 @Composable
-fun GameInputPanel(
+fun GameController(
     controllerType: String,
     dirCmds: List<CmdSpec>,
     actionCmds: List<CmdSpec>,
@@ -124,7 +126,7 @@ fun GameInputPanel(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
-        GameController(
+        ControllerNav(
             controllerType = controllerType,
             dirCmds = dirCmds,
             actionCmds = actionCmds,
@@ -219,12 +221,12 @@ private fun StepStrip(
 }
 
 /**
- * Controller permainan — 2 tipe (bisa diganti di Pengaturan):
+ * Navigasi controller — 2 tipe (bisa diganti di Pengaturan):
  * - "kart"  : panel tombol bulat besar (Kiri/Maju/Kanan) + panel action
  * - "simple": tombol kotak sebaris + tombol JALAN lebar
  */
 @Composable
-fun GameController(
+private fun ControllerNav(
     controllerType: String,
     dirCmds: List<CmdSpec>,     // Kiri, Maju, Kanan
     actionCmds: List<CmdSpec>,  // opsional (mis. Petik 🍎)

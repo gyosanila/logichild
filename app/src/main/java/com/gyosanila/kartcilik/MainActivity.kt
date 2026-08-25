@@ -221,11 +221,6 @@ private fun MainNav(
     if (breakOverlay && !locked) {
         BreakOverlay(
             strings = strings,
-            onContinue = {
-                breakOverlay = false
-                sessionStart = System.currentTimeMillis()
-                remainingSec = timerMin * 60
-            },
             onKeepPlaying = { requestUnlock() },
         )
     }
@@ -436,7 +431,7 @@ private fun SplashView() {
 }
 
 @Composable
-private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onContinue: () -> Unit, onKeepPlaying: () -> Unit) {
+private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onKeepPlaying: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -467,6 +462,7 @@ private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onConti
                     fontSize = 15.sp,
                 )
                 Spacer(Modifier.height(18.dp))
+                // Hanya "Main Lagi" — gak ada tombol lanjut biasa; harus lewat iklan + soal.
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = Color(0xFF43A047),
@@ -478,10 +474,6 @@ private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onConti
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                     )
-                }
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onContinue) {
-                    Text(strings.breakContinue, color = Color(0xFF2E7D32))
                 }
             }
         }

@@ -122,7 +122,7 @@ fun KartGameScreen(
             .fillMaxSize()
             .background(SkyBlue)
     ) {
-        GameHeader(
+        Toolbar(
             emoji = "🚗",
             title = strings.playCar,
             soundOn = state.soundOn,
@@ -148,7 +148,7 @@ fun KartGameScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 4.dp),
         )
-        GameInputPanel(
+        GameController(
             controllerType = controllerType,
             dirCmds = listOf(
                 CmdSpec(strings.cmdLeft, OceanBlue, Color(0xFF1E88E5), icon = Icons.Filled.RotateLeft, onClick = { vm.addInstruction(Instruction.LEFT) }),

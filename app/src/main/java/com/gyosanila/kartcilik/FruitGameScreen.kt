@@ -122,7 +122,7 @@ fun FruitGameScreen(
             .fillMaxSize()
             .background(SkyBlue)
     ) {
-        GameHeader(
+        Toolbar(
             emoji = "🍎",
             title = strings.playFruit,
             onBack = onBack,
@@ -144,7 +144,7 @@ fun FruitGameScreen(
                 .padding(horizontal = 12.dp, vertical = 4.dp),
         )
 
-        GameInputPanel(
+        GameController(
             controllerType = rememberControllerType(),
             dirCmds = listOf(
                 CmdSpec(strings.cmdLeft, OceanBlue, Color(0xFF1E88E5), icon = Icons.Filled.RotateLeft, onClick = { vm.addCommand(FruitCommand.LEFT) }),

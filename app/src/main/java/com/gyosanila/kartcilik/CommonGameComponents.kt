@@ -51,10 +51,10 @@ import com.gyosanila.kartcilik.ui.OceanBlue
 import com.gyosanila.kartcilik.ui.SunYellow
 import com.gyosanila.kartcilik.ui.TextDark
 
-// ─── Header game (sama di semua game) ──────────────────────────────
+// ─── Toolbar (sama di semua game): kiri icon+judul, kanan audio+home ─
 
 @Composable
-fun GameHeader(
+fun Toolbar(
     emoji: String,
     title: String,
     onBack: (() -> Unit)?,
@@ -68,13 +68,17 @@ fun GameHeader(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Kiri: icon + judul
+        Text(emoji, fontSize = 32.sp)
+        Spacer(Modifier.width(10.dp))
         Text(
-            "$emoji $title",
+            title,
             color = Color.White,
             fontSize = 22.sp,
             fontWeight = FontWeight.Black,
             modifier = Modifier.weight(1f),
         )
+        // Kanan: audio + home
         if (soundOn != null && onToggleSound != null) {
             Surface(
                 shape = CircleShape,
