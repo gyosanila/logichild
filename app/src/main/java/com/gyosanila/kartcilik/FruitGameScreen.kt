@@ -39,19 +39,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.font.FontWeight
@@ -62,11 +68,13 @@ import com.gyosanila.kartcilik.game.Dir
 import com.gyosanila.kartcilik.game.FruitCommand
 import com.gyosanila.kartcilik.game.Pos
 import com.gyosanila.kartcilik.game.Reward
+import com.gyosanila.kartcilik.ui.AppStrings
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.ConeOrange
 import com.gyosanila.kartcilik.ui.GrassDark
 import com.gyosanila.kartcilik.ui.GrassGreen
 import com.gyosanila.kartcilik.ui.KartRed
+import com.gyosanila.kartcilik.ui.LocalStrings
 import com.gyosanila.kartcilik.ui.OceanBlue
 import com.gyosanila.kartcilik.ui.RoadGray
 import com.gyosanila.kartcilik.ui.ShadowColor
@@ -103,6 +111,7 @@ fun FruitGameScreen(
     vm: FruitGameViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
+    val strings = LocalStrings.current
 
     Column(
         modifier = Modifier
@@ -116,8 +125,9 @@ fun FruitGameScreen(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val strings = LocalStrings.current
             Text(
-                "🍎 Petik Buah",
+                "🍎 ${strings.playFruit}",
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
@@ -142,6 +152,7 @@ fun FruitGameScreen(
 
         FruitBoard(
             state = state,
+            showGhost = !state.running && !state.won,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -151,17 +162,29 @@ fun FruitGameScreen(
         FruitInstructionStrip(
             state = state,
             onRemoveLast = vm::removeLast,
-            onClear = vm::clearCommands,
+            strings = strings,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
 
-        FruitControlTray(
-            state = state,
-            onAdd = vm::addCommand,
+        val controllerType = rememberControllerType()
+        GameController(
+            controllerType = controllerType,
+            dirCmds = listOf(
+                CmdSpec(strings.cmdLeft, OceanBlue, Color(0xFF1E88E5), icon = Icons.Filled.RotateLeft, onClick = { vm.addCommand(FruitCommand.LEFT) }),
+                CmdSpec(strings.cmdForward, KartRed, Color(0xFFE53935), icon = Icons.Filled.ArrowUpward, onClick = { vm.addCommand(FruitCommand.FORWARD) }),
+                CmdSpec(strings.cmdRight, BerryPurple, Color(0xFF7B4FD8), icon = Icons.Filled.RotateRight, onClick = { vm.addCommand(FruitCommand.RIGHT) }),
+            ),
+            actionCmds = listOf(
+                CmdSpec(strings.cmdPick, ConeOrange, Color(0xFFF57C00), emoji = "🍎", onClick = { vm.addCommand(FruitCommand.PICK) }),
+            ),
             onPlay = vm::play,
             onReset = vm::resetRobot,
+            canEdit = !state.running && !state.won && state.commands.size < state.maxCommands,
+            playEnabled = !state.running && !state.won && state.commands.isNotEmpty(),
+            resetEnabled = !state.running,
+            strings = strings,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -178,20 +201,20 @@ fun FruitGameScreen(
     if (state.crashed) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("💥 Ups!") },
-            text = { Text("Robot nabrak batu! Ayo susun ulang perintahnya.") },
+            title = { Text(strings.crashTitle) },
+            text = { Text(strings.crashMsg) },
             confirmButton = {
-                TextButton(onClick = vm::retryAfterCrash) { Text("Coba Lagi 🔄") }
+                TextButton(onClick = vm::retryAfterCrash) { Text(strings.retry) }
             },
         )
     }
     if (state.exhausted) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("🤔 Belum Selesai") },
-            text = { Text("Masih ada buah yang belum dipetik. Tambah blok perintah, robot balik ke awal lagi.") },
+            title = { Text(strings.exhaustedTitle) },
+            text = { Text(strings.exhaustedMsg) },
             confirmButton = {
-                TextButton(onClick = vm::resetRobot) { Text("Lanjut Susun ➕") }
+                TextButton(onClick = vm::resetRobot) { Text(strings.keepBuilding) }
             },
         )
     }
@@ -200,13 +223,41 @@ fun FruitGameScreen(
 // ─── Papan permainan ──────────────────────────────────────────────
 
 @Composable
-private fun FruitBoard(state: FruitUiState, modifier: Modifier = Modifier) {
+private fun FruitBoard(state: FruitUiState, showGhost: Boolean, modifier: Modifier = Modifier) {
     val targetCell = Offset(state.robot.x + 0.5f, state.robot.y + 0.5f)
     val animCell by animateOffsetAsState(
         targetValue = targetCell,
         animationSpec = tween(durationMillis = 380, easing = FastOutSlowInEasing),
         label = "robotCell",
     )
+
+    // Shadow/ghost: posisi akhir robot kalau perintah dieksekusi (PICK diabaikan).
+    val ghost = remember(state.level, state.commands) {
+        if (state.commands.isEmpty()) {
+            null
+        } else {
+            var robot = Pos(0, 0)
+            var dir = Dir.S
+            var ok = true
+            for (cmd in state.commands) {
+                when (cmd) {
+                    FruitCommand.FORWARD -> {
+                        val nx = robot.x + dir.dx
+                        val ny = robot.y + dir.dy
+                        if (nx < 0 || ny < 0 || nx >= state.size || ny >= state.size || state.rocks.contains(Pos(nx, ny))) {
+                            ok = false
+                            break
+                        }
+                        robot = Pos(nx, ny)
+                    }
+                    FruitCommand.LEFT -> dir = dir.left()
+                    FruitCommand.RIGHT -> dir = dir.right()
+                    FruitCommand.PICK -> {}
+                }
+            }
+            if (ok) robot to dir else null
+        }
+    }
 
     // key(level): ganti level = Canvas baru, robot tidak "meluncur" dari posisi lama
     key(state.level) {
@@ -220,6 +271,28 @@ private fun FruitBoard(state: FruitUiState, modifier: Modifier = Modifier) {
             val oy = (size.height - cell * state.size) / 2f
 
             drawFruitBoard(state, cell, ox, oy)
+
+            // Bayangan (shadow) preview posisi akhir
+            if (showGhost && ghost != null) {
+                val gx = ox + (ghost.first.x + 0.5f) * cell
+                val gy = oy + (ghost.first.y + 0.5f) * cell
+                drawCircle(
+                    SunYellow.copy(alpha = 0.45f),
+                    cell * 0.46f,
+                    Offset(gx, gy),
+                    style = Stroke(cell * 0.06f),
+                )
+                drawIntoCanvas { canvas ->
+                    canvas.saveLayer(
+                        Rect(gx - cell, gy - cell, gx + cell, gy + cell),
+                        Paint().apply { alpha = 0.35f },
+                    )
+                    translate(gx, gy) {
+                        drawFruitRobot(cell, ghost.second)
+                    }
+                    canvas.restore()
+                }
+            }
 
             val cx = ox + animCell.x * cell
             val cy = oy + animCell.y * cell
@@ -421,6 +494,7 @@ private fun DrawScope.drawFruitRobot(cell: Float, dir: Dir) {
 
 @Composable
 private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
+    val strings = LocalStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -440,7 +514,7 @@ private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
             modifier = Modifier.size(32.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.KeyboardArrowLeft, "Mundur", tint = TextDark)
+                Icon(Icons.Filled.KeyboardArrowLeft, strings.prev, tint = TextDark)
             }
         }
         (start until end).forEach { lv ->
@@ -474,7 +548,7 @@ private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
             modifier = Modifier.size(32.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.KeyboardArrowRight, "Maju", tint = TextDark)
+                Icon(Icons.Filled.KeyboardArrowRight, strings.next, tint = TextDark)
             }
         }
     }
@@ -486,9 +560,16 @@ private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
 private fun FruitInstructionStrip(
     state: FruitUiState,
     onRemoveLast: () -> Unit,
-    onClear: () -> Unit,
+    strings: AppStrings,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+    // Autoscroll ke kanan setiap ada blok baru.
+    LaunchedEffect(state.commands.size) {
+        if (state.commands.isNotEmpty()) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
     Row(
         modifier = modifier.height(56.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -502,7 +583,7 @@ private fun FruitInstructionStrip(
             if (state.commands.isEmpty()) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        "susun perintah di bawah 👇",
+                        strings.hintStripFruit,
                         color = TextDark.copy(alpha = 0.45f),
                         fontSize = 14.sp,
                     )
@@ -511,7 +592,7 @@ private fun FruitInstructionStrip(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
+                        .horizontalScroll(scrollState)
                         .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -533,14 +614,7 @@ private fun FruitInstructionStrip(
         IconButton(enabled = !state.running && !state.won && state.commands.isNotEmpty(), onClick = onRemoveLast) {
             Icon(
                 Icons.AutoMirrored.Filled.Backspace,
-                "Hapus satu",
-                tint = if (state.commands.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
-            )
-        }
-        IconButton(enabled = !state.running && !state.won && state.commands.isNotEmpty(), onClick = onClear) {
-            Icon(
-                Icons.Filled.Refresh,
-                "Hapus semua",
+                strings.deleteOne,
                 tint = if (state.commands.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
             )
         }
@@ -665,15 +739,16 @@ private fun FruitControlTray(
 
 @Composable
 private fun FruitWinOverlay(level: Int, reward: Reward, onNext: () -> Unit) {
+    val strings = LocalStrings.current
     val title = when (reward) {
-        Reward.BIG -> "🎉🎉 LEVEL $level!"
-        Reward.SMALL -> "🎉 LEVEL $level!"
-        Reward.NONE -> "Level $level Selesai!"
+        Reward.BIG -> String.format(strings.winBigTitle, level)
+        Reward.SMALL -> String.format(strings.winSmallTitle, level)
+        Reward.NONE -> String.format(strings.winNoneTitle, level)
     }
     val sub = when (reward) {
-        Reward.BIG -> "LUAR BIASA! 10 level beres! 👏👏👏"
-        Reward.SMALL -> "Hebat! Semakin jago! 👏"
-        Reward.NONE -> "Semua buah kepetik! Keren!"
+        Reward.BIG -> strings.winBigSub
+        Reward.SMALL -> strings.winSmallSub
+        Reward.NONE -> strings.winNoneSub
     }
     Box(
         modifier = Modifier
@@ -708,7 +783,7 @@ private fun FruitWinOverlay(level: Int, reward: Reward, onNext: () -> Unit) {
                     onClick = onNext,
                 ) {
                     Text(
-                        "Level Berikutnya ▶",
+                        strings.levelNext,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),

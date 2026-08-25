@@ -57,12 +57,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -79,6 +82,9 @@ import com.gyosanila.kartcilik.game.Level
 import com.gyosanila.kartcilik.game.LevelGen
 import com.gyosanila.kartcilik.game.Pos
 import com.gyosanila.kartcilik.game.Reward
+import com.gyosanila.kartcilik.game.GameEngine
+import com.gyosanila.kartcilik.game.StepResult
+import com.gyosanila.kartcilik.ui.AppStrings
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.ConeOrange
 import com.gyosanila.kartcilik.ui.FinishBlack
@@ -86,6 +92,7 @@ import com.gyosanila.kartcilik.ui.FinishWhite
 import com.gyosanila.kartcilik.ui.GrassDark
 import com.gyosanila.kartcilik.ui.GrassGreen
 import com.gyosanila.kartcilik.ui.KartRed
+import com.gyosanila.kartcilik.ui.LocalStrings
 import com.gyosanila.kartcilik.ui.OceanBlue
 import com.gyosanila.kartcilik.ui.ShadowColor
 import com.gyosanila.kartcilik.ui.SkyBlue
@@ -102,6 +109,8 @@ fun KartGameScreen(
 ) {
     val state by vm.uiState.collectAsState()
     val level = LevelGen.generate(state.levelIndex)
+    val strings = LocalStrings.current
+    val controllerType = rememberControllerType()
 
     Column(
         modifier = Modifier
@@ -122,6 +131,8 @@ fun KartGameScreen(
             kart = state.kart,
             crashed = state.crashed,
             crashCell = state.crashCell,
+            instructions = state.instructions,
+            showGhost = !state.running && !state.won,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -131,17 +142,26 @@ fun KartGameScreen(
             instructions = state.instructions,
             enabled = !state.running && !state.won,
             onRemoveLast = vm::removeLast,
-            onClear = vm::clearInstructions,
+            strings = strings,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
-        ControlTray(
-            enabled = !state.running && !state.won,
-            hasInstructions = state.instructions.isNotEmpty(),
-            onAdd = vm::addInstruction,
+        val controllerType = rememberControllerType()
+        GameController(
+            controllerType = controllerType,
+            dirCmds = listOf(
+                CmdSpec(strings.cmdLeft, OceanBlue, Color(0xFF1E88E5), icon = Icons.Filled.RotateLeft, onClick = { vm.addInstruction(Instruction.LEFT) }),
+                CmdSpec(strings.cmdForward, KartRed, Color(0xFFE53935), icon = Icons.Filled.ArrowUpward, onClick = { vm.addInstruction(Instruction.FORWARD) }),
+                CmdSpec(strings.cmdRight, BerryPurple, Color(0xFF7B4FD8), icon = Icons.Filled.RotateRight, onClick = { vm.addInstruction(Instruction.RIGHT) }),
+            ),
+            actionCmds = emptyList(),
             onPlay = vm::play,
             onReset = vm::resetKart,
+            canEdit = !state.running && !state.won,
+            playEnabled = !state.running && !state.won && state.instructions.isNotEmpty(),
+            resetEnabled = !state.running,
+            strings = strings,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -168,6 +188,8 @@ private fun GameBoard(
     kart: KartState,
     crashed: Boolean,
     crashCell: Pos?,
+    instructions: List<Instruction>,
+    showGhost: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var shake by remember(crashed) { mutableStateOf(0f) }
@@ -178,6 +200,25 @@ private fun GameBoard(
                 delay(60)
             }
             shake = 0f
+        }
+    }
+
+    // Shadow/ghost: posisi akhir mobil kalau susunan instruksi dieksekusi.
+    val ghost = remember(level, instructions) {
+        if (instructions.isEmpty()) {
+            null
+        } else {
+            var g = KartState(level.start, level.startDir)
+            var ok = true
+            for (i in instructions) {
+                val (n, res) = GameEngine.apply(g, i, level)
+                g = n
+                if (res is StepResult.Crashed) {
+                    ok = false
+                    break
+                }
+            }
+            if (ok) g else null
         }
     }
 
@@ -209,6 +250,30 @@ private fun GameBoard(
             val oy = (size.height - cell * level.height) / 2f
 
             drawBoard(level, cell, ox, oy)
+
+            // Bayangan (shadow) preview posisi akhir
+            if (showGhost && ghost != null) {
+                val gx = ox + (ghost.pos.x + 0.5f) * cell
+                val gy = oy + (ghost.pos.y + 0.5f) * cell
+                drawCircle(
+                    SunYellow.copy(alpha = 0.45f),
+                    cell * 0.46f,
+                    Offset(gx, gy),
+                    style = Stroke(cell * 0.06f),
+                )
+                drawIntoCanvas { canvas ->
+                    canvas.saveLayer(
+                        Rect(gx - cell, gy - cell, gx + cell, gy + cell),
+                        Paint().apply { alpha = 0.35f },
+                    )
+                    rotate(ghost.dir.angleDeg, pivot = Offset(gx, gy)) {
+                        translate(gx, gy) {
+                            drawKart(cell)
+                        }
+                    }
+                    canvas.restore()
+                }
+            }
 
             crashCell?.let { c ->
                 val cx = ox + (c.x + 0.5f) * cell
@@ -362,13 +427,15 @@ private fun LevelSelector(
     onToggleSound: () -> Unit,
     onBack: (() -> Unit)? = null,
 ) {
+    val strings = LocalStrings.current
     Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val strings = LocalStrings.current
             Text(
-                "🚗 Main Mobil",
+                "🚗 ${strings.playCar}",
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
@@ -400,7 +467,7 @@ private fun LevelSelector(
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         if (soundOn) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                        contentDescription = "Suara",
+                        contentDescription = strings.sound,
                         tint = TextDark,
                     )
                 }
@@ -426,7 +493,7 @@ private fun LevelSelector(
                 modifier = Modifier.size(32.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.KeyboardArrowLeft, "Mundur", tint = TextDark)
+                    Icon(Icons.Filled.KeyboardArrowLeft, strings.prev, tint = TextDark)
                 }
             }
             (start until end).forEach { i ->
@@ -466,7 +533,7 @@ private fun LevelSelector(
                 modifier = Modifier.size(32.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.KeyboardArrowRight, "Maju", tint = TextDark)
+                    Icon(Icons.Filled.KeyboardArrowRight, strings.next, tint = TextDark)
                 }
             }
         }
@@ -480,9 +547,16 @@ private fun InstructionStrip(
     instructions: List<Instruction>,
     enabled: Boolean,
     onRemoveLast: () -> Unit,
-    onClear: () -> Unit,
+    strings: AppStrings,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+    // Autoscroll ke kanan setiap ada blok baru (biar blok terakhir selalu kelihatan).
+    LaunchedEffect(instructions.size) {
+        if (instructions.isNotEmpty()) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
     Row(
         modifier = modifier.height(56.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -496,7 +570,7 @@ private fun InstructionStrip(
             if (instructions.isEmpty()) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        "susun langkah di sini 👇",
+                        strings.hintStripCar,
                         color = TextDark.copy(alpha = 0.45f),
                         fontSize = 14.sp,
                     )
@@ -505,7 +579,7 @@ private fun InstructionStrip(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
+                        .horizontalScroll(scrollState)
                         .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -532,14 +606,7 @@ private fun InstructionStrip(
         IconButton(enabled = enabled && instructions.isNotEmpty(), onClick = onRemoveLast) {
             Icon(
                 Icons.AutoMirrored.Filled.Backspace,
-                "Hapus satu",
-                tint = if (enabled && instructions.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
-            )
-        }
-        IconButton(enabled = enabled && instructions.isNotEmpty(), onClick = onClear) {
-            Icon(
-                Icons.Filled.Refresh,
-                "Hapus semua",
+                strings.deleteOne,
                 tint = if (enabled && instructions.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
             )
         }
@@ -665,75 +732,6 @@ private fun ControlTray(
     }
 }
 
-@Composable
-fun BigRoundButton(
-    label: String,
-    color: Color,
-    darker: Color,
-    icon: ImageVector? = null,
-    emoji: String? = null,
-    enabled: Boolean = true,
-    size: Dp = 72.dp,
-    iconSize: Dp = 36.dp,
-    shadow: Dp = 6.dp,
-    fontSize: TextUnit = 12.sp,
-    onClick: () -> Unit,
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.90f else 1f,
-        animationSpec = tween(90),
-        label = "btnScale",
-    )
-    val bg = Brush.verticalGradient(listOf(color, darker))
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        },
-    ) {
-        Box(
-            modifier = Modifier
-                .size(size)
-                .shadow(shadow, CircleShape)
-                .background(if (enabled) bg else Brush.verticalGradient(listOf(Color(0xFFB0BEC5), Color(0xFF90A4AE))), CircleShape)
-                .border(
-                    width = if (enabled) 0.dp else 2.dp,
-                    color = Color.White.copy(alpha = 0.35f),
-                    shape = CircleShape,
-                )
-                .clickable(
-                    interactionSource = interaction,
-                    indication = ripple(color = Color.White.copy(alpha = 0.35f)),
-                    enabled = enabled,
-                    onClick = onClick,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (emoji != null) {
-                Text(emoji, fontSize = iconSize.value.sp)
-            } else {
-                Icon(
-                    icon!!,
-                    label,
-                    tint = Color.White,
-                    modifier = Modifier.size(iconSize),
-                )
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            label,
-            color = Color.White,
-            fontSize = fontSize,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-        )
-    }
-}
-
 // ─── Overlay menang + konfeti ─────────────────────────────────────
 
 @Composable
@@ -745,16 +743,17 @@ private fun WinOverlay(
     onNext: () -> Unit,
     onReplay: () -> Unit,
 ) {
+    val strings = LocalStrings.current
     val levelNumber = levelIndex + 1
     val title = when (reward) {
-        Reward.BIG -> "🎉🎉 LEVEL $levelNumber!"
-        Reward.SMALL -> "🎉 LEVEL $levelNumber!"
-        Reward.NONE -> "Level $levelNumber Selesai!"
+        Reward.BIG -> String.format(strings.winBigTitle, levelNumber)
+        Reward.SMALL -> String.format(strings.winSmallTitle, levelNumber)
+        Reward.NONE -> String.format(strings.winNoneTitle, levelNumber)
     }
     val sub = when (reward) {
-        Reward.BIG -> "LUAR BIASA! 10 level beres! 👏👏👏"
-        Reward.SMALL -> "Hebat! Semakin jago! 👏"
-        Reward.NONE -> "Keren! Lanjut ya!"
+        Reward.BIG -> strings.winBigSub
+        Reward.SMALL -> strings.winSmallSub
+        Reward.NONE -> strings.winNoneSub
     }
     Box(
         modifier = Modifier
@@ -801,7 +800,7 @@ private fun WinOverlay(
                         onClick = onNext,
                     ) {
                         Text(
-                            "Level berikutnya ▶",
+                            strings.levelNext,
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                             color = Color.White,
                             fontSize = 16.sp,
@@ -816,7 +815,7 @@ private fun WinOverlay(
                     onClick = onReplay,
                 ) {
                     Text(
-                        "Main lagi",
+                        strings.playAgain,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                         color = Color.White,
                         fontSize = 16.sp,

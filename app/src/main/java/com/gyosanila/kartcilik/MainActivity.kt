@@ -1,5 +1,6 @@
 package com.gyosanila.kartcilik
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -14,14 +15,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,13 +49,16 @@ import com.google.android.gms.ads.AdView
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.GrassGreen
 import com.gyosanila.kartcilik.ui.KartRed
+import com.gyosanila.kartcilik.ui.LocalStrings
 import com.gyosanila.kartcilik.ui.OceanBlue
 import com.gyosanila.kartcilik.ui.SkyBlue
+import com.gyosanila.kartcilik.ui.StringsEn
+import com.gyosanila.kartcilik.ui.StringsId
 import com.gyosanila.kartcilik.ui.SunYellow
 import com.gyosanila.kartcilik.ui.TextDark
 import kotlinx.coroutines.delay
 
-enum class GameChoice { Menu, Kart, Fruit }
+enum class GameChoice { Menu, Kart, Fruit, Settings }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,19 +72,24 @@ class MainActivity : ComponentActivity() {
         initAds(applicationContext)
         setContent {
             KartCilikTheme {
-                var splash by remember { mutableStateOf(true) }
-                if (splash) {
-                    SplashView()
-                    LaunchedEffect(Unit) {
-                        // Logo tampil minimal 1.5s, lalu tunggu interstitial siap
-                        // (maks 2.5s) — pastikan iklan muncul di setiap buka app.
-                        loadInterstitial(this@MainActivity)
-                        delay(1500)
-                        awaitAndShowInterstitial(this@MainActivity, 2500)
-                        splash = false
+                val context = LocalContext.current
+                val prefs = context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+                var lang by remember { mutableStateOf(prefs.getString("lang", "id") ?: "id") }
+                CompositionLocalProvider(
+                    LocalStrings provides if (lang == "en") StringsEn else StringsId,
+                ) {
+                    var splash by remember { mutableStateOf(true) }
+                    if (splash) {
+                        SplashView()
+                        LaunchedEffect(Unit) {
+                            loadInterstitial(this@MainActivity)
+                            delay(1500)
+                            awaitAndShowInterstitial(this@MainActivity, 2500)
+                            splash = false
+                        }
+                    } else {
+                        MainNav(lang) { lang = it }
                     }
-                } else {
-                    MainNav()
                 }
             }
         }
@@ -84,23 +97,61 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun MainNav() {
+private fun MainNav(
+    lang: String,
+    onLanguageChange: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+    val strings = LocalStrings.current
+
     var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
     BackHandler(enabled = game != GameChoice.Menu) { game = GameChoice.Menu }
+
+    // Timer layar (istirahat otomatis)
+    var breakOverlay by remember { mutableStateOf(false) }
+    var sessionStart by remember { mutableStateOf(System.currentTimeMillis()) }
+    val timerMin = prefs.getInt("timer_minutes", 0)
+    LaunchedEffect(timerMin, breakOverlay) {
+        if (timerMin > 0 && !breakOverlay) {
+            while (true) {
+                delay(15_000)
+                if (System.currentTimeMillis() - sessionStart >= timerMin * 60_000L) {
+                    breakOverlay = true
+                    break
+                }
+            }
+        }
+    }
+
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f)) {
             when (game) {
                 GameChoice.Menu -> MainMenuScreen(
                     onKart = { game = GameChoice.Kart },
                     onFruit = { game = GameChoice.Fruit },
+                    onSettings = { game = GameChoice.Settings },
                 )
                 GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
                 GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
+                GameChoice.Settings -> SettingsScreen(
+                    onBack = { game = GameChoice.Menu },
+                    onLanguageChange = onLanguageChange,
+                )
             }
         }
-        // Satu banner permanen — AdView yang SAMA stay di menu & semua game,
-        // gak di-reload tiap pindah screen (impression kehitung lama).
+        // Satu banner permanen — AdView yang SAMA stay di menu & semua game.
         PersistentBanner()
+    }
+
+    if (breakOverlay) {
+        BreakOverlay(
+            strings = strings,
+            onContinue = {
+                breakOverlay = false
+                sessionStart = System.currentTimeMillis()
+            },
+        )
     }
 }
 
@@ -142,6 +193,7 @@ fun KartCilikTheme(content: @Composable () -> Unit) {
 
 @Composable
 private fun SplashView() {
+    val strings = LocalStrings.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -152,14 +204,14 @@ private fun SplashView() {
             Text("🎮", fontSize = 72.sp)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Logichild",
+                strings.appName,
                 color = Color.White,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Black,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "Belajar logika sambil main!",
+                strings.splashSub,
                 color = Color.White,
                 fontSize = 15.sp,
             )
@@ -170,10 +222,61 @@ private fun SplashView() {
 }
 
 @Composable
+private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onContinue: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xF21B5E20)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color.White,
+            modifier = Modifier.padding(24.dp),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
+            ) {
+                Text("💤", fontSize = 52.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    strings.breakTitle,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black,
+                    color = TextDark,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    strings.breakMsg,
+                    color = TextDark,
+                    fontSize = 15.sp,
+                )
+                Spacer(Modifier.height(18.dp))
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFF43A047),
+                    onClick = onContinue,
+                ) {
+                    Text(
+                        strings.breakContinue,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MainMenuScreen(
     onKart: () -> Unit,
     onFruit: () -> Unit,
+    onSettings: () -> Unit,
 ) {
+    val strings = LocalStrings.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -185,18 +288,18 @@ private fun MainMenuScreen(
         Text("🎮", fontSize = 56.sp)
         Spacer(Modifier.height(4.dp))
         Text(
-            "Logichild",
+            strings.appName,
             color = Color.White,
             fontSize = 34.sp,
             fontWeight = FontWeight.Black,
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "Pilih game-nya!",
+            strings.menuPick,
             color = Color.White,
             fontSize = 16.sp,
         )
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(28.dp))
 
         Surface(
             shape = RoundedCornerShape(24.dp),
@@ -204,30 +307,30 @@ private fun MainMenuScreen(
             onClick = onKart,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
+                .height(110.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 24.dp),
             ) {
-                Text("🚗", fontSize = 52.sp)
+                Text("🚗", fontSize = 48.sp)
                 Spacer(Modifier.width(20.dp))
                 Column {
                     Text(
-                        "Main Mobil",
+                        strings.playCar,
                         color = TextDark,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                     )
                     Text(
-                        "Susun langkah, mobil sampai finish!",
+                        strings.playCarDesc,
                         color = TextDark,
                         fontSize = 14.sp,
                     )
                 }
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
 
         Surface(
             shape = RoundedCornerShape(24.dp),
@@ -235,32 +338,55 @@ private fun MainMenuScreen(
             onClick = onFruit,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
+                .height(110.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 24.dp),
             ) {
-                Text("🍎", fontSize = 52.sp)
+                Text("🍎", fontSize = 48.sp)
                 Spacer(Modifier.width(20.dp))
                 Column {
                     Text(
-                        "Petik Buah",
+                        strings.playFruit,
                         color = TextDark,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                     )
                     Text(
-                        "Susun perintah, robot panen buah!",
+                        strings.playFruitDesc,
                         color = TextDark,
                         fontSize = 14.sp,
                     )
                 }
             }
         }
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(14.dp))
+
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color.White.copy(alpha = 0.25f),
+            onClick = onSettings,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(vertical = 12.dp),
+            ) {
+                Text("⚙️", fontSize = 20.sp)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    strings.settings,
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
         Text(
-            "Tanpa internet • Untuk balita 3+",
+            strings.offlineTag,
             color = Color.White,
             fontSize = 12.sp,
         )
