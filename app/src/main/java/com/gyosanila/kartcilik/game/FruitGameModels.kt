@@ -55,7 +55,7 @@ object FruitLevelGen {
     }
 
     /** BFS: pastikan semua buah bisa dicapai dari start tanpa lewat batu. */
-    fun allReachable(size: Int, start: Pos, fruits: Set<Pos>, rocks: Set<Pos>): Boolean {
+    private fun allReachable(size: Int, start: Pos, fruits: Set<Pos>, rocks: Set<Pos>): Boolean {
         val seen = mutableSetOf(start)
         val queue = ArrayDeque<Pos>().apply { add(start) }
         while (queue.isNotEmpty()) {
@@ -69,4 +69,57 @@ object FruitLevelGen {
         }
         return fruits.all { it in seen }
     }
+
+    /**
+     * Langkah MINIMUM (blok perintah) untuk memetik semua buah — dipakai rating 5★.
+     * TSP kecil: jarak antar titik via BFS (posisi+arah, belok = 1 langkah),
+     * lalu coba semua urutan petik (maks 4 buah = 24 permutasi).
+     */
+    fun minStepsToCollect(level: FruitLevel): Int {
+        val rocks = level.rocks.toSet()
+        val pts = listOf(level.start) + level.fruits
+        val n = pts.size
+        val dist = Array(n) { i -> IntArray(n) { j ->
+            if (i == j) 0 else bfsDist(level.size, rocks, pts[i], pts[j])
+        } }
+        val mid = (1 until n).toList()
+        var best = Int.MAX_VALUE
+        for (perm in permutations(mid)) {
+            var d = dist[0][perm[0]]
+            for (k in 0 until perm.size - 1) d += dist[perm[k]][perm[k + 1]]
+            if (d < best) best = d
+        }
+        return best
+    }
+
+    /** Jarak langkah terpendek dari → ke (boleh hadap arah mana pun di awal). */
+    private fun bfsDist(size: Int, rocks: Set<Pos>, from: Pos, to: Pos): Int {
+        var best = Int.MAX_VALUE
+        for (sd in Dir.entries) {
+            val seen = mutableSetOf<Pair<Pos, Dir>>()
+            val queue = ArrayDeque<Triple<Pos, Dir, Int>>().apply { add(Triple(from, sd, 0)) }
+            seen.add(from to sd)
+            while (queue.isNotEmpty()) {
+                val (p, d, c) = queue.removeFirst()
+                if (p == to) {
+                    if (c < best) best = c
+                    continue
+                }
+                val nx = p.x + d.dx
+                val ny = p.y + d.dy
+                if (nx in 0 until size && ny in 0 until size && Pos(nx, ny) !in rocks) {
+                    val np = Pos(nx, ny)
+                    if (seen.add(np to d)) queue.add(Triple(np, d, c + 1))
+                }
+                for (nd in listOf(d.left(), d.right())) {
+                    if (seen.add(p to nd)) queue.add(Triple(p, nd, c + 1))
+                }
+            }
+        }
+        return best
+    }
+
+    private fun <T> permutations(list: List<T>): List<List<T>> =
+        if (list.size <= 1) listOf(list)
+        else list.flatMap { e -> permutations(list - e).map { listOf(e) + it } }
 }

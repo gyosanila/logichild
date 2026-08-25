@@ -34,6 +34,7 @@ data class FruitUiState(
     val crashed: Boolean = false,
     val exhausted: Boolean = false,
     val reward: Reward = Reward.NONE,
+    val stars: Map<Int, Int> = emptyMap(),
 )
 
 class FruitGameViewModel(application: Application) : AndroidViewModel(application) {
@@ -41,7 +42,13 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     private val sounds = GameSounds(application)
 
-    private val _uiState = MutableStateFlow(FruitUiState())
+    private val _uiState = MutableStateFlow(
+        FruitUiState(
+            stars = prefs.all.filterKeys { it.startsWith("fstar_") }.mapNotNull { (k, v) ->
+                k.removePrefix("fstar_").toIntOrNull()?.let { it to ((v as? Int) ?: 0) }
+            }.toMap(),
+        )
+    )
     val uiState: StateFlow<FruitUiState> = _uiState.asStateFlow()
 
     private var runJob: Job? = null
@@ -177,23 +184,46 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
             val after = _uiState.value
             if (!after.crashed) {
                 if (after.fruitsLeft.isEmpty()) {
+                    val lv = FruitLevelGen.generate(after.level, Random(after.level * 104729L))
+                    // Rating 1-5: 5★ = rute paling hemat DAN tanpa ghost preview.
+                    val best = FruitLevelGen.minStepsToCollect(lv)
+                    val steps = after.commands.size
+                    val ghostShown = after.level <= 5
+                    val rating = when {
+                        steps <= best && !ghostShown -> 5
+                        steps <= best -> 4
+                        steps <= best * 2 -> 3
+                        steps <= best * 3 -> 2
+                        else -> 1
+                    }
+                    val prevStars = _uiState.value.stars[after.level] ?: 0
+                    val newStars = maxOf(prevStars, rating)
                     // Reward: level kelipatan 10 = besar, kelipatan 5 = kecil
                     val reward = when {
                         after.level % 10 == 0 -> Reward.BIG
                         after.level % 10 == 5 -> Reward.SMALL
                         else -> Reward.NONE
                     }
-                    when (reward) {
-                        Reward.BIG -> sounds.bigWin()
-                        Reward.SMALL -> sounds.clap()
-                        Reward.NONE -> sounds.win()
+                    when {
+                        reward == Reward.BIG -> sounds.bigWin()
+                        rating >= 4 -> sounds.win()
+                        rating == 3 -> sounds.win()
+                        else -> sounds.clap()
                     }
-                    prefs.edit().putInt("fruit_level", after.level + 1).apply()
+                    prefs.edit()
+                        .putInt("fruit_level", after.level + 1)
+                        .putInt("fstar_${after.level}", newStars)
+                        .apply()
                     _uiState.update {
                         it.copy(
                             running = false, won = true, reward = reward,
                             unlocked = maxOf(it.unlocked, after.level + 1),
+                            stars = it.stars + (after.level to newStars),
                         )
+                    }
+                    // AdMob fullscreen setiap naik ke level kelipatan 5.
+                    if (after.level % 5 == 0) {
+                        AppActivityHolder.current?.let { act -> showInterstitialIfReady(act) }
                     }
                 } else {
                     _uiState.update { it.copy(running = false, exhausted = true) }

@@ -6,8 +6,14 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.FullScreenContentCallback
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
+
+/** Pegangan Activity aktif — dipakai ViewModel untuk menampilkan iklan. */
+object AppActivityHolder {
+    var current: Activity? = null
+}
 
 // ─── TEST IDs (AdMob). Ganti dengan ID asli dari akun AdMob sebelum rilis. ───
 const val AD_UNIT_BANNER = "ca-app-pub-3940256099942544/6300978111"
@@ -53,10 +59,17 @@ suspend fun awaitAndShowInterstitial(activity: Activity, timeoutMs: Long): Boole
     return false
 }
 
-fun showInterstitialIfReady(activity: Activity) {
-    val ad = interstitial ?: return
+fun showInterstitialIfReady(activity: Activity): Boolean {
+    val ad = interstitial ?: return false
     interstitial = null
+    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+        override fun onAdDismissedFullScreenContent() {
+            // Siapkan interstitial berikutnya begitu yang sekarang ditutup.
+            loadInterstitial(activity)
+        }
+    }
     ad.show(activity)
+    return true
 }
 
 /** Init AdMob — panggil sekali di Application/Activity. */

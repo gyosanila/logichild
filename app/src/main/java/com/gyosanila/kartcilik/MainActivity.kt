@@ -73,6 +73,7 @@ enum class GameChoice { Menu, Kart, Fruit, Settings }
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppActivityHolder.current = this
         // Fullscreen: sembunyikan status bar & nav bar (immersive, swipe untuk muncul).
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
@@ -118,11 +119,16 @@ private fun MainNav(
 
     var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
     var mathGate by remember { mutableStateOf(false) }
-    BackHandler(enabled = game != GameChoice.Menu) { game = GameChoice.Menu }
 
     // Timer layar: countdown + progress bar + auto istirahat + kunci layar
     var breakOverlay by remember { mutableStateOf(false) }
-    var locked by remember { mutableStateOf(false) }
+    var locked by remember { mutableStateOf(prefs.getBoolean("screen_locked", false)) }
+
+    // Back diblokir selama lock/istirahat — harus lewat "Main Lagi" + soal.
+    BackHandler(enabled = game != GameChoice.Menu || locked || breakOverlay) {
+        if (!locked && !breakOverlay) game = GameChoice.Menu
+    }
+
     var sessionStart by remember { mutableStateOf(System.currentTimeMillis()) }
     val timerMin = prefs.getInt("timer_minutes", 0)
     var remainingSec by remember { mutableStateOf(timerMin * 60) }
@@ -135,6 +141,7 @@ private fun MainNav(
                 remainingSec = rem
                 if (rem <= 0) {
                     breakOverlay = true
+                    prefs.edit().putBoolean("screen_locked", true).apply()
                     tts.speak("Waktu bermain sudah habis, teman. Waktunya istirahat.")
                     break
                 }
@@ -148,6 +155,21 @@ private fun MainNav(
             delay(6000)
             locked = true
         }
+    }
+
+    // Alur buka kunci: tombol Main Lagi → iklan → soal kabataku → bebas
+    var pendingMath by remember { mutableStateOf(false) }
+    fun requestUnlock() {
+        AppActivityHolder.current?.let { act -> showInterstitialIfReady(act) }
+        pendingMath = true
+    }
+    fun completeUnlock() {
+        prefs.edit().putBoolean("screen_locked", false).apply()
+        pendingMath = false
+        locked = false
+        breakOverlay = false
+        sessionStart = System.currentTimeMillis()
+        remainingSec = timerMin * 60
     }
 
     Column(
@@ -185,6 +207,15 @@ private fun MainNav(
                 game = GameChoice.Settings
             },
             onDismiss = { mathGate = false },
+            dismissable = true,
+        )
+    }
+    if (pendingMath) {
+        MathGateDialog(
+            strings = strings,
+            onSuccess = { completeUnlock() },
+            onDismiss = {},
+            dismissable = false,
         )
     }
     if (breakOverlay && !locked) {
@@ -195,17 +226,13 @@ private fun MainNav(
                 sessionStart = System.currentTimeMillis()
                 remainingSec = timerMin * 60
             },
+            onKeepPlaying = { requestUnlock() },
         )
     }
     if (locked) {
         LockScreen(
             strings = strings,
-            onUnlock = {
-                locked = false
-                breakOverlay = false
-                sessionStart = System.currentTimeMillis()
-                remainingSec = timerMin * 60
-            },
+            onKeepPlaying = { requestUnlock() },
         )
     }
 }
@@ -248,6 +275,7 @@ private fun MathGateDialog(
     strings: AppStrings,
     onSuccess: () -> Unit,
     onDismiss: () -> Unit,
+    dismissable: Boolean = true,
 ) {
     val rng = remember { Random(System.currentTimeMillis()) }
     val (qa, qb, op) = remember {
@@ -260,7 +288,7 @@ private fun MathGateDialog(
     var wrong by remember { mutableStateOf(false) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (dismissable) onDismiss() },
         title = { Text("🧮 ${strings.settingsTitle}") },
         text = {
             Column {
@@ -299,9 +327,9 @@ private fun MathGateDialog(
     )
 }
 
-/** Layar "terkunci" setelah waktu habis — parent gate. */
+/** Layar "terkunci" setelah waktu habis — harus Main Lagi → iklan → soal. */
 @Composable
-private fun LockScreen(strings: AppStrings, onUnlock: () -> Unit) {
+private fun LockScreen(strings: AppStrings, onKeepPlaying: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -320,7 +348,7 @@ private fun LockScreen(strings: AppStrings, onUnlock: () -> Unit) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Minta tolong orang tua ya 🙏",
+                strings.lockAsk,
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 15.sp,
             )
@@ -328,10 +356,10 @@ private fun LockScreen(strings: AppStrings, onUnlock: () -> Unit) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color(0xFF43A047),
-                onClick = onUnlock,
+                onClick = onKeepPlaying,
             ) {
                 Text(
-                    strings.breakContinue,
+                    strings.keepPlaying,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
@@ -408,7 +436,7 @@ private fun SplashView() {
 }
 
 @Composable
-private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onContinue: () -> Unit) {
+private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onContinue: () -> Unit, onKeepPlaying: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -442,14 +470,18 @@ private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onConti
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = Color(0xFF43A047),
-                    onClick = onContinue,
+                    onClick = onKeepPlaying,
                 ) {
                     Text(
-                        strings.breakContinue,
+                        strings.keepPlaying,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                     )
+                }
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onContinue) {
+                    Text(strings.breakContinue, color = Color(0xFF2E7D32))
                 }
             }
         }

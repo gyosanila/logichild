@@ -125,8 +125,9 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
     private val _uiState = MutableStateFlow(
         KartGameUiState(
             unlocked = prefs.getInt("unlocked", 0),
-            stars = (0..7).mapNotNull { i ->
-                prefs.getInt("star_$i", -1).takeIf { it >= 0 }?.let { i to it }
+            // Baca SEMUA star yang pernah disimpan (level bisa ribuan).
+            stars = prefs.all.filterKeys { it.startsWith("star_") }.mapNotNull { (k, v) ->
+                k.removePrefix("star_").toIntOrNull()?.let { it to ((v as? Int) ?: 0) }
             }.toMap(),
         )
     )
@@ -222,9 +223,20 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                     is StepResult.Won -> {
                         val lv = level
                         val prevStars = _uiState.value.stars[lv.index] ?: 0
-                        // Star 1 = menang. (v1: 1 bintang; nanti bisa 3 kalau pakai
-                        // instruksi lebih sedikit dari minimum.)
-                        val newStars = maxOf(prevStars, 1)
+                        // Rating 1-5: 5★ = rute paling hemat DAN tanpa ghost preview.
+                        // Ghost cuma tampil di level 1-5, jadi 5★ baru bisa di level 6+.
+                        val best = LevelGen.bfs(lv.start, lv.finish, lv.width, lv.height, lv.cones)
+                            ?: s.instructions.size
+                        val steps = s.instructions.size
+                        val ghostShown = lv.index < 5
+                        val rating = when {
+                            steps <= best && !ghostShown -> 5
+                            steps <= best -> 4
+                            steps <= best * 2 -> 3
+                            steps <= best * 3 -> 2
+                            else -> 1
+                        }
+                        val newStars = maxOf(prevStars, rating)
                         val newUnlocked = maxOf(_uiState.value.unlocked, lv.index + 1)
                         // Reward: level kelipatan 10 = besar, kelipatan 5 = kecil
                         val levelNumber = lv.index + 1
@@ -233,10 +245,11 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                             levelNumber % 10 == 5 -> Reward.SMALL
                             else -> Reward.NONE
                         }
-                        when (reward) {
-                            Reward.BIG -> sounds.bigWin()
-                            Reward.SMALL -> sounds.clap()
-                            Reward.NONE -> sounds.win()
+                        when {
+                            reward == Reward.BIG -> sounds.bigWin()
+                            rating >= 4 -> sounds.win()
+                            rating == 3 -> sounds.win()
+                            else -> sounds.clap()
                         }
                         prefs.edit()
                             .putInt("star_${lv.index}", newStars)
@@ -250,6 +263,10 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                                 confettiTick = it.confettiTick + 1,
                                 reward = reward,
                             )
+                        }
+                        // AdMob fullscreen setiap naik ke level kelipatan 5.
+                        if (levelNumber % 5 == 0) {
+                            AppActivityHolder.current?.let { act -> showInterstitialIfReady(act) }
                         }
                         return@launch
                     }

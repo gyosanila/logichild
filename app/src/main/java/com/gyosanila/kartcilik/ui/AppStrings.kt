@@ -61,6 +61,14 @@ data class AppStrings(
     val breakTitle: String,
     val breakMsg: String,
     val breakContinue: String,
+    // Lock & pujian rating
+    val keepPlaying: String,
+    val lockAsk: String,
+    val praise1: String,
+    val praise2: String,
+    val praise3: String,
+    val praise4: String,
+    val praise5: String,
 )
 
 val StringsId = AppStrings(
@@ -113,8 +121,15 @@ val StringsId = AppStrings(
     timerMin = "%1\$d menit",
     timerNote = "Anak istirahat otomatis setelah durasi bermain.",
     breakTitle = "Waktunya Istirahat 💤",
-    breakMsg = "Mainnya udah cukup lama. Ayo istirahat sebentar, minum, atau jalan-jalan!",
-    breakContinue = "Lanjut Main",
+    breakMsg = "Waktu bermain sudah habis, teman. Yuk istirahat dulu!",
+    breakContinue = "Lanjut",
+    keepPlaying = "Main Lagi ▶",
+    lockAsk = "Minta tolong orang tua ya 🙏",
+    praise1 = "Tetap semangat! Coba lagi ya! 💪",
+    praise2 = "Bagus! Coba lebih hemat langkah!",
+    praise3 = "Keren! Terus berlatih ya!",
+    praise4 = "Hebat! Hampir sempurna!",
+    praise5 = "Luar biasa! Sempurna! 👏👏👏",
 )
 
 val StringsEn = AppStrings(
@@ -166,9 +181,16 @@ val StringsEn = AppStrings(
     timerOff = "Off",
     timerMin = "%1\$d minutes",
     timerNote = "Child gets an auto break after play duration.",
-    breakTitle = "Time for a Break 💤",
-    breakMsg = "That's enough screen time. Let's rest, drink, or take a walk!",
-    breakContinue = "Keep Playing",
+    breakTitle = "Time to Rest 💤",
+    breakMsg = "Play time is over, buddy. Let's take a break!",
+    breakContinue = "Continue",
+    keepPlaying = "Keep Playing ▶",
+    lockAsk = "Ask your parents for help 🙏",
+    praise1 = "Keep going! Try again! 💪",
+    praise2 = "Nice! Try fewer steps!",
+    praise3 = "Cool! Keep practicing!",
+    praise4 = "Great! Almost perfect!",
+    praise5 = "Amazing! Perfect! 👏👏👏",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }

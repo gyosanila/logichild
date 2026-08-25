@@ -77,6 +77,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -179,6 +180,7 @@ fun KartGameScreen(
             hasNext = true,
             confettiTick = state.confettiTick,
             reward = state.reward,
+            rating = state.stars[state.levelIndex] ?: 0,
             onNext = vm::nextLevel,
             onReplay = vm::resetKart,
         )
@@ -725,6 +727,7 @@ private fun WinOverlay(
     hasNext: Boolean,
     confettiTick: Int,
     reward: Reward,
+    rating: Int,
     onNext: () -> Unit,
     onReplay: () -> Unit,
 ) {
@@ -735,11 +738,14 @@ private fun WinOverlay(
         Reward.SMALL -> String.format(strings.winSmallTitle, levelNumber)
         Reward.NONE -> String.format(strings.winNoneTitle, levelNumber)
     }
-    val sub = when (reward) {
-        Reward.BIG -> strings.winBigSub
-        Reward.SMALL -> strings.winSmallSub
-        Reward.NONE -> strings.winNoneSub
+    val praise = when (rating) {
+        5 -> strings.praise5
+        4 -> strings.praise4
+        3 -> strings.praise3
+        2 -> strings.praise2
+        else -> strings.praise1
     }
+    val starRow = "⭐".repeat(rating.coerceIn(0, 5)) + "☆".repeat((5 - rating).coerceIn(0, 5))
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -771,12 +777,19 @@ private fun WinOverlay(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    sub,
-                    fontSize = 15.sp,
+                    starRow,
+                    fontSize = 34.sp,
                     color = TextDark,
+                    textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(6.dp))
-                Icon(Icons.Filled.Star, null, tint = SunYellow, modifier = Modifier.size(32.dp))
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    praise,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark,
+                    textAlign = TextAlign.Center,
+                )
                 Spacer(Modifier.height(18.dp))
                 if (hasNext) {
                     Surface(

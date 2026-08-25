@@ -200,6 +200,7 @@ fun FruitGameScreen(
         FruitWinOverlay(
             level = state.level,
             reward = state.reward,
+            rating = state.stars[state.level] ?: 0,
             onNext = vm::nextLevel,
         )
     }
@@ -724,18 +725,21 @@ private fun FruitControlTray(
 // ─── Overlay menang ───────────────────────────────────────────────
 
 @Composable
-private fun FruitWinOverlay(level: Int, reward: Reward, onNext: () -> Unit) {
+private fun FruitWinOverlay(level: Int, reward: Reward, rating: Int, onNext: () -> Unit) {
     val strings = LocalStrings.current
     val title = when (reward) {
         Reward.BIG -> String.format(strings.winBigTitle, level)
         Reward.SMALL -> String.format(strings.winSmallTitle, level)
         Reward.NONE -> String.format(strings.winNoneTitle, level)
     }
-    val sub = when (reward) {
-        Reward.BIG -> strings.winBigSub
-        Reward.SMALL -> strings.winSmallSub
-        Reward.NONE -> strings.winNoneSub
+    val praise = when (rating) {
+        5 -> strings.praise5
+        4 -> strings.praise4
+        3 -> strings.praise3
+        2 -> strings.praise2
+        else -> strings.praise1
     }
+    val starRow = "⭐".repeat(rating.coerceIn(0, 5)) + "☆".repeat((5 - rating).coerceIn(0, 5))
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -759,8 +763,15 @@ private fun FruitWinOverlay(level: Int, reward: Reward, onNext: () -> Unit) {
                     color = TextDark,
                 )
                 Text(
-                    sub,
+                    starRow,
                     color = TextDark,
+                    fontSize = 30.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    praise,
+                    color = TextDark,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
                 Surface(
