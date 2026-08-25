@@ -666,11 +666,12 @@ private fun ControlTray(
 }
 
 @Composable
-private fun BigRoundButton(
+fun BigRoundButton(
     label: String,
     color: Color,
     darker: Color,
-    icon: ImageVector,
+    icon: ImageVector? = null,
+    emoji: String? = null,
     enabled: Boolean = true,
     size: Dp = 72.dp,
     iconSize: Dp = 36.dp,
@@ -711,12 +712,16 @@ private fun BigRoundButton(
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                icon,
-                label,
-                tint = Color.White,
-                modifier = Modifier.size(iconSize),
-            )
+            if (emoji != null) {
+                Text(emoji, fontSize = iconSize.value.sp)
+            } else {
+                Icon(
+                    icon!!,
+                    label,
+                    tint = Color.White,
+                    modifier = Modifier.size(iconSize),
+                )
+            }
         }
         Spacer(Modifier.height(4.dp))
         Text(

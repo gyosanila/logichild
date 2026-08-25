@@ -21,9 +21,10 @@ import kotlin.random.Random
 
 data class FruitUiState(
     val level: Int = 1,
+    val unlocked: Int = 1,
     val commands: List<FruitCommand> = emptyList(),
     val robot: Pos = Pos(0, 0),
-    val dir: Dir = Dir.S,
+    val dir: Dir = Dir.N,
     val fruitsLeft: List<Pos> = emptyList(),
     val rocks: List<Pos> = emptyList(),
     val size: Int = 5,
@@ -48,7 +49,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
         val savedLevel = prefs.getInt("fruit_level", 1)
-        _uiState.update { it.copy(level = savedLevel) }
+        _uiState.update { it.copy(level = savedLevel, unlocked = maxOf(savedLevel, 1)) }
         newLevel(savedLevel)
     }
 
@@ -117,9 +118,17 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    /** Pilih level dari selector (1-based, maks = level yang sudah kebuka). */
+    fun selectLevel(level: Int) {
+        if (level > _uiState.value.unlocked) return
+        prefs.edit().putInt("fruit_level", level).apply()
+        newLevel(level)
+    }
+
     fun nextLevel() {
         val next = _uiState.value.level + 1
         prefs.edit().putInt("fruit_level", next).apply()
+        _uiState.update { it.copy(unlocked = maxOf(it.unlocked, next)) }
         newLevel(next)
     }
 
@@ -180,7 +189,12 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                         Reward.NONE -> sounds.win()
                     }
                     prefs.edit().putInt("fruit_level", after.level + 1).apply()
-                    _uiState.update { it.copy(running = false, won = true, reward = reward) }
+                    _uiState.update {
+                        it.copy(
+                            running = false, won = true, reward = reward,
+                            unlocked = maxOf(it.unlocked, after.level + 1),
+                        )
+                    }
                 } else {
                     _uiState.update { it.copy(running = false, exhausted = true) }
                 }

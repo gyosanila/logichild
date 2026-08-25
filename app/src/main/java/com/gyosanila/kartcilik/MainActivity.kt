@@ -36,6 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.gyosanila.kartcilik.ui.BerryPurple
@@ -52,6 +55,12 @@ enum class GameChoice { Menu, Kart, Fruit }
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Fullscreen: sembunyikan status bar & nav bar (immersive, swipe untuk muncul).
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
         initAds(applicationContext)
         setContent {
             KartCilikTheme {

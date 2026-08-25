@@ -14,10 +14,13 @@ object LevelGen {
 
     fun generate(index: Int): Level {
         val rng = Random(index * 7919L + 13L)
+        // Difficulty: makin tinggi level makin sulit, tiap 10 level +5%.
+        val tier = index / 10
+        val diff = 1.0 + tier * 0.05
         val w = minOf(7, 4 + index / 4)      // 4..7
         val h = minOf(6, 3 + index / 5)      // 3..6
-        val coneCount = minOf(10, 1 + index / 2)
-        val minPath = minOf(14, 3 + index / 2)
+        val coneCount = minOf(12, (1 + index / 2.0 * diff).toInt())
+        val minPath = minOf(14, (3 + index / 2.0 * diff).toInt())
 
         repeat(300) {
             val start = Pos(0, rng.nextInt(h))      // tepi kiri

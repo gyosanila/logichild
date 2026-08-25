@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,9 +24,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RotateLeft
+import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +73,7 @@ import com.gyosanila.kartcilik.ui.ShadowColor
 import com.gyosanila.kartcilik.ui.SkyBlue
 import com.gyosanila.kartcilik.ui.SunYellow
 import com.gyosanila.kartcilik.ui.TextDark
+import kotlin.math.max
 import kotlin.math.min
 
 private fun FruitCommand.emoji(): String = when (this) {
@@ -117,19 +124,6 @@ fun FruitGameScreen(
                 modifier = Modifier.weight(1f),
             )
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color.White.copy(alpha = 0.9f),
-            ) {
-                Text(
-                    "Level ${state.level}",
-                    color = TextDark,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-            }
-            Spacer(Modifier.width(6.dp))
-            Surface(
                 shape = CircleShape,
                 color = Color.White.copy(alpha = 0.9f),
                 modifier = Modifier.size(40.dp),
@@ -140,6 +134,11 @@ fun FruitGameScreen(
                 }
             }
         }
+
+        FruitLevelSelector(
+            state = state,
+            onSelect = vm::selectLevel,
+        )
 
         FruitBoard(
             state = state,
@@ -418,6 +417,69 @@ private fun DrawScope.drawFruitRobot(cell: Float, dir: Dir) {
     }
 }
 
+// ─── Pemilih level (windowed, 1-based) ─────────────────────────────
+
+@Composable
+private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val window = 8
+        val total = maxOf(state.unlocked, state.level)
+        val start = max(1, min(state.level - window / 2, total - window + 1))
+        val end = min(total + 1, start + window)
+
+        Surface(
+            shape = CircleShape,
+            color = Color.White.copy(alpha = if (start > 1) 0.9f else 0.35f),
+            onClick = { if (start > 1) onSelect(start - 1) },
+            modifier = Modifier.size(32.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.KeyboardArrowLeft, "Mundur", tint = TextDark)
+            }
+        }
+        (start until end).forEach { lv ->
+            val isCurrent = lv == state.level
+            Surface(
+                shape = CircleShape,
+                color = if (isCurrent) SunYellow else Color.White.copy(alpha = 0.85f),
+                onClick = { onSelect(lv) },
+                modifier = Modifier
+                    .size(if (isCurrent) 40.dp else 32.dp)
+                    .border(
+                        width = if (isCurrent) 3.dp else 0.dp,
+                        color = Color.White,
+                        shape = CircleShape,
+                    ),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        "$lv",
+                        fontSize = if (isCurrent) 16.sp else 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDark,
+                    )
+                }
+            }
+        }
+        Surface(
+            shape = CircleShape,
+            color = Color.White.copy(alpha = if (end <= total) 0.9f else 0.35f),
+            onClick = { if (end <= total) onSelect(end) },
+            modifier = Modifier.size(32.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.KeyboardArrowRight, "Maju", tint = TextDark)
+            }
+        }
+    }
+}
+
 // ─── Strip perintah ───────────────────────────────────────────────
 
 @Composable
@@ -485,7 +547,7 @@ private fun FruitInstructionStrip(
     }
 }
 
-// ─── Tombol perintah & kontrol ────────────────────────────────────
+// ─── Tombol perintah & kontrol (sama gaya Main Mobil) ─────────────
 
 @Composable
 private fun FruitControlTray(
@@ -495,81 +557,107 @@ private fun FruitControlTray(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FruitCommand.entries.forEach { c ->
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = c.color(),
-                    onClick = { if (!state.running && !state.won && state.commands.size < state.maxCommands) onAdd(c) },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(vertical = 10.dp),
-                    ) {
-                        Text(c.emoji(), fontSize = 24.sp)
-                        Text(
-                            c.label(),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                        )
-                    }
-                }
+    val canEdit = !state.running && !state.won && state.commands.size < state.maxCommands
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        // Panel 1: arah permainan (Kiri, Maju, Kanan)
+        Surface(
+            shape = RoundedCornerShape(26.dp),
+            color = Color.White.copy(alpha = 0.18f),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Spacer(Modifier.weight(1f))
+                BigRoundButton(
+                    label = "Kiri",
+                    color = OceanBlue,
+                    darker = Color(0xFF1E88E5),
+                    icon = Icons.Filled.RotateLeft,
+                    enabled = canEdit,
+                    size = 76.dp,
+                    onClick = { onAdd(FruitCommand.LEFT) },
+                )
+                Spacer(Modifier.width(22.dp))
+                BigRoundButton(
+                    label = "Maju",
+                    color = KartRed,
+                    darker = Color(0xFFE53935),
+                    icon = Icons.Filled.ArrowUpward,
+                    enabled = canEdit,
+                    size = 76.dp,
+                    onClick = { onAdd(FruitCommand.FORWARD) },
+                )
+                Spacer(Modifier.width(22.dp))
+                BigRoundButton(
+                    label = "Kanan",
+                    color = BerryPurple,
+                    darker = Color(0xFF7B4FD8),
+                    icon = Icons.Filled.RotateRight,
+                    enabled = canEdit,
+                    size = 76.dp,
+                    onClick = { onAdd(FruitCommand.RIGHT) },
+                )
+                Spacer(Modifier.weight(1f))
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF43A047),
-                onClick = onPlay,
-                enabled = !state.running && !state.won && state.commands.isNotEmpty(),
-                modifier = Modifier.weight(1f),
+        Spacer(Modifier.height(12.dp))
+        // Panel 2: action (Petik, Main!, Ulang)
+        Surface(
+            shape = RoundedCornerShape(26.dp),
+            color = Color.White.copy(alpha = 0.26f),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(vertical = 14.dp),
-                ) {
-                    Icon(
-                        Icons.Filled.PlayArrow,
-                        null,
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp),
-                    )
-                    Text(
-                        "JALAN!",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-            }
-            Spacer(Modifier.width(8.dp))
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
-                onClick = onReset,
-                enabled = !state.running,
-                modifier = Modifier.size(52.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Filled.Refresh,
-                        "Ulang",
-                        tint = if (state.running) TextDark.copy(alpha = 0.35f) else TextDark,
-                    )
-                }
+                Spacer(Modifier.weight(1f))
+                BigRoundButton(
+                    label = "Petik",
+                    color = ConeOrange,
+                    darker = Color(0xFFF57C00),
+                    emoji = "🍎",
+                    enabled = canEdit,
+                    size = 64.dp,
+                    iconSize = 30.dp,
+                    onClick = { onAdd(FruitCommand.PICK) },
+                )
+                Spacer(Modifier.width(26.dp))
+                BigRoundButton(
+                    label = "Main!",
+                    color = Color(0xFF66BB6A),
+                    darker = Color(0xFF2E7D32),
+                    icon = Icons.Filled.PlayArrow,
+                    enabled = !state.running && !state.won && state.commands.isNotEmpty(),
+                    size = 96.dp,
+                    iconSize = 58.dp,
+                    shadow = 10.dp,
+                    fontSize = 15.sp,
+                    onClick = onPlay,
+                )
+                Spacer(Modifier.width(26.dp))
+                BigRoundButton(
+                    label = "Ulang",
+                    color = Color(0xFF90A4AE),
+                    darker = Color(0xFF607D8B),
+                    icon = Icons.Filled.Refresh,
+                    enabled = !state.running,
+                    size = 64.dp,
+                    iconSize = 32.dp,
+                    shadow = 5.dp,
+                    onClick = onReset,
+                )
+                Spacer(Modifier.weight(1f))
             }
         }
-        Text(
-            "Blok: ${state.commands.size}/${state.maxCommands}",
-            color = Color.White,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 4.dp),
-        )
     }
 }
 

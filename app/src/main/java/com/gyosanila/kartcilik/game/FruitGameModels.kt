@@ -21,9 +21,12 @@ object FruitLevelGen {
      * Dijamin semua buah bisa dicapai (BFS) — tidak pernah buntu.
      */
     fun generate(level: Int, rng: Random = Random.Default): FruitLevel {
+        // Difficulty: makin tinggi level makin sulit, tiap 10 level +5%.
+        val tier = level / 10
+        val diff = 1.0 + tier * 0.05
         val size = minOf(7, 4 + (level + 2) / 3)      // 5..7
         val fruitCount = minOf(4, 1 + (level + 1) / 2) // 1..4
-        val rockCount = minOf(8, level + 1)            // 2..8
+        val rockCount = minOf(10, (1 + (level + 1) * diff).toInt())
 
         repeat(80) {
             val start = Pos(0, 0)
