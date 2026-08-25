@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -18,16 +19,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -79,6 +84,139 @@ data class CmdSpec(
     val icon: ImageVector? = null,
     val onClick: () -> Unit = {},
 )
+
+/** Satu blok langkah yang sudah disusun (chip di strip input). */
+data class StepSpec(
+    val color: Color,
+    val emoji: String? = null,
+    val icon: ImageVector? = null,
+)
+
+/**
+ * Panel input lengkap (SAMA di semua game): strip langkah + controller.
+ * Strip langkah memang bagian dari controller — satu kesatuan di sini.
+ */
+@Composable
+fun GameInputPanel(
+    controllerType: String,
+    dirCmds: List<CmdSpec>,
+    actionCmds: List<CmdSpec>,
+    steps: List<StepSpec>,
+    onRemoveLast: () -> Unit,
+    onPlay: () -> Unit,
+    onReset: () -> Unit,
+    canEdit: Boolean,
+    playEnabled: Boolean,
+    resetEnabled: Boolean,
+    hintText: String,
+    deleteLabel: String,
+    strings: AppStrings,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        StepStrip(
+            steps = steps,
+            enabled = canEdit,
+            onRemoveLast = onRemoveLast,
+            hint = hintText,
+            deleteLabel = deleteLabel,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        )
+        GameController(
+            controllerType = controllerType,
+            dirCmds = dirCmds,
+            actionCmds = actionCmds,
+            onPlay = onPlay,
+            onReset = onReset,
+            canEdit = canEdit,
+            playEnabled = playEnabled,
+            resetEnabled = resetEnabled,
+            strings = strings,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+        )
+    }
+}
+
+/** Strip langkah: chip perintah yang sudah disusun + autoscroll ke kanan. */
+@Composable
+private fun StepStrip(
+    steps: List<StepSpec>,
+    enabled: Boolean,
+    onRemoveLast: () -> Unit,
+    hint: String,
+    deleteLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    // Autoscroll ke kanan setiap ada blok baru.
+    LaunchedEffect(steps.size) {
+        if (steps.isNotEmpty()) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+    Row(
+        modifier = modifier.height(56.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White.copy(alpha = 0.9f),
+            modifier = Modifier.weight(1f).height(52.dp),
+        ) {
+            if (steps.isEmpty()) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        hint,
+                        color = TextDark.copy(alpha = 0.45f),
+                        fontSize = 14.sp,
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(scrollState)
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    steps.forEach { s ->
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = s.color,
+                            modifier = Modifier.size(38.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (s.emoji != null) {
+                                    Text(s.emoji, fontSize = 18.sp)
+                                } else {
+                                    Icon(
+                                        s.icon!!,
+                                        null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(22.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        IconButton(enabled = enabled && steps.isNotEmpty(), onClick = onRemoveLast) {
+            Icon(
+                Icons.AutoMirrored.Filled.Backspace,
+                deleteLabel,
+                tint = if (enabled && steps.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
+            )
+        }
+    }
+}
 
 /**
  * Controller permainan — 2 tipe (bisa diganti di Pengaturan):

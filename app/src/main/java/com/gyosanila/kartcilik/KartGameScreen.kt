@@ -122,14 +122,18 @@ fun KartGameScreen(
             .fillMaxSize()
             .background(SkyBlue)
     ) {
-        LevelSelector(
-            unlocked = state.unlocked,
-            stars = state.stars,
-            current = state.levelIndex,
+        GameHeader(
+            emoji = "🚗",
+            title = strings.playCar,
             soundOn = state.soundOn,
-            onSelect = vm::selectLevel,
             onToggleSound = vm::toggleSound,
             onBack = onBack,
+        )
+        LevelSelector(
+            itemCount = state.unlocked + 1,
+            currentIndex = state.levelIndex,
+            isMarked = { i -> (state.stars[i] ?: 0) > 0 },
+            onSelect = vm::selectLevel,
         )
         GameBoard(
             level = level,
@@ -144,17 +148,7 @@ fun KartGameScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 4.dp),
         )
-        InstructionStrip(
-            instructions = state.instructions,
-            enabled = !state.running && !state.won,
-            onRemoveLast = vm::removeLast,
-            strings = strings,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        )
-        val controllerType = rememberControllerType()
-        GameController(
+        GameInputPanel(
             controllerType = controllerType,
             dirCmds = listOf(
                 CmdSpec(strings.cmdLeft, OceanBlue, Color(0xFF1E88E5), icon = Icons.Filled.RotateLeft, onClick = { vm.addInstruction(Instruction.LEFT) }),
@@ -162,25 +156,44 @@ fun KartGameScreen(
                 CmdSpec(strings.cmdRight, BerryPurple, Color(0xFF7B4FD8), icon = Icons.Filled.RotateRight, onClick = { vm.addInstruction(Instruction.RIGHT) }),
             ),
             actionCmds = emptyList(),
+            steps = state.instructions.map { StepSpec(color = instrColor(it), icon = instrIcon(it)) },
+            onRemoveLast = vm::removeLast,
             onPlay = vm::play,
             onReset = vm::resetKart,
             canEdit = !state.running && !state.won,
             playEnabled = !state.running && !state.won && state.instructions.isNotEmpty(),
             resetEnabled = !state.running,
+            hintText = strings.hintStripCar,
+            deleteLabel = strings.deleteOne,
             strings = strings,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 
     if (state.won) {
-        WinOverlay(
-            levelIndex = state.levelIndex,
-            hasNext = true,
+        val rating = state.stars[state.levelIndex] ?: 0
+        val levelNumber = state.levelIndex + 1
+        GameWinOverlay(
+            emoji = if (state.reward == Reward.BIG) "🎉🎊🎉" else "🎉",
+            title = when (state.reward) {
+                Reward.BIG -> String.format(strings.winBigTitle, levelNumber)
+                Reward.SMALL -> String.format(strings.winSmallTitle, levelNumber)
+                Reward.NONE -> String.format(strings.winNoneTitle, levelNumber)
+            },
+            starRow = "⭐".repeat(rating.coerceIn(0, 5)) + "☆".repeat((5 - rating).coerceIn(0, 5)),
+            praise = when (rating) {
+                5 -> strings.praise5
+                4 -> strings.praise4
+                3 -> strings.praise3
+                2 -> strings.praise2
+                else -> strings.praise1
+            },
+            showConfetti = true,
             confettiTick = state.confettiTick,
-            reward = state.reward,
-            rating = state.stars[state.levelIndex] ?: 0,
+            showNext = true,
+            showReplay = true,
+            nextLabel = strings.levelNext,
+            replayLabel = strings.playAgain,
             onNext = vm::nextLevel,
             onReplay = vm::resetKart,
         )
@@ -420,454 +433,6 @@ private fun DrawScope.drawKart(cell: Float) {
         close()
     }
     drawPath(arrow, SunYellow)
-}
-
-// ─── Pemilih level ────────────────────────────────────────────────
-
-@Composable
-private fun LevelSelector(
-    unlocked: Int,
-    stars: Map<Int, Int>,
-    current: Int,
-    soundOn: Boolean,
-    onSelect: (Int) -> Unit,
-    onToggleSound: () -> Unit,
-    onBack: (() -> Unit)? = null,
-) {
-    val strings = LocalStrings.current
-    Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val strings = LocalStrings.current
-            Text(
-                "🚗 ${strings.playCar}",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.weight(1f),
-            )
-            if (onBack != null) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(40.dp),
-                    onClick = onBack,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.Home,
-                            contentDescription = "Menu",
-                            tint = TextDark,
-                        )
-                    }
-                }
-                Spacer(Modifier.width(6.dp))
-            }
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier.size(40.dp),
-                onClick = onToggleSound,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        if (soundOn) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                        contentDescription = strings.sound,
-                        tint = TextDark,
-                    )
-                }
-            }
-        }
-        val listState = rememberLazyListState()
-        LazyRow(
-            state = listState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            contentPadding = PaddingValues(horizontal = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items(unlocked + 1) { i ->
-                val starCount = stars[i] ?: 0
-                val isCurrent = i == current
-                val bg = when {
-                    isCurrent -> SunYellow
-                    starCount > 0 -> Color(0xFFFFF3B0)
-                    else -> Color.White.copy(alpha = 0.85f)
-                }
-                Surface(
-                    shape = CircleShape,
-                    color = bg,
-                    onClick = { onSelect(i) },
-                    modifier = Modifier
-                        .size(if (isCurrent) 40.dp else 32.dp)
-                        .border(
-                            width = if (isCurrent) 3.dp else 0.dp,
-                            color = Color.White,
-                            shape = CircleShape,
-                        ),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            "${i + 1}",
-                            fontSize = if (isCurrent) 16.sp else 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextDark,
-                        )
-                    }
-                }
-            }
-        }
-        // Scroll halus ke level aktif (gak loncat-loncat).
-        LaunchedEffect(current) {
-            listState.animateScrollToItem((current - 3).coerceAtLeast(0))
-        }
-    }
-}
-
-// ─── Strip instruksi ──────────────────────────────────────────────
-
-@Composable
-private fun InstructionStrip(
-    instructions: List<Instruction>,
-    enabled: Boolean,
-    onRemoveLast: () -> Unit,
-    strings: AppStrings,
-    modifier: Modifier = Modifier,
-) {
-    val scrollState = rememberScrollState()
-    // Autoscroll ke kanan setiap ada blok baru (biar blok terakhir selalu kelihatan).
-    LaunchedEffect(instructions.size) {
-        if (instructions.isNotEmpty()) {
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
-    }
-    Row(
-        modifier = modifier.height(56.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White.copy(alpha = 0.9f),
-            modifier = Modifier.weight(1f).height(52.dp),
-        ) {
-            if (instructions.isEmpty()) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        strings.hintStripCar,
-                        color = TextDark.copy(alpha = 0.45f),
-                        fontSize = 14.sp,
-                    )
-                }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(scrollState)
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    instructions.forEach { instr ->
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = instrColor(instr),
-                            modifier = Modifier.size(38.dp),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    instrIcon(instr),
-                                    null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        IconButton(enabled = enabled && instructions.isNotEmpty(), onClick = onRemoveLast) {
-            Icon(
-                Icons.AutoMirrored.Filled.Backspace,
-                strings.deleteOne,
-                tint = if (enabled && instructions.isNotEmpty()) TextDark else TextDark.copy(alpha = 0.35f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun IconButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        shape = CircleShape,
-        color = if (enabled) Color.White.copy(alpha = 0.9f) else Color.White.copy(alpha = 0.4f),
-        modifier = Modifier.size(44.dp),
-        onClick = { if (enabled) onClick() },
-    ) {
-        Box(contentAlignment = Alignment.Center) { content() }
-    }
-}
-
-// ─── Tray kontrol ─────────────────────────────────────────────────
-
-@Composable
-private fun ControlTray(
-    enabled: Boolean,
-    hasInstructions: Boolean,
-    onAdd: (Instruction) -> Unit,
-    onPlay: () -> Unit,
-    onReset: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        // Panel 1: arah permainan
-        Surface(
-            shape = RoundedCornerShape(26.dp),
-            color = Color.White.copy(alpha = 0.18f),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.weight(1f))
-                BigRoundButton(
-                    label = "Maju",
-                    color = KartRed,
-                    darker = Color(0xFFE53935),
-                    icon = Icons.Filled.ArrowUpward,
-                    enabled = enabled,
-                    size = 76.dp,
-                    onClick = { onAdd(Instruction.FORWARD) },
-                )
-                Spacer(Modifier.width(22.dp))
-                BigRoundButton(
-                    label = "Kiri",
-                    color = OceanBlue,
-                    darker = Color(0xFF1E88E5),
-                    icon = Icons.Filled.RotateLeft,
-                    enabled = enabled,
-                    size = 76.dp,
-                    onClick = { onAdd(Instruction.LEFT) },
-                )
-                Spacer(Modifier.width(22.dp))
-                BigRoundButton(
-                    label = "Kanan",
-                    color = BerryPurple,
-                    darker = Color(0xFF7B4FD8),
-                    icon = Icons.Filled.RotateRight,
-                    enabled = enabled,
-                    size = 76.dp,
-                    onClick = { onAdd(Instruction.RIGHT) },
-                )
-                Spacer(Modifier.weight(1f))
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        // Panel 2: action (play & reset) — panel terpisah, beda warna
-        Surface(
-            shape = RoundedCornerShape(26.dp),
-            color = Color.White.copy(alpha = 0.26f),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.weight(1f))
-                BigRoundButton(
-                    label = "Main!",
-                    color = Color(0xFF66BB6A),
-                    darker = Color(0xFF2E7D32),
-                    icon = Icons.Filled.PlayArrow,
-                    enabled = enabled && hasInstructions,
-                    size = 96.dp,
-                    iconSize = 58.dp,
-                    shadow = 10.dp,
-                    fontSize = 15.sp,
-                    onClick = onPlay,
-                )
-                Spacer(Modifier.width(26.dp))
-                BigRoundButton(
-                    label = "Ulang",
-                    color = Color(0xFF90A4AE),
-                    darker = Color(0xFF607D8B),
-                    icon = Icons.Filled.Refresh,
-                    enabled = enabled,
-                    size = 64.dp,
-                    iconSize = 32.dp,
-                    shadow = 5.dp,
-                    onClick = onReset,
-                )
-                Spacer(Modifier.weight(1f))
-            }
-        }
-    }
-}
-
-// ─── Overlay menang + konfeti ─────────────────────────────────────
-
-@Composable
-private fun WinOverlay(
-    levelIndex: Int,
-    hasNext: Boolean,
-    confettiTick: Int,
-    reward: Reward,
-    rating: Int,
-    onNext: () -> Unit,
-    onReplay: () -> Unit,
-) {
-    val strings = LocalStrings.current
-    val levelNumber = levelIndex + 1
-    val title = when (reward) {
-        Reward.BIG -> String.format(strings.winBigTitle, levelNumber)
-        Reward.SMALL -> String.format(strings.winSmallTitle, levelNumber)
-        Reward.NONE -> String.format(strings.winNoneTitle, levelNumber)
-    }
-    val praise = when (rating) {
-        5 -> strings.praise5
-        4 -> strings.praise4
-        3 -> strings.praise3
-        2 -> strings.praise2
-        else -> strings.praise1
-    }
-    val starRow = "⭐".repeat(rating.coerceIn(0, 5)) + "☆".repeat((5 - rating).coerceIn(0, 5))
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0x99000000)),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (reward == Reward.BIG) {
-            Confetti(seed = confettiTick * 7)
-            Confetti(seed = confettiTick * 7 + 3)
-        } else {
-            Confetti(seed = confettiTick * (if (reward == Reward.SMALL) 3 else 1))
-        }
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = Color.White,
-            modifier = Modifier.padding(24.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(if (reward == Reward.BIG) "🎉🎊🎉" else "🎉", fontSize = if (reward == Reward.BIG) 64.sp else 56.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    title,
-                    fontSize = if (reward == Reward.BIG) 28.sp else 24.sp,
-                    fontWeight = FontWeight.Black,
-                    color = TextDark,
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    starRow,
-                    fontSize = 34.sp,
-                    color = TextDark,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    praise,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextDark,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(18.dp))
-                if (hasNext) {
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color(0xFF4CAF50),
-                        onClick = onNext,
-                    ) {
-                        Text(
-                            strings.levelNext,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                    Spacer(Modifier.height(10.dp))
-                }
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = OceanBlue,
-                    onClick = onReplay,
-                ) {
-                    Text(
-                        strings.playAgain,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-        }
-    }
-}
-
-private data class Particle(
-    val x: Float,   // 0..1 dari lebar
-    val y: Float,   // 0..1 dari tinggi (posisi awal)
-    val color: Color,
-    val size: Float,
-    val delayMs: Long,
-    val spin: Float,
-)
-
-@Composable
-private fun Confetti(seed: Int) {
-    val particles = remember(seed) {
-        val colors = listOf(KartRed, SunYellow, OceanBlue, GrassGreen, BerryPurple, ConeOrange)
-        List(46) { i ->
-            Particle(
-                x = (i * 37 % 100) / 100f,
-                y = (i * 53 % 40) / 100f,
-                color = colors[i % colors.size],
-                size = 8f + (i % 5) * 3f,
-                delayMs = (i % 8) * 90L,
-                spin = (i % 7) * 50f,
-            )
-        }
-    }
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(seed) {
-        progress.snapTo(0f)
-        progress.animateTo(1f, tween(2600))
-    }
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val w = size.width
-        val h = size.height
-        particles.forEach { p ->
-            val t = (progress.value * 1.25f - p.delayMs / 2600f).coerceIn(0f, 1f)
-            if (t > 0f) {
-                val x = p.x * w + t * 70f * (if ((p.spin / 50).toInt() % 2 == 0) 1 else -1)
-                val y = p.y * h + t * t * h * 1.15f
-                rotate(p.spin + t * 420f, pivot = Offset(x + p.size / 2f, y + p.size / 2f)) {
-                    drawRect(p.color, Offset(x, y), Size(p.size, p.size * 0.6f))
-                }
-            }
-        }
-    }
 }
 
 private fun instrIcon(instr: Instruction) = when (instr) {
