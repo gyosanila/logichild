@@ -36,9 +36,10 @@ data class KartGameUiState(
     val reward: Reward = Reward.NONE,
 )
 
-/** Bunyi-bunyian pakai ToneGenerator — tanpa file asset sama sekali. */
+/** Bunyi-bunyian pakai ToneGenerator + suara TTS — tanpa file asset sama sekali. */
 class GameSounds(context: Context) {
     private val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 75)
+    private val tts = TtsSpeaker(context)
     var enabled = true
 
     fun tap() {
@@ -57,14 +58,20 @@ class GameSounds(context: Context) {
         if (enabled) tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 250)
     }
 
+    /** Menang: "Hore!" + nada naik + tepuk tangan. */
     fun win() {
         if (!enabled) return
-        // Nada naik sederhana: 3 beep dengan pitch berbeda
+        tts.speak("Hore!")
         tone.startTone(ToneGenerator.TONE_PROP_BEEP, 80)
         Thread {
             try {
                 Thread.sleep(120); tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 80)
                 Thread.sleep(120); tone.startTone(ToneGenerator.TONE_PROP_ACK, 160)
+                Thread.sleep(100)
+                repeat(3) { i ->
+                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
+                    Thread.sleep(110)
+                }
             } catch (_: InterruptedException) {
             }
         }.start()
@@ -84,25 +91,30 @@ class GameSounds(context: Context) {
         }.start()
     }
 
-    /** Fanfare reward besar: nada naik + tepuk. */
+    /** Reward besar: "Luar biasa!" + fanfare + tepuk ramai. */
     fun bigWin() {
         if (!enabled) return
+        tts.speak("Luar biasa!")
         Thread {
             try {
                 intArrayOf(ToneGenerator.TONE_PROP_BEEP, ToneGenerator.TONE_PROP_BEEP2, ToneGenerator.TONE_PROP_ACK).forEach {
                     tone.startTone(it, 110)
                     Thread.sleep(150)
                 }
-                repeat(4) { i ->
+                repeat(5) { i ->
                     tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
                     Thread.sleep(100)
                 }
+                tone.startTone(ToneGenerator.TONE_PROP_ACK, 200)
             } catch (_: InterruptedException) {
             }
         }.start()
     }
 
-    fun release() = tone.release()
+    fun release() {
+        tts.shutdown()
+        tone.release()
+    }
 }
 
 class KartGameViewModel(application: Application) : AndroidViewModel(application) {
@@ -148,7 +160,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     fun addInstruction(i: Instruction) {
         val s = _uiState.value
-        if (s.running || s.won || s.instructions.size >= 12) return
+        if (s.running || s.won || s.instructions.size >= 1000) return
         sounds.tap()
         _uiState.update { it.copy(instructions = it.instructions + i) }
     }

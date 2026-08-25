@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -473,30 +477,16 @@ private fun LevelSelector(
                 }
             }
         }
-        Row(
+        val listState = rememberLazyListState()
+        LazyRow(
+            state = listState,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(vertical = 8.dp),
+            contentPadding = PaddingValues(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            // Level tak terbatas → tampilkan jendela 8 level di sekitar level aktif.
-            val window = 8
-            val total = unlocked + 1
-            val start = max(0, min(current - window / 2, total - window))
-            val end = min(total, start + window)
-
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = if (start > 0) 0.9f else 0.35f),
-                onClick = { if (start > 0) onSelect(start - 1) },
-                modifier = Modifier.size(32.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.KeyboardArrowLeft, strings.prev, tint = TextDark)
-                }
-            }
-            (start until end).forEach { i ->
+            items(unlocked + 1) { i ->
                 val starCount = stars[i] ?: 0
                 val isCurrent = i == current
                 val bg = when {
@@ -526,16 +516,10 @@ private fun LevelSelector(
                     }
                 }
             }
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = if (end < total) 0.9f else 0.35f),
-                onClick = { if (end < total) onSelect(end) },
-                modifier = Modifier.size(32.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.KeyboardArrowRight, strings.next, tint = TextDark)
-                }
-            }
+        }
+        // Scroll halus ke level aktif (gak loncat-loncat).
+        LaunchedEffect(current) {
+            listState.animateScrollToItem((current - 3).coerceAtLeast(0))
         }
     }
 }

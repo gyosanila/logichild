@@ -8,9 +8,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -494,30 +498,17 @@ private fun DrawScope.drawFruitRobot(cell: Float, dir: Dir) {
 
 @Composable
 private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
-    val strings = LocalStrings.current
-    Row(
+    val listState = rememberLazyListState()
+    LazyRow(
+        state = listState,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        val window = 8
-        val total = maxOf(state.unlocked, state.level)
-        val start = max(1, min(state.level - window / 2, total - window + 1))
-        val end = min(total + 1, start + window)
-
-        Surface(
-            shape = CircleShape,
-            color = Color.White.copy(alpha = if (start > 1) 0.9f else 0.35f),
-            onClick = { if (start > 1) onSelect(start - 1) },
-            modifier = Modifier.size(32.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.KeyboardArrowLeft, strings.prev, tint = TextDark)
-            }
-        }
-        (start until end).forEach { lv ->
+        items(maxOf(state.unlocked, state.level)) { idx ->
+            val lv = idx + 1
             val isCurrent = lv == state.level
             Surface(
                 shape = CircleShape,
@@ -541,16 +532,10 @@ private fun FruitLevelSelector(state: FruitUiState, onSelect: (Int) -> Unit) {
                 }
             }
         }
-        Surface(
-            shape = CircleShape,
-            color = Color.White.copy(alpha = if (end <= total) 0.9f else 0.35f),
-            onClick = { if (end <= total) onSelect(end) },
-            modifier = Modifier.size(32.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.KeyboardArrowRight, strings.next, tint = TextDark)
-            }
-        }
+    }
+    // Scroll halus ke level aktif.
+    LaunchedEffect(state.level) {
+        listState.animateScrollToItem((state.level - 3).coerceAtLeast(0))
     }
 }
 

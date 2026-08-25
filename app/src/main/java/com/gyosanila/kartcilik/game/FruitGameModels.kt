@@ -46,12 +46,12 @@ object FruitLevelGen {
                     fruits = fruits.toList(),
                     rocks = rocks.toList(),
                     start = start,
-                    maxCommands = minOf(16, 5 + level * 2),
+                    maxCommands = minOf(1000, 5 + level * 2),
                 )
             }
         }
         // Fallback: level paling sederhana (nyaris mustahil tercapai)
-        return FruitLevel(5, listOf(Pos(0, 1)), emptyList(), Pos(0, 0), 6)
+        return FruitLevel(5, listOf(Pos(0, 1)), emptyList(), Pos(0, 0), 1000)
     }
 
     /** BFS: pastikan semua buah bisa dicapai dari start tanpa lewat batu. */

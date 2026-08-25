@@ -15,15 +15,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -46,6 +54,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.gyosanila.kartcilik.ui.AppStrings
 import com.gyosanila.kartcilik.ui.BerryPurple
 import com.gyosanila.kartcilik.ui.GrassGreen
 import com.gyosanila.kartcilik.ui.KartRed
@@ -57,6 +66,7 @@ import com.gyosanila.kartcilik.ui.StringsId
 import com.gyosanila.kartcilik.ui.SunYellow
 import com.gyosanila.kartcilik.ui.TextDark
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 enum class GameChoice { Menu, Kart, Fruit, Settings }
 
@@ -104,33 +114,56 @@ private fun MainNav(
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     val strings = LocalStrings.current
+    val tts = remember { TtsSpeaker(context) }
 
     var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
+    var mathGate by remember { mutableStateOf(false) }
     BackHandler(enabled = game != GameChoice.Menu) { game = GameChoice.Menu }
 
-    // Timer layar (istirahat otomatis)
+    // Timer layar: countdown + progress bar + auto istirahat + kunci layar
     var breakOverlay by remember { mutableStateOf(false) }
+    var locked by remember { mutableStateOf(false) }
     var sessionStart by remember { mutableStateOf(System.currentTimeMillis()) }
     val timerMin = prefs.getInt("timer_minutes", 0)
-    LaunchedEffect(timerMin, breakOverlay) {
-        if (timerMin > 0 && !breakOverlay) {
+    var remainingSec by remember { mutableStateOf(timerMin * 60) }
+
+    LaunchedEffect(timerMin, breakOverlay, locked) {
+        if (timerMin > 0 && !breakOverlay && !locked) {
             while (true) {
-                delay(15_000)
-                if (System.currentTimeMillis() - sessionStart >= timerMin * 60_000L) {
+                val elapsed = ((System.currentTimeMillis() - sessionStart) / 1000L).toInt()
+                val rem = (timerMin * 60 - elapsed).coerceAtLeast(0)
+                remainingSec = rem
+                if (rem <= 0) {
                     breakOverlay = true
+                    tts.speak("Waktu bermain sudah habis, teman. Waktunya istirahat.")
                     break
                 }
+                delay(1000)
             }
         }
     }
+    // Beberapa detik setelah peringatan → "kunci" layar app (parent gate)
+    LaunchedEffect(breakOverlay) {
+        if (breakOverlay) {
+            delay(6000)
+            locked = true
+        }
+    }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
+        if (timerMin > 0 && !breakOverlay && !locked) {
+            TimerBar(remainingSec, timerMin * 60)
+        }
         Box(Modifier.weight(1f)) {
             when (game) {
                 GameChoice.Menu -> MainMenuScreen(
                     onKart = { game = GameChoice.Kart },
                     onFruit = { game = GameChoice.Fruit },
-                    onSettings = { game = GameChoice.Settings },
+                    onSettings = { mathGate = true },
                 )
                 GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
                 GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
@@ -144,14 +177,167 @@ private fun MainNav(
         PersistentBanner()
     }
 
-    if (breakOverlay) {
+    if (mathGate) {
+        MathGateDialog(
+            strings = strings,
+            onSuccess = {
+                mathGate = false
+                game = GameChoice.Settings
+            },
+            onDismiss = { mathGate = false },
+        )
+    }
+    if (breakOverlay && !locked) {
         BreakOverlay(
             strings = strings,
             onContinue = {
                 breakOverlay = false
                 sessionStart = System.currentTimeMillis()
+                remainingSec = timerMin * 60
             },
         )
+    }
+    if (locked) {
+        LockScreen(
+            strings = strings,
+            onUnlock = {
+                locked = false
+                breakOverlay = false
+                sessionStart = System.currentTimeMillis()
+                remainingSec = timerMin * 60
+            },
+        )
+    }
+}
+
+/** Bar countdown timer layar di bagian paling atas. */
+@Composable
+private fun TimerBar(remainingSec: Int, totalSec: Int) {
+    val progress = if (totalSec > 0) remainingSec.toFloat() / totalSec else 0f
+    val mm = remainingSec / 60
+    val ss = remainingSec % 60
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Color(0xE61B5E20))
+    ) {
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(5.dp),
+            color = SunYellow,
+            trackColor = Color.White.copy(alpha = 0.25f),
+        )
+        Text(
+            "⏱ %02d:%02d".format(mm, ss),
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 2.dp),
+        )
+    }
+}
+
+/** Gerbang pengaturan: soal kabataku (× / ÷) dulu. */
+@Composable
+private fun MathGateDialog(
+    strings: AppStrings,
+    onSuccess: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val rng = remember { Random(System.currentTimeMillis()) }
+    val (qa, qb, op) = remember {
+        val a = 2 + rng.nextInt(8)
+        val b = 2 + rng.nextInt(8)
+        if (rng.nextBoolean()) Triple(a * b, b, '÷') else Triple(a, b, '×')
+    }
+    val answer = if (op == '×') qa * qb else qa / qb
+    var input by remember { mutableStateOf("") }
+    var wrong by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("🧮 ${strings.settingsTitle}") },
+        text = {
+            Column {
+                Text(
+                    "Jawab dulu ya:  $qa $op $qb = ?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it.filter(Char::isDigit).take(3) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    placeholder = { Text("?") },
+                )
+                if (wrong) {
+                    Spacer(Modifier.height(6.dp))
+                    Text("Salah, coba lagi! 🙈", color = KartRed, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (input.toIntOrNull() == answer) {
+                    onSuccess()
+                } else {
+                    wrong = true
+                    input = ""
+                }
+            }) { Text("OK") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Batal") }
+        },
+    )
+}
+
+/** Layar "terkunci" setelah waktu habis — parent gate. */
+@Composable
+private fun LockScreen(strings: AppStrings, onUnlock: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0B1F0F)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("🔒", fontSize = 64.sp)
+            Spacer(Modifier.height(12.dp))
+            Text(
+                strings.breakTitle,
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Minta tolong orang tua ya 🙏",
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 15.sp,
+            )
+            Spacer(Modifier.height(24.dp))
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFF43A047),
+                onClick = onUnlock,
+            ) {
+                Text(
+                    strings.breakContinue,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
+                )
+            }
+        }
     }
 }
 
