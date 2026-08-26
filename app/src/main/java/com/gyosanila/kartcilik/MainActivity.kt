@@ -375,6 +375,11 @@ private fun PersistentBanner() {
         AdView(context).apply {
             setAdSize(AdSize.BANNER)
             adUnitId = AD_UNIT_BANNER
+            adListener = object : com.google.android.gms.ads.AdListener() {
+                override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
+                    android.util.Log.w("LogichildAds", "Banner gagal load: code=${error.code} msg=${error.message}")
+                }
+            }
             loadAd(childSafeAdRequest())
         }
     }
