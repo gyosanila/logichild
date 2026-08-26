@@ -100,7 +100,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.update { it.copy(commands = emptyList()) }
     }
 
-    /** Robot balik ke start, perintah tetap (anak bisa perbaiki). */
+    /** Robot balik ke start, perintah tetap (dipakai dialog "Lanjut Susun"). */
     fun resetRobot() {
         val s = _uiState.value
         if (s.running) return
@@ -108,6 +108,20 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
             it.copy(
                 robot = Pos(0, 0),
                 dir = Dir.S,
+                crashed = false, exhausted = false, won = false,
+            )
+        }
+    }
+
+    /** Ulang penuh (tombol Ulang): robot ke start + perintah dibersihkan. */
+    fun resetAll() {
+        val s = _uiState.value
+        if (s.running) return
+        _uiState.update {
+            it.copy(
+                robot = Pos(0, 0),
+                dir = Dir.S,
+                commands = emptyList(),
                 crashed = false, exhausted = false, won = false,
             )
         }

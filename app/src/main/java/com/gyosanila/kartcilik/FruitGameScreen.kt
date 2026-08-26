@@ -157,7 +157,7 @@ fun FruitGameScreen(
             steps = state.commands.map { StepSpec(color = it.color(), emoji = it.emoji()) },
             onRemoveLast = vm::removeLast,
             onPlay = vm::play,
-            onReset = vm::resetRobot,
+            onReset = vm::resetAll,
             canEdit = !state.running && !state.won && state.commands.size < state.maxCommands,
             playEnabled = !state.running && !state.won && state.commands.isNotEmpty(),
             resetEnabled = !state.running,

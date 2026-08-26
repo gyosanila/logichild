@@ -180,7 +180,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
         _uiState.update { it.copy(instructions = emptyList()) }
     }
 
-    /** Kembalikan kart ke posisi start, instruksi tetap (biar anak bisa perbaiki). */
+    /** Kembalikan kart ke posisi start + bersihkan langkah (tombol Ulang / Main lagi). */
     fun resetKart() {
         val s = _uiState.value
         if (s.running) return
@@ -188,6 +188,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
         _uiState.update {
             it.copy(
                 kart = KartState(lv.start, lv.startDir),
+                instructions = emptyList(),
                 crashed = false, crashCell = null, won = false
             )
         }

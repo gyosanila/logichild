@@ -276,10 +276,15 @@ private fun MathGateDialog(
     dismissable: Boolean = true,
 ) {
     val rng = remember { Random(System.currentTimeMillis()) }
+    // Kabataku 1 digit: kedua angka selalu 1 digit & habis dibagi (÷) / perkalian dasar (×).
     val (qa, qb, op) = remember {
-        val a = 2 + rng.nextInt(8)
-        val b = 2 + rng.nextInt(8)
-        if (rng.nextBoolean()) Triple(a * b, b, '÷') else Triple(a, b, '×')
+        if (rng.nextBoolean()) {
+            val b = 2 + rng.nextInt(4)                 // 2..5
+            val opts = (b..9).filter { it % b == 0 }   // hasil bagi 1 digit
+            Triple(opts[rng.nextInt(opts.size)], b, '÷')
+        } else {
+            Triple(2 + rng.nextInt(8), 2 + rng.nextInt(8), '×')
+        }
     }
     val answer = if (op == '×') qa * qb else qa / qb
     var input by remember { mutableStateOf("") }
@@ -371,6 +376,7 @@ private fun LockScreen(strings: AppStrings, onKeepPlaying: () -> Unit) {
 @Composable
 private fun PersistentBanner() {
     val context = LocalContext.current
+    var adError by remember { mutableStateOf<String?>(null) }
     val adView = remember(context) {
         AdView(context).apply {
             setAdSize(AdSize.BANNER)
@@ -378,15 +384,34 @@ private fun PersistentBanner() {
             adListener = object : com.google.android.gms.ads.AdListener() {
                 override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
                     android.util.Log.w("LogichildAds", "Banner gagal load: code=${error.code} msg=${error.message}")
+                    adError = "kode ${error.code}"
+                }
+
+                override fun onAdLoaded() {
+                    adError = null
                 }
             }
             loadAd(childSafeAdRequest())
         }
     }
-    AndroidView(
-        factory = { adView },
-        modifier = Modifier.fillMaxWidth(),
-    )
+    Column(Modifier.fillMaxWidth()) {
+        AndroidView(
+            factory = { adView },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // Indikator error sementara (buat diagnosis) — hapus setelah iklan jalan.
+        if (adError != null) {
+            Text(
+                "⚠️ iklan belum tampil ($adError)",
+                color = Color.White,
+                fontSize = 11.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0x991B5E20)),
+            )
+        }
+    }
 }
 
 @Composable
