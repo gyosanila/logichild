@@ -49,17 +49,44 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Setup signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+            echo "keystore.jks written"
+          else
+            echo "::warning::KEYSTORE_B64 not set — release will fall back to debug signing"
+          fi
+
       - name: Compile Kotlin (compile check)
         run: ./gradlew :app:compileDebugKotlin --no-daemon
 
-      - name: Build APK
+      - name: Build APK debug
         run: ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload APK artifact
+      - name: Build APK release
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 7
 
@@ -74,13 +101,17 @@ jobs:
             exit 0
           fi
           SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          if [ -f "$APK_PATH" ]; then
-            printf '✅ Build #%s sukses (debug)\nRepo: gyosanila/KartCilik\nCommit: %s\nAPK Kart Cilik siap install' \
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ] && [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+            printf '✅ Build #%s sukses (debug + release)\nRepo: gyosanila/KartCilik\nCommit: %s\n- debug: ad TEST\n- release: ad ASLI (keystore gyosanila)' \
               "${{ github.run_number }}" "$SHA_SHORT" > /tmp/caption.txt
             curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
-                 -F "document=@${APK_PATH}" \
+                 -F "document=@app/build/outputs/apk/debug/app-debug.apk" \
                  -F "caption=</tmp/caption.txt" \
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            printf '✅ Release signed (gyosanila) — ad ASLI aktif' > /tmp/cap2.txt
+            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+                 -F "document=@app/build/outputs/apk/release/app-release.apk" \
+                 -F "caption=</tmp/cap2.txt" \
                  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
           else
             printf '@randang_bot ❌ Build #%s GAGAL\nRepo: gyosanila/KartCilik\nCommit: %s\nCek log: %s' \

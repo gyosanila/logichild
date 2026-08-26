@@ -15,8 +15,8 @@ android {
         versionCode = 15
         versionName = "1.9.2"
 
-        // AdMob App ID — ganti dengan ID asli (ca-app-pub-6023230476562279~xxxx) saat release.
-        manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-3940256099942544~3347511713"
+        // AdMob App ID asli (Logichild)
+        manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-6023230476562279~4364973144"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
