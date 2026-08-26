@@ -23,7 +23,7 @@ const val REAL_BANNER = "ca-app-pub-6023230476562279/9234156447"
 const val REAL_INTERSTITIAL = "ca-app-pub-6023230476562279/1340566000"
 
 /** true = release pakai iklan asli (wajib: app AdMob sudah terdaftar dgn package baru). */
-const val ADS_LIVE = false
+const val ADS_LIVE = true
 
 val AD_UNIT_BANNER: String
     get() = if (BuildConfig.DEBUG || !ADS_LIVE) TEST_BANNER else REAL_BANNER
