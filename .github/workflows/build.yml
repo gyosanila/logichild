@@ -74,6 +74,14 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease --no-daemon
 
+      - name: Build AAB release (Play Store)
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:bundleRelease --no-daemon
+
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -87,6 +95,14 @@ jobs:
         with:
           name: app-release-apk
           path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 7
 
@@ -113,6 +129,13 @@ jobs:
                  -F "document=@app/build/outputs/apk/release/app-release.apk" \
                  -F "caption=</tmp/cap2.txt" \
                  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
+              printf '📦 AAB v%s (Play Store) — upload ke Play Console' "$(grep -oP 'versionName = \"\K[^\"]+' app/build.gradle.kts | head -1)" > /tmp/cap3.txt
+              curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+                   -F "document=@app/build/outputs/bundle/release/app-release.aab" \
+                   -F "caption=</tmp/cap3.txt" \
+                   "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            fi
           else
             printf '@randang_bot ❌ Build #%s GAGAL\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s\nCek log: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" \
