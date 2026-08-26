@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Versi release di-override dari CI: -PrelVersionName=1.0.0 -PrelVersionCode=N
+val relVersionName: String = (project.findProperty("relVersionName") as? String) ?: "1.0.0"
+val relVersionCode: Int = (project.findProperty("relVersionCode") as? String)?.toIntOrNull() ?: 1
+
 android {
     namespace = "com.gyosanila.kartcilik"
     compileSdk = 35
@@ -12,7 +16,7 @@ android {
         applicationId = "com.gyosanila.logichild"
         minSdk = 23
         targetSdk = 35
-        // Release mulai dari 1.0.0; debug pakai suffix -debug biar kebedain.
+        // Dev: versi tetap, gak naik tiap push (naik cuma pas tag release).
         versionCode = 1
         versionName = "1.0.0"
 
@@ -63,6 +67,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    // Versi AAB/release APK dari CI: versionName/versionCode di-override khusus release
+    // (versionCode incremental otomatis per tag).
+    androidComponents {
+        onVariants(selector().withBuildType("release")) { variant ->
+            variant.outputs.forEach { output ->
+                output.versionName.set(relVersionName)
+                output.versionCode.set(relVersionCode)
+            }
         }
     }
     compileOptions {

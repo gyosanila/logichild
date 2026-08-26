@@ -3,9 +3,14 @@ name: Build APK
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+    tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versi rilis untuk build manual (mis. 1.0.0)'
+        type: string
+        required: false
+        default: '1.0.0'
 
 concurrency:
   group: build-${{ github.ref }}
@@ -13,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    name: Compile & Build APK
+    name: Compile & Build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -63,47 +70,64 @@ jobs:
       - name: Compile Kotlin (compile check)
         run: ./gradlew :app:compileDebugKotlin --no-daemon
 
-      - name: Build APK debug
+      # ── Versi release: dari tag v*, versionCode = jumlah tag (incremental) ──
+      - name: Determine release version
+        id: relver
+        run: |
+          VC=$(git tag -l 'v*' | wc -l)
+          if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
+            VN="${GITHUB_REF#refs/tags/v}"
+          else
+            VN="${{ inputs.version }}"
+            VC=$((VC + 1))
+          fi
+          echo "version_name=${VN}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VC}" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VN} (code ${VC})"
+
+      # ── Dev: push ke main → debug APK aja ──
+      - name: Build APK debug (dev)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') && github.event_name != 'workflow_dispatch' }}
         run: ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Build APK release
+      # ── Rilis: tag v* atau manual → release APK + AAB ──
+      - name: Build release APK + AAB
+        if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease --no-daemon
-
-      - name: Build AAB release (Play Store)
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:bundleRelease --no-daemon
+        run: |
+          ./gradlew :app:assembleRelease :app:bundleRelease \
+            -PrelVersionName=${{ steps.relver.outputs.version_name }} \
+            -PrelVersionCode=${{ steps.relver.outputs.version_code }} --no-daemon
 
       - name: Upload debug APK artifact
+        if: ${{ !startsWith(github.ref, 'refs/tags/') && github.event_name != 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 7
 
       - name: Upload release APK artifact
+        if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 7
 
       - name: Upload AAB artifact
+        if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 7
 
       - name: Send result to Telegram
@@ -117,25 +141,26 @@ jobs:
             exit 0
           fi
           SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ] && [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-            printf '✅ Build #%s sukses (debug + release)\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s\n- debug: ad TEST\n- release: ad ASLI (keystore gyosanila)' \
+          REL=${{ steps.relver.outputs.version_name }}
+          if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
+            printf '📦 Logichild v%s (code %s) — AAB + release APK\nRepo: ${GITHUB_REPOSITORY}\nUpload AAB ke Play Console' \
+              "$REL" "${{ steps.relver.outputs.version_code }}" > /tmp/cap.txt
+            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+                 -F "document=@app/build/outputs/bundle/release/app-release.aab" \
+                 -F "caption=</tmp/cap.txt" \
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            printf '✅ Release v%s signed (gyosanila) — ad ASLI' "$REL" > /tmp/cap2.txt
+            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+                 -F "document=@app/build/outputs/apk/release/app-release.apk" \
+                 -F "caption=</tmp/cap2.txt" \
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+          elif [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+            printf '✅ Build #%s sukses (debug v1.0.0-debug)\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" > /tmp/caption.txt
             curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
                  -F "document=@app/build/outputs/apk/debug/app-debug.apk" \
                  -F "caption=</tmp/caption.txt" \
                  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
-            printf '✅ Release signed (gyosanila) — ad ASLI aktif' > /tmp/cap2.txt
-            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
-                 -F "document=@app/build/outputs/apk/release/app-release.apk" \
-                 -F "caption=</tmp/cap2.txt" \
-                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
-            if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
-              printf '📦 AAB v%s (Play Store) — upload ke Play Console' "$(grep -oP 'versionName = \"\K[^\"]+' app/build.gradle.kts | head -1)" > /tmp/cap3.txt
-              curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
-                   -F "document=@app/build/outputs/bundle/release/app-release.aab" \
-                   -F "caption=</tmp/cap3.txt" \
-                   "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
-            fi
           else
             printf '@randang_bot ❌ Build #%s GAGAL\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s\nCek log: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" \
