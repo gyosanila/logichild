@@ -15,9 +15,16 @@ object AppActivityHolder {
     var current: Activity? = null
 }
 
-// ─── TEST IDs (AdMob). Ganti dengan ID asli dari akun AdMob sebelum rilis. ───
-const val AD_UNIT_BANNER = "ca-app-pub-3940256099942544/6300978111"
-const val AD_UNIT_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
+// ─── AdMob: debug pakai TEST ID (aman buat testing), release pakai ID asli. ───
+const val TEST_BANNER = "ca-app-pub-3940256099942544/6300978111"
+const val TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
+const val REAL_BANNER = "ca-app-pub-6023230476562279/9234156447"
+const val REAL_INTERSTITIAL = "ca-app-pub-6023230476562279/1340566000"
+
+val AD_UNIT_BANNER: String
+    get() = if (BuildConfig.DEBUG) TEST_BANNER else REAL_BANNER
+val AD_UNIT_INTERSTITIAL: String
+    get() = if (BuildConfig.DEBUG) TEST_INTERSTITIAL else REAL_INTERSTITIAL
 
 private var interstitial: InterstitialAd? = null
 private var interstitialLoading = CompletableDeferred<Unit>()

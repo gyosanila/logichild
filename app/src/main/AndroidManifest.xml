@@ -12,10 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KartCilik">
 
-        <!-- AdMob App ID: TEST. Ganti dengan ID asli dari akun AdMob sebelum rilis. -->
+        <!-- AdMob App ID: debug = TEST. Ganti placeholder release dengan ID asli dari AdMob. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="${ADMOB_APP_ID}" />
 
         <activity
             android:name=".MainActivity"

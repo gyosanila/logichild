@@ -12,8 +12,11 @@ android {
         applicationId = "com.gyosanila.kartcilik"
         minSdk = 23
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.9.1"
+        versionCode = 15
+        versionName = "1.9.2"
+
+        // AdMob App ID — ganti dengan ID asli (ca-app-pub-6023230476562279~xxxx) saat release.
+        manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-3940256099942544~3347511713"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -66,6 +69,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
