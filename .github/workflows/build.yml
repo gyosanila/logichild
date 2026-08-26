@@ -102,7 +102,7 @@ jobs:
           fi
           SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
           if [ -f "app/build/outputs/apk/release/app-release.apk" ] && [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-            printf '✅ Build #%s sukses (debug + release)\nRepo: gyosanila/KartCilik\nCommit: %s\n- debug: ad TEST\n- release: ad ASLI (keystore gyosanila)' \
+            printf '✅ Build #%s sukses (debug + release)\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s\n- debug: ad TEST\n- release: ad ASLI (keystore gyosanila)' \
               "${{ github.run_number }}" "$SHA_SHORT" > /tmp/caption.txt
             curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
                  -F "document=@app/build/outputs/apk/debug/app-debug.apk" \
@@ -114,7 +114,7 @@ jobs:
                  -F "caption=</tmp/cap2.txt" \
                  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
           else
-            printf '@randang_bot ❌ Build #%s GAGAL\nRepo: gyosanila/KartCilik\nCommit: %s\nCek log: %s' \
+            printf '@randang_bot ❌ Build #%s GAGAL\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s\nCek log: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" \
               "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" > /tmp/caption.txt
             curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
