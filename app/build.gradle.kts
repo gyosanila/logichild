@@ -12,8 +12,9 @@ android {
         applicationId = "com.gyosanila.logichild"
         minSdk = 23
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.9.7"
+        // Release mulai dari 1.0.0; debug pakai suffix -debug biar kebedain.
+        versionCode = 1
+        versionName = "1.0.0"
 
         // AdMob App ID asli (Logichild)
         manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-6023230476562279~4364973144"
@@ -50,6 +51,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Tandai build debug: versi jadi "1.0.0-debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
