@@ -12,8 +12,8 @@ android {
         applicationId = "com.gyosanila.logichild"
         minSdk = 23
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.9.3"
+        versionCode = 17
+        versionName = "1.9.4"
 
         // AdMob App ID asli (Logichild)
         manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-6023230476562279~4364973144"

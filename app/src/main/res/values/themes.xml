@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.KartCilik" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- Full blue: background + status bar + nav bar semua biru (gak ada putih) -->
+        <item name="android:windowBackground">#FF8ED6FF</item>
+        <item name="android:statusBarColor">#FF8ED6FF</item>
+        <item name="android:navigationBarColor">#FF8ED6FF</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

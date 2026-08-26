@@ -188,7 +188,8 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                     // Rating 1-5: 5★ = rute paling hemat DAN tanpa ghost preview.
                     val best = FruitLevelGen.minStepsToCollect(lv)
                     val steps = after.commands.size
-                    val ghostShown = prefs.getBoolean("shadow_preview", true) && after.level <= 5
+                    val shadowMode = readShadowMode(prefs)
+                    val ghostShown = shadowMode == "on" || (shadowMode == "auto" && after.level <= 5)
                     val rating = when {
                         steps <= best && !ghostShown -> 5
                         steps <= best -> 4

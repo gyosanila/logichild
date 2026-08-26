@@ -228,7 +228,8 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                         val best = LevelGen.bfs(lv.start, lv.finish, lv.width, lv.height, lv.cones)
                             ?: s.instructions.size
                         val steps = s.instructions.size
-                        val ghostShown = prefs.getBoolean("shadow_preview", true) && lv.index < 5
+                        val shadowMode = readShadowMode(prefs)
+                        val ghostShown = shadowMode == "on" || (shadowMode == "auto" && lv.index < 5)
                         val rating = when {
                             steps <= best && !ghostShown -> 5
                             steps <= best -> 4

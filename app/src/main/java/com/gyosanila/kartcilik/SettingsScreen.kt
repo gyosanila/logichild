@@ -45,7 +45,7 @@ fun SettingsScreen(
     var lang by remember { mutableStateOf(prefs.getString("lang", "id") ?: "id") }
     var controller by remember { mutableStateOf(prefs.getString("controller_type", "kart") ?: "kart") }
     var timerMin by remember { mutableStateOf(prefs.getInt("timer_minutes", 0)) }
-    var shadowOn by remember { mutableStateOf(prefs.getBoolean("shadow_preview", true)) }
+    var shadowMode by remember { mutableStateOf(readShadowMode(prefs)) }
 
     Column(
         modifier = Modifier
@@ -138,11 +138,14 @@ fun SettingsScreen(
         // ── Shadow preview ──
         SettingSection(strings.shadowLabel) {
             OptionRow(
-                options = listOf(strings.shadowOn to "true", strings.shadowOff to "false"),
-                selected = shadowOn.toString(),
+                options = listOf(strings.shadowAuto to "auto", strings.shadowActive to "on", strings.shadowOff to "off"),
+                selected = shadowMode,
                 onSelect = { v ->
-                    shadowOn = v.toBoolean()
-                    prefs.edit().putBoolean("shadow_preview", v.toBoolean()).apply()
+                    shadowMode = v
+                    prefs.edit()
+                        .putString("shadow_mode", v)
+                        .remove("shadow_preview")
+                        .apply()
                 },
             )
         }

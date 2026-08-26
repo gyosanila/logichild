@@ -71,8 +71,13 @@ data class AppStrings(
     val praise5: String,
     // Shadow preview
     val shadowLabel: String,
-    val shadowOn: String,
+    val shadowAuto: String,
+    val shadowActive: String,
     val shadowOff: String,
+    // Benefit di splash
+    val splashBenefit1: String,
+    val splashBenefit2: String,
+    val splashBenefit3: String,
 )
 
 val StringsId = AppStrings(
@@ -84,7 +89,7 @@ val StringsId = AppStrings(
     playFruit = "Petik Buah",
     playFruitDesc = "Susun perintah, robot panen buah!",
     settings = "Pengaturan",
-    offlineTag = "Tanpa internet • Untuk balita 3+",
+    offlineTag = "Tanpa internet • Untuk balita 2+",
     cmdForward = "Maju",
     cmdLeft = "Kiri",
     cmdRight = "Kanan",
@@ -135,8 +140,12 @@ val StringsId = AppStrings(
     praise4 = "Hebat! Hampir sempurna!",
     praise5 = "Luar biasa! Sempurna! 👏👏👏",
     shadowLabel = "Bayangan Preview",
-    shadowOn = "Aktif (level 1-5)",
+    shadowAuto = "Otomatis (level 1-5)",
+    shadowActive = "Aktif (semua level)",
     shadowOff = "Mati",
+    splashBenefit1 = "🧠 Belajar logika sambil main",
+    splashBenefit2 = "👨‍👩‍👧 Aman, ada kunci orang tua",
+    splashBenefit3 = "🚫 Bisa main tanpa internet",
 )
 
 val StringsEn = AppStrings(
@@ -148,7 +157,7 @@ val StringsEn = AppStrings(
     playFruit = "Fruit Picking",
     playFruitDesc = "Arrange commands, robot picks the fruits!",
     settings = "Settings",
-    offlineTag = "No internet • For toddlers 3+",
+    offlineTag = "No internet • For toddlers 2+",
     cmdForward = "Forward",
     cmdLeft = "Left",
     cmdRight = "Right",
@@ -199,8 +208,12 @@ val StringsEn = AppStrings(
     praise4 = "Great! Almost perfect!",
     praise5 = "Amazing! Perfect! 👏👏👏",
     shadowLabel = "Shadow Preview",
-    shadowOn = "On (levels 1-5)",
+    shadowAuto = "Auto (levels 1-5)",
+    shadowActive = "On (all levels)",
     shadowOff = "Off",
+    splashBenefit1 = "🧠 Learn logic while playing",
+    splashBenefit2 = "👨‍👩‍👧 Safe with parent gate",
+    splashBenefit3 = "🚫 Works without internet",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }

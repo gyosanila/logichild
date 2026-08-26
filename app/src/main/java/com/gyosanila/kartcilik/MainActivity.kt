@@ -433,7 +433,24 @@ private fun SplashView() {
                 color = Color.White,
                 fontSize = 15.sp,
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(20.dp))
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.White.copy(alpha = 0.22f),
+                modifier = Modifier.padding(horizontal = 32.dp),
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                ) {
+                    Text(strings.splashBenefit1, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text(strings.splashBenefit2, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text(strings.splashBenefit3, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(28.dp))
             CircularProgressIndicator(color = Color.White)
         }
     }

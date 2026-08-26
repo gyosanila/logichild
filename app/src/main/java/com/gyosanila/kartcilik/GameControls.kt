@@ -65,13 +65,19 @@ fun rememberControllerType(): String {
     }
 }
 
-/** Shadow preview ON/OFF dari Pengaturan. */
+/** Baca mode shadow preview ("auto" | "on" | "off"), dengan migrasi pref lama. */
+fun readShadowMode(prefs: android.content.SharedPreferences): String {
+    prefs.getString("shadow_mode", null)?.let { return it }
+    // Migrasi dari boolean lama: true → auto, false → off
+    return if (prefs.getBoolean("shadow_preview", true)) "auto" else "off"
+}
+
+/** Shadow preview mode dari Pengaturan ("auto" | "on" | "off"). */
 @Composable
-fun rememberShadowEnabled(): Boolean {
+fun rememberShadowMode(): String {
     val context = LocalContext.current
     return remember {
-        context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
-            .getBoolean("shadow_preview", true)
+        readShadowMode(context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE))
     }
 }
 
