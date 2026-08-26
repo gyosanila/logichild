@@ -130,6 +130,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Upload R8 mapping artifact (deobfuscation)
+        if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapping-txt
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Send result to Telegram
         if: always() && github.event_name != 'pull_request'
         env:
@@ -154,6 +163,13 @@ jobs:
                  -F "document=@app/build/outputs/apk/release/app-release.apk" \
                  -F "caption=</tmp/cap2.txt" \
                  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            if [ -f "app/build/outputs/mapping/release/mapping.txt" ]; then
+              printf '🗺️ mapping.txt v%s — upload ke Play Console (Deobfuscation files)' "$REL" > /tmp/cap4.txt
+              curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+                   -F "document=@app/build/outputs/mapping/release/mapping.txt" \
+                   -F "caption=</tmp/cap4.txt" \
+                   "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            fi
           elif [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
             printf '✅ Build #%s sukses (debug v1.0.0-debug)\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" > /tmp/caption.txt
