@@ -9,11 +9,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gyosanila.kartcilik"
+        applicationId = "com.gyosanila.logichild"
         minSdk = 23
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.9.2"
+        versionCode = 16
+        versionName = "1.9.3"
 
         // AdMob App ID asli (Logichild)
         manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-6023230476562279~4364973144"
