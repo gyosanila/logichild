@@ -67,6 +67,18 @@ jobs:
             echo "::warning::KEYSTORE_B64 not set — release will fall back to debug signing"
           fi
 
+      - name: Setup google-services.json (Crashlytics)
+        env:
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_B64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > app/google-services.json
+            echo "google-services.json written"
+          else
+            echo "::error::GOOGLE_SERVICES_JSON_B64 not set — build will fail"
+            exit 1
+          fi
+
       - name: Compile Kotlin (compile check)
         run: ./gradlew :app:compileDebugKotlin --no-daemon
 

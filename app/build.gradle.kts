@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.crashlytics)
 }
 
 // Versi release di-override dari CI: -PrelVersionName=1.0.0 -PrelVersionCode=N
@@ -113,6 +115,9 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.play.services.ads)
+    // Firebase Crashlytics (crash & ANR reporting)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
     implementation(libs.androidx.lifecycle.runtime.compose)
     debugImplementation(libs.androidx.ui.tooling)
 

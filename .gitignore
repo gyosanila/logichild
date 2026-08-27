@@ -10,3 +10,4 @@ captures/
 app/build/
 *.apk
 !keystore/
+google-services.json
