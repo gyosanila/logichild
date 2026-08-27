@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik.ui
+package com.gyosanila.logichild.ui
 
 import androidx.compose.runtime.staticCompositionLocalOf
 

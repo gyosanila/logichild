@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.app.Application
 import android.content.Context
@@ -6,13 +6,13 @@ import android.media.AudioManager
 import android.media.ToneGenerator
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.gyosanila.kartcilik.game.GameEngine
-import com.gyosanila.kartcilik.game.Instruction
-import com.gyosanila.kartcilik.game.KartState
-import com.gyosanila.kartcilik.game.Level
-import com.gyosanila.kartcilik.game.LevelGen
-import com.gyosanila.kartcilik.game.Reward
-import com.gyosanila.kartcilik.game.StepResult
+import com.gyosanila.logichild.game.GameEngine
+import com.gyosanila.logichild.game.Instruction
+import com.gyosanila.logichild.game.KartState
+import com.gyosanila.logichild.game.Level
+import com.gyosanila.logichild.game.LevelGen
+import com.gyosanila.logichild.game.Reward
+import com.gyosanila.logichild.game.StepResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +28,7 @@ data class KartGameUiState(
     val running: Boolean = false,
     val won: Boolean = false,
     val crashed: Boolean = false,
-    val crashCell: com.gyosanila.kartcilik.game.Pos? = null,
+    val crashCell: com.gyosanila.logichild.game.Pos? = null,
     val unlocked: Int = 0,
     val stars: Map<Int, Int> = emptyMap(),
     val soundOn: Boolean = true,

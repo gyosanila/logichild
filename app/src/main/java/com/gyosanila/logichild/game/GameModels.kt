@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik.game
+package com.gyosanila.logichild.game
 
 data class Pos(val x: Int, val y: Int)
 

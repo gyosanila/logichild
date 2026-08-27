@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.content.Context
 import android.os.Bundle
@@ -57,17 +57,17 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.gyosanila.kartcilik.ui.AppStrings
-import com.gyosanila.kartcilik.ui.BerryPurple
-import com.gyosanila.kartcilik.ui.GrassGreen
-import com.gyosanila.kartcilik.ui.KartRed
-import com.gyosanila.kartcilik.ui.LocalStrings
-import com.gyosanila.kartcilik.ui.OceanBlue
-import com.gyosanila.kartcilik.ui.SkyBlue
-import com.gyosanila.kartcilik.ui.StringsEn
-import com.gyosanila.kartcilik.ui.StringsId
-import com.gyosanila.kartcilik.ui.SunYellow
-import com.gyosanila.kartcilik.ui.TextDark
+import com.gyosanila.logichild.ui.AppStrings
+import com.gyosanila.logichild.ui.BerryPurple
+import com.gyosanila.logichild.ui.GrassGreen
+import com.gyosanila.logichild.ui.KartRed
+import com.gyosanila.logichild.ui.LocalStrings
+import com.gyosanila.logichild.ui.OceanBlue
+import com.gyosanila.logichild.ui.SkyBlue
+import com.gyosanila.logichild.ui.StringsEn
+import com.gyosanila.logichild.ui.StringsId
+import com.gyosanila.logichild.ui.SunYellow
+import com.gyosanila.logichild.ui.TextDark
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -487,7 +487,7 @@ private fun SplashView() {
 }
 
 @Composable
-private fun BreakOverlay(strings: com.gyosanila.kartcilik.ui.AppStrings, onKeepPlaying: () -> Unit) {
+private fun BreakOverlay(strings: com.gyosanila.logichild.ui.AppStrings, onKeepPlaying: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()

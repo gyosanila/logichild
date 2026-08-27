@@ -1,15 +1,15 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.gyosanila.kartcilik.game.Dir
-import com.gyosanila.kartcilik.game.FruitCommand
-import com.gyosanila.kartcilik.game.FruitLevel
-import com.gyosanila.kartcilik.game.FruitLevelGen
-import com.gyosanila.kartcilik.game.Pos
-import com.gyosanila.kartcilik.game.Reward
+import com.gyosanila.logichild.game.Dir
+import com.gyosanila.logichild.game.FruitCommand
+import com.gyosanila.logichild.game.FruitLevel
+import com.gyosanila.logichild.game.FruitLevelGen
+import com.gyosanila.logichild.game.Pos
+import com.gyosanila.logichild.game.Reward
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

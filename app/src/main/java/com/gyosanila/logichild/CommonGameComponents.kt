@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -43,13 +43,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gyosanila.kartcilik.ui.BerryPurple
-import com.gyosanila.kartcilik.ui.ConeOrange
-import com.gyosanila.kartcilik.ui.GrassGreen
-import com.gyosanila.kartcilik.ui.KartRed
-import com.gyosanila.kartcilik.ui.OceanBlue
-import com.gyosanila.kartcilik.ui.SunYellow
-import com.gyosanila.kartcilik.ui.TextDark
+import com.gyosanila.logichild.ui.BerryPurple
+import com.gyosanila.logichild.ui.ConeOrange
+import com.gyosanila.logichild.ui.GrassGreen
+import com.gyosanila.logichild.ui.KartRed
+import com.gyosanila.logichild.ui.OceanBlue
+import com.gyosanila.logichild.ui.SunYellow
+import com.gyosanila.logichild.ui.TextDark
 
 // ─── Toolbar (sama di semua game): kiri icon+judul, kanan audio+home ─
 

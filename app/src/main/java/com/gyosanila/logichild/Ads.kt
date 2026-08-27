@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.app.Activity
 import android.content.Context

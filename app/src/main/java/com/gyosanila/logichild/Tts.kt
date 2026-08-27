@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.content.Context
 import android.speech.tts.TextToSpeech

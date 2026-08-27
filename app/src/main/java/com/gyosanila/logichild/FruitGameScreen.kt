@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -68,23 +68,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.gyosanila.kartcilik.game.Dir
-import com.gyosanila.kartcilik.game.FruitCommand
-import com.gyosanila.kartcilik.game.Pos
-import com.gyosanila.kartcilik.game.Reward
-import com.gyosanila.kartcilik.ui.AppStrings
-import com.gyosanila.kartcilik.ui.BerryPurple
-import com.gyosanila.kartcilik.ui.ConeOrange
-import com.gyosanila.kartcilik.ui.GrassDark
-import com.gyosanila.kartcilik.ui.GrassGreen
-import com.gyosanila.kartcilik.ui.KartRed
-import com.gyosanila.kartcilik.ui.LocalStrings
-import com.gyosanila.kartcilik.ui.OceanBlue
-import com.gyosanila.kartcilik.ui.RoadGray
-import com.gyosanila.kartcilik.ui.ShadowColor
-import com.gyosanila.kartcilik.ui.SkyBlue
-import com.gyosanila.kartcilik.ui.SunYellow
-import com.gyosanila.kartcilik.ui.TextDark
+import com.gyosanila.logichild.game.Dir
+import com.gyosanila.logichild.game.FruitCommand
+import com.gyosanila.logichild.game.Pos
+import com.gyosanila.logichild.game.Reward
+import com.gyosanila.logichild.ui.AppStrings
+import com.gyosanila.logichild.ui.BerryPurple
+import com.gyosanila.logichild.ui.ConeOrange
+import com.gyosanila.logichild.ui.GrassDark
+import com.gyosanila.logichild.ui.GrassGreen
+import com.gyosanila.logichild.ui.KartRed
+import com.gyosanila.logichild.ui.LocalStrings
+import com.gyosanila.logichild.ui.OceanBlue
+import com.gyosanila.logichild.ui.RoadGray
+import com.gyosanila.logichild.ui.ShadowColor
+import com.gyosanila.logichild.ui.SkyBlue
+import com.gyosanila.logichild.ui.SunYellow
+import com.gyosanila.logichild.ui.TextDark
 import kotlin.math.max
 import kotlin.math.min
 

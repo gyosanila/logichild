@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -29,9 +29,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gyosanila.kartcilik.ui.LocalStrings
-import com.gyosanila.kartcilik.ui.SkyBlue
-import com.gyosanila.kartcilik.ui.TextDark
+import com.gyosanila.logichild.ui.LocalStrings
+import com.gyosanila.logichild.ui.SkyBlue
+import com.gyosanila.logichild.ui.TextDark
 
 @Composable
 fun SettingsScreen(

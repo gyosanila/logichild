@@ -11,13 +11,13 @@ val relVersionName: String = (project.findProperty("relVersionName") as? String)
 val relVersionCode: Int = (project.findProperty("relVersionCode") as? String)?.toIntOrNull() ?: 1
 
 android {
-    namespace = "com.gyosanila.kartcilik"
-    compileSdk = 35
+    namespace = "com.gyosanila.logichild"
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.gyosanila.logichild"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 36
         // Dev: versi tetap, gak naik tiap push (naik cuma pas tag release).
         versionCode = 1
         versionName = "1.0.0"

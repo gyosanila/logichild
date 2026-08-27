@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik.game
+package com.gyosanila.logichild.game
 
 import kotlin.random.Random
 

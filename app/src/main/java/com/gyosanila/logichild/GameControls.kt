@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik
+package com.gyosanila.logichild
 
 import android.content.Context
 import androidx.compose.animation.core.animateFloatAsState
@@ -48,12 +48,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gyosanila.kartcilik.ui.AppStrings
-import com.gyosanila.kartcilik.ui.BerryPurple
-import com.gyosanila.kartcilik.ui.ConeOrange
-import com.gyosanila.kartcilik.ui.KartRed
-import com.gyosanila.kartcilik.ui.OceanBlue
-import com.gyosanila.kartcilik.ui.TextDark
+import com.gyosanila.logichild.ui.AppStrings
+import com.gyosanila.logichild.ui.BerryPurple
+import com.gyosanila.logichild.ui.ConeOrange
+import com.gyosanila.logichild.ui.KartRed
+import com.gyosanila.logichild.ui.OceanBlue
+import com.gyosanila.logichild.ui.TextDark
 
 /** Tipe controller dari Pengaturan ("kart" | "simple"). */
 @Composable

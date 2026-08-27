@@ -1,4 +1,4 @@
-package com.gyosanila.kartcilik.game
+package com.gyosanila.logichild.game
 
 sealed interface StepResult {
     data class Moved(val from: Pos, val to: Pos, val dir: Dir) : StepResult
