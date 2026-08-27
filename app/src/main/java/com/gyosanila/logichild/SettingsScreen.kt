@@ -1,7 +1,11 @@
 package com.gyosanila.logichild
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -147,6 +151,47 @@ fun SettingsScreen(
                         .remove("shadow_preview")
                         .apply()
                 },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+
+        // ── Kotak Saran (buka Gmail, auto isi subject/body + info perangkat) ──
+        SettingSection(strings.feedbackLabel) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        try {
+                            val appVersion = BuildConfig.VERSION_NAME
+                            val androidVer = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
+                            val device = "${Build.MANUFACTURER} ${Build.MODEL}"
+                            val body = "\n\n\nApp version: $appVersion\nAndroid version: $androidVer\nDevice: $device"
+                            val uri = Uri.parse(
+                                "mailto:gyosanila@gmail.com" +
+                                    "?subject=${Uri.encode("[Logichild] User Feedback")}" +
+                                    "&body=${Uri.encode(body)}"
+                            )
+                            context.startActivity(Intent(Intent.ACTION_SENDTO, uri))
+                        } catch (_: Exception) {
+                            // Gak ada app email → diem aja
+                        }
+                    },
+            ) {
+                Text(
+                    "📮 ${strings.feedbackLabel}",
+                    color = androidx.compose.ui.graphics.Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(14.dp),
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "gyosanila@gmail.com",
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f),
+                fontSize = 13.sp,
             )
         }
     }
