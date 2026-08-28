@@ -157,6 +157,7 @@ fun SettingsScreen(
 
         // ── Kotak Saran (buka Gmail, auto isi subject/body + info perangkat) ──
         SettingSection(strings.feedbackLabel) {
+            val ttsTest = remember { TtsSpeaker(context) }
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f),
@@ -193,6 +194,22 @@ fun SettingsScreen(
                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f),
                 fontSize = 13.sp,
             )
+            Spacer(Modifier.height(10.dp))
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { ttsTest.speak("Halo! Suara berfungsi.") },
+            ) {
+                Text(
+                    "🔊 ${strings.testSoundLabel}",
+                    color = androidx.compose.ui.graphics.Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(14.dp),
+                )
+            }
         }
     }
 }

@@ -80,6 +80,7 @@ data class AppStrings(
     val splashBenefit3: String,
     // Feedback
     val feedbackLabel: String,
+    val testSoundLabel: String,
 )
 
 val StringsId = AppStrings(
@@ -149,6 +150,7 @@ val StringsId = AppStrings(
     splashBenefit2 = "👨‍👩‍👧 Aman, ada kunci orang tua",
     splashBenefit3 = "🚫 Bisa main tanpa internet",
     feedbackLabel = "Kotak Saran",
+    testSoundLabel = "Coba Suara",
 )
 
 val StringsEn = AppStrings(
@@ -218,6 +220,7 @@ val StringsEn = AppStrings(
     splashBenefit2 = "👨‍👩‍👧 Safe with parent gate",
     splashBenefit3 = "🚫 Works without internet",
     feedbackLabel = "Feedback",
+    testSoundLabel = "Test Sound",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }
