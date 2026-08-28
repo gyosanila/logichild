@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -200,7 +201,16 @@ fun SettingsScreen(
                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { ttsTest.speak("Halo! Suara berfungsi.") },
+                    .clickable {
+                        val ok = ttsTest.speak("Halo! Suara berfungsi.")
+                        val status = ttsTest.statusInfo()
+                        Log.i("LogichildTTS", "tes: ok=$ok | $status")
+                        android.widget.Toast.makeText(
+                            context,
+                            if (ok) "TTS: $status" else "TTS gagal: $status",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    },
             ) {
                 Text(
                     "🔊 ${strings.testSoundLabel}",
