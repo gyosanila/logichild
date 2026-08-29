@@ -53,45 +53,73 @@ class GameSounds(context: Context) {
     private val sApplause = pool.load(context, R.raw.applause, 1)
     private val sFanfare = pool.load(context, R.raw.fanfare, 1)
     private val sSparkle = pool.load(context, R.raw.sparkle, 1)
+
+    // Load SoundPool itu async — simpan status siap & pending play.
+    private val ready = mutableSetOf<Int>()
+    private var pending: Triple<Int, Float, Float>? = null
+
+    init {
+        pool.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status == 0) {
+                ready += sampleId
+                pending?.let { (id, vol, rate) ->
+                    if (id == sampleId) {
+                        pool.play(id, vol, vol, 1, 0, rate)
+                        pending = null
+                    }
+                }
+            }
+        }
+    }
+
+    private fun play(soundId: Int, vol: Float, rate: Float = 1f) {
+        if (soundId in ready) {
+            pool.play(soundId, vol, vol, 1, 0, rate)
+        } else {
+            // Belum ke-load (baru buka app) → tunggu, nanti diputar pas siap.
+            pending = Triple(soundId, vol, rate)
+        }
+    }
+
     var enabled = true
 
     fun tap() {
-        if (enabled) pool.play(sSparkle, 0.4f, 0.4f, 1, 0, 1.6f)
+        if (enabled) play(sSparkle, 0.4f, 1.6f)
     }
 
     fun move() {
-        if (enabled) pool.play(sSparkle, 0.5f, 0.5f, 1, 0, 1.4f)
+        if (enabled) play(sSparkle, 0.5f, 1.4f)
     }
 
     fun turn() {
-        if (enabled) pool.play(sSparkle, 0.5f, 0.5f, 1, 0, 1.2f)
+        if (enabled) play(sSparkle, 0.5f, 1.2f)
     }
 
     fun crash() {
-        if (enabled) pool.play(sFanfare, 0.35f, 0.35f, 1, 0, 0.7f)
+        if (enabled) play(sFanfare, 0.35f, 0.7f)
     }
 
     /** Menang: apresiasi sesuai kalimat dialog + tepuk tangan + sparkle. */
     fun win(praise: String) {
         if (!enabled) return
         tts.speak(praise)
-        pool.play(sApplause, 0.85f, 0.85f, 1, 0, 1f)
-        pool.play(sSparkle, 0.6f, 0.6f, 1, 0, 1.3f)
+        play(sApplause, 0.9f)
+        play(sSparkle, 0.6f, 1.3f)
     }
 
     /** Reward besar: fanfare + tepuk tangan + apresiasi. */
     fun bigWin(praise: String) {
         if (!enabled) return
         tts.speak(praise)
-        pool.play(sFanfare, 0.95f, 0.95f, 1, 0, 1f)
-        pool.play(sApplause, 0.8f, 0.8f, 1, 0, 1f)
+        play(sFanfare, 0.95f)
+        play(sApplause, 0.85f)
     }
 
     /** Rating rendah: tetap apresiasi + tepuk tangan pelan. */
     fun clap(praise: String) {
         if (!enabled) return
         tts.speak(praise)
-        pool.play(sApplause, 0.45f, 0.45f, 1, 0, 1f)
+        play(sApplause, 0.5f)
     }
 
     fun stop() {
