@@ -12,6 +12,8 @@ import com.gyosanila.logichild.game.KartState
 import com.gyosanila.logichild.game.Level
 import com.gyosanila.logichild.game.LevelGen
 import com.gyosanila.logichild.game.Reward
+import com.gyosanila.logichild.ui.StringsEn
+import com.gyosanila.logichild.ui.StringsId
 import com.gyosanila.logichild.game.StepResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,84 +38,70 @@ data class KartGameUiState(
     val reward: Reward = Reward.NONE,
 )
 
-/** Bunyi-bunyian pakai ToneGenerator + suara TTS — tanpa file asset sama sekali. */
+/** Bunyi-bunyian: efek meriah (applause/fanfare/sparkle) + TTS apresiasi. */
 class GameSounds(context: Context) {
-    private val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 75)
     private val tts = TtsSpeaker(context)
+    private val pool = android.media.SoundPool.Builder()
+        .setMaxStreams(4)
+        .setAudioAttributes(
+            android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        )
+        .build()
+    private val sApplause = pool.load(context, R.raw.applause, 1)
+    private val sFanfare = pool.load(context, R.raw.fanfare, 1)
+    private val sSparkle = pool.load(context, R.raw.sparkle, 1)
     var enabled = true
 
     fun tap() {
-        if (enabled) tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 40)
+        if (enabled) pool.play(sSparkle, 0.4f, 0.4f, 1, 0, 1.6f)
     }
 
     fun move() {
-        if (enabled) tone.startTone(ToneGenerator.TONE_PROP_BEEP, 60)
+        if (enabled) pool.play(sSparkle, 0.5f, 0.5f, 1, 0, 1.4f)
     }
 
     fun turn() {
-        if (enabled) tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 60)
+        if (enabled) pool.play(sSparkle, 0.5f, 0.5f, 1, 0, 1.2f)
     }
 
     fun crash() {
-        if (enabled) tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 250)
+        if (enabled) pool.play(sFanfare, 0.35f, 0.35f, 1, 0, 0.7f)
     }
 
-    /** Menang: "Hore!" + nada naik + tepuk tangan. */
-    fun win() {
+    /** Menang: apresiasi sesuai kalimat dialog + tepuk tangan + sparkle. */
+    fun win(praise: String) {
         if (!enabled) return
-        tts.speak("Hore!")
-        tone.startTone(ToneGenerator.TONE_PROP_BEEP, 80)
-        Thread {
-            try {
-                Thread.sleep(120); tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 80)
-                Thread.sleep(120); tone.startTone(ToneGenerator.TONE_PROP_ACK, 160)
-                Thread.sleep(100)
-                repeat(3) { i ->
-                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
-                    Thread.sleep(110)
-                }
-            } catch (_: InterruptedException) {
-            }
-        }.start()
+        tts.speak(praise)
+        pool.play(sApplause, 0.85f, 0.85f, 1, 0, 1f)
+        pool.play(sSparkle, 0.6f, 0.6f, 1, 0, 1.3f)
     }
 
-    /** Tepuk tangan: 3 ketukan cepat. */
-    fun clap() {
+    /** Reward besar: fanfare + tepuk tangan + apresiasi. */
+    fun bigWin(praise: String) {
         if (!enabled) return
-        Thread {
-            try {
-                repeat(3) { i ->
-                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
-                    Thread.sleep(110)
-                }
-            } catch (_: InterruptedException) {
-            }
-        }.start()
+        tts.speak(praise)
+        pool.play(sFanfare, 0.95f, 0.95f, 1, 0, 1f)
+        pool.play(sApplause, 0.8f, 0.8f, 1, 0, 1f)
     }
 
-    /** Reward besar: "Luar biasa!" + fanfare + tepuk ramai. */
-    fun bigWin() {
+    /** Rating rendah: tetap apresiasi + tepuk tangan pelan. */
+    fun clap(praise: String) {
         if (!enabled) return
-        tts.speak("Luar biasa!")
-        Thread {
-            try {
-                intArrayOf(ToneGenerator.TONE_PROP_BEEP, ToneGenerator.TONE_PROP_BEEP2, ToneGenerator.TONE_PROP_ACK).forEach {
-                    tone.startTone(it, 110)
-                    Thread.sleep(150)
-                }
-                repeat(5) { i ->
-                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 45)
-                    Thread.sleep(100)
-                }
-                tone.startTone(ToneGenerator.TONE_PROP_ACK, 200)
-            } catch (_: InterruptedException) {
-            }
-        }.start()
+        tts.speak(praise)
+        pool.play(sApplause, 0.45f, 0.45f, 1, 0, 1f)
+    }
+
+    fun stop() {
+        pool.autoPause()
+        tts.stop()
     }
 
     fun release() {
+        pool.release()
         tts.shutdown()
-        tone.release()
     }
 }
 
@@ -247,11 +235,20 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                             levelNumber % 10 == 5 -> Reward.SMALL
                             else -> Reward.NONE
                         }
+                        // Apresiasi sesuai bahasa & rating (sama dengan teks di dialog).
+                        val st = if (prefs.getString("lang", "id") == "en") StringsEn else StringsId
+                        val praise = when (rating) {
+                            5 -> st.praise5
+                            4 -> st.praise4
+                            3 -> st.praise3
+                            2 -> st.praise2
+                            else -> st.praise1
+                        }
                         when {
-                            reward == Reward.BIG -> sounds.bigWin()
-                            rating >= 4 -> sounds.win()
-                            rating == 3 -> sounds.win()
-                            else -> sounds.clap()
+                            reward == Reward.BIG -> sounds.bigWin(st.praise5)
+                            rating >= 4 -> sounds.win(praise)
+                            rating == 3 -> sounds.win(praise)
+                            else -> sounds.clap(praise)
                         }
                         prefs.edit()
                             .putInt("star_${lv.index}", newStars)

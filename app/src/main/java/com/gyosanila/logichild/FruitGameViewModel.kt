@@ -10,6 +10,8 @@ import com.gyosanila.logichild.game.FruitLevel
 import com.gyosanila.logichild.game.FruitLevelGen
 import com.gyosanila.logichild.game.Pos
 import com.gyosanila.logichild.game.Reward
+import com.gyosanila.logichild.ui.StringsEn
+import com.gyosanila.logichild.ui.StringsId
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -219,11 +221,20 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                         after.level % 10 == 5 -> Reward.SMALL
                         else -> Reward.NONE
                     }
+                    // Apresiasi sesuai bahasa & rating (sama dengan teks di dialog).
+                    val st = if (prefs.getString("lang", "id") == "en") StringsEn else StringsId
+                    val praise = when (rating) {
+                        5 -> st.praise5
+                        4 -> st.praise4
+                        3 -> st.praise3
+                        2 -> st.praise2
+                        else -> st.praise1
+                    }
                     when {
-                        reward == Reward.BIG -> sounds.bigWin()
-                        rating >= 4 -> sounds.win()
-                        rating == 3 -> sounds.win()
-                        else -> sounds.clap()
+                        reward == Reward.BIG -> sounds.bigWin(st.praise5)
+                        rating >= 4 -> sounds.win(praise)
+                        rating == 3 -> sounds.win(praise)
+                        else -> sounds.clap(praise)
                     }
                     prefs.edit()
                         .putInt("fruit_level", after.level + 1)
