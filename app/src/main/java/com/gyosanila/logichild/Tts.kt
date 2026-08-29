@@ -6,26 +6,34 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import java.util.Locale
 
-/** Text-to-speech Bahasa Indonesia — dipakai buat ucapan & pengumuman. */
+/** Text-to-speech Bahasa Indonesia — coba default engine, terus semua engine terinstall. */
 class TtsSpeaker(context: Context) {
     private val appContext = context.applicationContext
-    private var tts: TextToSpeech? = null
-    private var initRetried = false
 
-    // Status buat diagnosa (dibaca lewat statusInfo()).
+    // Daftar engine yang tersedia (nama package), dari sistem.
+    private val engines: List<String> = TextToSpeech.getEngines(appContext).map { it.name }
+    private var tts: TextToSpeech? = null
+    private var attempt = 0
+
     private var engineReady = false
+    private var engineUsed = "?"
     private var voiceLabel = "belum init"
     private var voicesCount = 0
 
     init {
+        Log.i("LogichildTTS", "engine terinstall: $engines")
         initTts()
     }
 
     private fun initTts() {
-        tts = TextToSpeech(appContext) { status ->
+        // attempt 0 = default engine; berikutnya = engine dari daftar.
+        val enginePkg: String? = if (attempt == 0) null else engines.getOrNull(attempt - 1)
+        engineUsed = enginePkg ?: "default"
+        tts = TextToSpeech(appContext, { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val engine = tts ?: return@TextToSpeech
                 engineReady = true
+                Log.i("LogichildTTS", "init SUCCESS engine=$engineUsed")
+                val engine = tts ?: return@TextToSpeech
                 engine.setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -50,20 +58,23 @@ class TtsSpeaker(context: Context) {
                     Log.i("LogichildTTS", "id-ID OK (res=$res)")
                 }
             } else {
-                Log.w("LogichildTTS", "init status=$status")
-                if (!initRetried) {
-                    initRetried = true
+                // Init gagal → coba engine berikutnya.
+                attempt++
+                if (attempt <= engines.size) {
+                    Log.w("LogichildTTS", "engine $engineUsed gagal (status=$status), coba berikutnya")
                     tts?.shutdown()
                     initTts()
+                } else {
+                    Log.e("LogichildTTS", "SEMUA engine gagal init. engines=$engines")
                 }
             }
-        }
+        }, enginePkg)
     }
 
-    /** Status ringkas buat diagnosa: "engine OK, voice=...", atau "init GAGAL". */
+    /** Status ringkas buat diagnosa. */
     fun statusInfo(): String =
-        if (engineReady) "engine OK, voice=$voiceLabel, total voice=$voicesCount"
-        else "engine BELUM ready / GAGAL init (sudah retry sekali)"
+        if (engineReady) "engine OK ($engineUsed), voice=$voiceLabel, total voice=$voicesCount"
+        else "init GAGAL semua (${engines.size} engine: $engines)"
 
     /** true = speak diterima engine. */
     fun speak(text: String): Boolean {
