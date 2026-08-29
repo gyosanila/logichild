@@ -81,6 +81,18 @@ data class AppStrings(
     // Feedback
     val feedbackLabel: String,
     val testSoundLabel: String,
+    // Game 3: Cocokkan Warna
+    val playColor: String,
+    val playColorDesc: String,
+    val colorAsk: String,
+    val colorTryAgain: String,
+    val colorRed: String,
+    val colorBlue: String,
+    val colorYellow: String,
+    val colorGreen: String,
+    val colorPurple: String,
+    val colorOrange: String,
+    val colorPink: String,
 )
 
 val StringsId = AppStrings(
@@ -151,6 +163,17 @@ val StringsId = AppStrings(
     splashBenefit3 = "🚫 Bisa main tanpa internet",
     feedbackLabel = "Kotak Saran",
     testSoundLabel = "Coba Suara",
+    playColor = "Cocokkan Warna",
+    playColorDesc = "Temukan warna yang diminta!",
+    colorAsk = "Cari yang %s!",
+    colorTryAgain = "Coba lagi ya!",
+    colorRed = "Merah",
+    colorBlue = "Biru",
+    colorYellow = "Kuning",
+    colorGreen = "Hijau",
+    colorPurple = "Ungu",
+    colorOrange = "Oranye",
+    colorPink = "Pink",
 )
 
 val StringsEn = AppStrings(
@@ -221,6 +244,17 @@ val StringsEn = AppStrings(
     splashBenefit3 = "🚫 Works without internet",
     feedbackLabel = "Feedback",
     testSoundLabel = "Test Sound",
+    playColor = "Color Match",
+    playColorDesc = "Find the color asked!",
+    colorAsk = "Find the %s one!",
+    colorTryAgain = "Try again!",
+    colorRed = "red",
+    colorBlue = "blue",
+    colorYellow = "yellow",
+    colorGreen = "green",
+    colorPurple = "purple",
+    colorOrange = "orange",
+    colorPink = "pink",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }
