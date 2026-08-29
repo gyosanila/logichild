@@ -11,7 +11,10 @@ class TtsSpeaker(context: Context) {
     private val appContext = context.applicationContext
 
     // Daftar engine yang tersedia (nama package), dari sistem.
-    private val engines: List<String> = TextToSpeech.getEngines(appContext).map { it.name }
+    private val engines: List<String> =
+        appContext.packageManager.queryIntentServices(
+            android.content.Intent("android.intent.action.TTS_SERVICE"), 0
+        ).mapNotNull { it.serviceInfo?.packageName }
     private var tts: TextToSpeech? = null
     private var attempt = 0
 
