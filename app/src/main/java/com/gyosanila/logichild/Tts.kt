@@ -22,6 +22,7 @@ class TtsSpeaker(context: Context) {
     private var engineUsed = "?"
     private var voiceLabel = "belum init"
     private var voicesCount = 0
+    private var round = 0
 
     init {
         Log.i("LogichildTTS", "engine terinstall: $engines")
@@ -67,8 +68,17 @@ class TtsSpeaker(context: Context) {
                     Log.w("LogichildTTS", "engine $engineUsed gagal (status=$status), coba berikutnya")
                     tts?.shutdown()
                     initTts()
+                } else if (round < 2) {
+                    // Semua engine gagal — ColorOS kadang baru ngizinin service
+                    // beberapa detik setelah app buka. Retry delay.
+                    round++
+                    attempt = 0
+                    Log.w("LogichildTTS", "SEMUA engine gagal, retry round $round dalam 4 dtk")
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        initTts()
+                    }, 4000)
                 } else {
-                    Log.e("LogichildTTS", "SEMUA engine gagal init. engines=$engines")
+                    Log.e("LogichildTTS", "SEMUA engine gagal setelah retry. engines=$engines")
                 }
             }
         }, enginePkg)
