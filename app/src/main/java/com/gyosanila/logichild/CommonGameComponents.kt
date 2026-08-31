@@ -126,9 +126,9 @@ fun LevelSelector(
         state = listState,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        contentPadding = PaddingValues(horizontal = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(vertical = 2.dp),
+        contentPadding = PaddingValues(horizontal = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         items(itemCount) { i ->
             val isCurrent = i == currentIndex
@@ -142,9 +142,9 @@ fun LevelSelector(
                 color = bg,
                 onClick = { onSelect(i) },
                 modifier = Modifier
-                    .size(if (isCurrent) 40.dp else 32.dp)
+                    .size(if (isCurrent) 30.dp else 24.dp)
                     .border(
-                        width = if (isCurrent) 3.dp else 0.dp,
+                        width = if (isCurrent) 2.dp else 0.dp,
                         color = Color.White,
                         shape = CircleShape,
                     ),
@@ -152,7 +152,7 @@ fun LevelSelector(
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         "${i + 1}",
-                        fontSize = if (isCurrent) 16.sp else 13.sp,
+                        fontSize = if (isCurrent) 12.sp else 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
                     )
