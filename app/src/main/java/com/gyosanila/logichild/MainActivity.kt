@@ -378,7 +378,8 @@ private fun LockScreen(strings: AppStrings, onKeepPlaying: () -> Unit) {
 @Composable
 private fun PersistentBanner() {
     val context = LocalContext.current
-    var adError by remember { mutableStateOf<String?>(null) }
+    // Container disembunyiin kalau lagi NO_FILL (kode 3) — muncul lagi pas ada iklan.
+    var showBanner by remember { mutableStateOf(true) }
     val adView = remember(context) {
         AdView(context).apply {
             setAdSize(AdSize.BANNER)
@@ -386,33 +387,25 @@ private fun PersistentBanner() {
             adListener = object : com.google.android.gms.ads.AdListener() {
                 override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
                     android.util.Log.w("LogichildAds", "Banner gagal load: code=${error.code} msg=${error.message}")
-                    adError = "kode ${error.code}"
+                    showBanner = false
+                    // NO_FILL → coba lagi 30 dtk kemudian (banner persist wajar retry).
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        loadAd(childSafeAdRequest())
+                    }, 30_000)
                 }
 
                 override fun onAdLoaded() {
-                    adError = null
+                    showBanner = true
                 }
             }
             loadAd(childSafeAdRequest())
         }
     }
-    Column(Modifier.fillMaxWidth()) {
+    if (showBanner) {
         AndroidView(
             factory = { adView },
             modifier = Modifier.fillMaxWidth(),
         )
-        // Indikator error sementara (buat diagnosis) — hapus setelah iklan jalan.
-        if (adError != null) {
-            Text(
-                "⚠️ iklan belum tampil ($adError)",
-                color = Color.White,
-                fontSize = 11.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0x991B5E20)),
-            )
-        }
     }
 }
 
