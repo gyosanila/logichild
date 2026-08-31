@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -111,11 +112,17 @@ private fun FruitCommand.color(): Color = when (this) {
 
 @Composable
 fun FruitGameScreen(
-    onBack: () -> Unit,
+    startLevel: Int = 1,
+    onBack: (() -> Unit)? = null,
     vm: FruitGameViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
     val strings = LocalStrings.current
+
+    // Level dari roadmap — kalau 0, pakai level terakhir.
+    LaunchedEffect(Unit) {
+        if (startLevel > 0) vm.selectLevel(startLevel)
+    }
 
     Column(
         modifier = Modifier
@@ -128,14 +135,15 @@ fun FruitGameScreen(
             onBack = onBack,
         )
 
-        LevelMapSelector(
-            itemCount = maxOf(state.unlocked, state.level),
-            currentIndex = state.level - 1,
-            isMarked = { i -> (state.stars[i + 1] ?: 0) > 0 },
-            onSelect = { vm.selectLevel(it + 1) },
+        Text(
+            "${strings.level} ${state.level}",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+                .padding(vertical = 6.dp),
         )
 
         FruitBoard(

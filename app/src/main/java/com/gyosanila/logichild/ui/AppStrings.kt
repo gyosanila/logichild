@@ -93,6 +93,8 @@ data class AppStrings(
     val colorPurple: String,
     val colorOrange: String,
     val colorPink: String,
+    // Roadmap
+    val roadmapPick: String,
 )
 
 val StringsId = AppStrings(
@@ -174,6 +176,7 @@ val StringsId = AppStrings(
     colorPurple = "Ungu",
     colorOrange = "Oranye",
     colorPink = "Pink",
+    roadmapPick = "Pilih level!",
 )
 
 val StringsEn = AppStrings(
@@ -255,6 +258,7 @@ val StringsEn = AppStrings(
     colorPurple = "purple",
     colorOrange = "orange",
     colorPink = "pink",
+    roadmapPick = "Pick a level!",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }

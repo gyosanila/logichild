@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,6 +46,7 @@ private val Palette = listOf(
 
 @Composable
 fun ColorMatchScreen(
+    startLevel: Int = 1,
     onBack: () -> Unit,
     vm: ColorMatchViewModel = viewModel(),
 ) {
@@ -52,6 +54,11 @@ fun ColorMatchScreen(
     val strings = LocalStrings.current
     val state by vm.uiState.collectAsState()
     val tts = remember { TtsSpeaker(context) }
+
+    // Level dari roadmap — kalau 0, mulai dari level 1.
+    LaunchedEffect(Unit) {
+        if (startLevel > 0) vm.loadLevel(startLevel)
+    }
 
     // Instruksi dibacakan tiap level baru.
     LaunchedEffect(state.level, state.won) {
@@ -75,14 +82,15 @@ fun ColorMatchScreen(
             },
         )
 
-        LevelMapSelector(
-            itemCount = state.unlocked,
-            currentIndex = state.level - 1,
-            isMarked = { i -> state.stars[i + 1] != null },
-            onSelect = { vm.loadLevel(it + 1) },
+        Text(
+            "${strings.level} ${state.level}",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+                .padding(vertical = 6.dp),
         )
 
         Box(

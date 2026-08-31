@@ -71,7 +71,7 @@ import com.gyosanila.logichild.ui.TextDark
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-enum class GameChoice { Menu, Kart, Fruit, Color, Settings }
+enum class GameChoice { Menu, Kart, Fruit, Color, RoadmapKart, RoadmapFruit, RoadmapColor, Settings }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -121,6 +121,7 @@ private fun MainNav(
     val tts = remember { TtsSpeaker(context) }
 
     var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
+    var startLevel by rememberSaveable { mutableStateOf(1) }
     var mathGate by remember { mutableStateOf(false) }
 
     // Timer layar: countdown + progress bar + auto istirahat + kunci layar
@@ -186,14 +187,56 @@ private fun MainNav(
         Box(Modifier.weight(1f)) {
             when (game) {
                 GameChoice.Menu -> MainMenuScreen(
-                    onKart = { game = GameChoice.Kart },
-                    onFruit = { game = GameChoice.Fruit },
-                    onColor = { game = GameChoice.Color },
+                    onKart = { game = GameChoice.RoadmapKart },
+                    onFruit = { game = GameChoice.RoadmapFruit },
+                    onColor = { game = GameChoice.RoadmapColor },
                     onSettings = { mathGate = true },
                 )
-                GameChoice.Kart -> KartGameScreen(onBack = { game = GameChoice.Menu })
-                GameChoice.Fruit -> FruitGameScreen(onBack = { game = GameChoice.Menu })
-                GameChoice.Color -> ColorMatchScreen(onBack = { game = GameChoice.Menu })
+                GameChoice.RoadmapKart -> RoadmapScreen(
+                    emoji = "🚗",
+                    title = strings.playCar,
+                    unlockedCount = prefs.getInt("unlocked", 0) + 1,
+                    stars = prefs.all.filterKeys { it.startsWith("star_") }
+                        .mapNotNull { (k, v) ->
+                            k.removePrefix("star_").toIntOrNull()?.let { (it + 1) to ((v as? Int) ?: 0) }
+                        }.toMap(),
+                    onSelect = { startLevel = it; game = GameChoice.Kart },
+                    onBack = { game = GameChoice.Menu },
+                )
+                GameChoice.RoadmapFruit -> RoadmapScreen(
+                    emoji = "🍎",
+                    title = strings.playFruit,
+                    unlockedCount = prefs.getInt("fruit_level", 1),
+                    stars = prefs.all.filterKeys { it.startsWith("fstar_") }
+                        .mapNotNull { (k, v) ->
+                            k.removePrefix("fstar_").toIntOrNull()?.let { it to ((v as? Int) ?: 0) }
+                        }.toMap(),
+                    onSelect = { startLevel = it; game = GameChoice.Fruit },
+                    onBack = { game = GameChoice.Menu },
+                )
+                GameChoice.RoadmapColor -> RoadmapScreen(
+                    emoji = "🎨",
+                    title = strings.playColor,
+                    unlockedCount = prefs.getInt("cunlocked", 1),
+                    stars = prefs.all.filterKeys { it.startsWith("cstar_") }
+                        .mapNotNull { (k, v) ->
+                            k.removePrefix("cstar_").toIntOrNull()?.let { it to ((v as? Int) ?: 0) }
+                        }.toMap(),
+                    onSelect = { startLevel = it; game = GameChoice.Color },
+                    onBack = { game = GameChoice.Menu },
+                )
+                GameChoice.Kart -> KartGameScreen(
+                    startLevel = startLevel,
+                    onBack = { game = GameChoice.RoadmapKart },
+                )
+                GameChoice.Fruit -> FruitGameScreen(
+                    startLevel = startLevel,
+                    onBack = { game = GameChoice.RoadmapFruit },
+                )
+                GameChoice.Color -> ColorMatchScreen(
+                    startLevel = startLevel,
+                    onBack = { game = GameChoice.RoadmapColor },
+                )
                 GameChoice.Settings -> SettingsScreen(
                     onBack = { game = GameChoice.Menu },
                     onLanguageChange = onLanguageChange,

@@ -109,6 +109,7 @@ import kotlin.math.min
 
 @Composable
 fun KartGameScreen(
+    startLevel: Int = 1,
     onBack: (() -> Unit)? = null,
     vm: KartGameViewModel = viewModel(),
 ) {
@@ -116,6 +117,11 @@ fun KartGameScreen(
     val level = LevelGen.generate(state.levelIndex)
     val strings = LocalStrings.current
     val controllerType = rememberControllerType()
+
+    // Level dari roadmap (kalau dipilih) — kalau 0, pakai level terakhir.
+    LaunchedEffect(Unit) {
+        if (startLevel > 0) vm.selectLevel(startLevel - 1)
+    }
 
     Column(
         modifier = Modifier
@@ -129,14 +135,15 @@ fun KartGameScreen(
             onToggleSound = vm::toggleSound,
             onBack = onBack,
         )
-        LevelMapSelector(
-            itemCount = state.unlocked + 1,
-            currentIndex = state.levelIndex,
-            isMarked = { i -> (state.stars[i] ?: 0) > 0 },
-            onSelect = vm::selectLevel,
+        Text(
+            "${strings.level} ${state.levelIndex + 1}",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+                .padding(vertical = 6.dp),
         )
         GameBoard(
             level = level,
