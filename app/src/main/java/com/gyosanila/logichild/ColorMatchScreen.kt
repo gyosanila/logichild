@@ -75,11 +75,14 @@ fun ColorMatchScreen(
             },
         )
 
-        LevelSelector(
+        LevelMapSelector(
             itemCount = state.unlocked,
             currentIndex = state.level - 1,
             isMarked = { i -> state.stars[i + 1] != null },
             onSelect = { vm.loadLevel(it + 1) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
         )
 
         Box(

@@ -128,10 +128,14 @@ fun FruitGameScreen(
             onBack = onBack,
         )
 
-        LevelSelector(
+        LevelMapSelector(
             itemCount = maxOf(state.unlocked, state.level),
             currentIndex = state.level - 1,
+            isMarked = { i -> (state.stars[i + 1] ?: 0) > 0 },
             onSelect = { vm.selectLevel(it + 1) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
         )
 
         FruitBoard(

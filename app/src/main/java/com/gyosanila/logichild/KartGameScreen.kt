@@ -129,11 +129,14 @@ fun KartGameScreen(
             onToggleSound = vm::toggleSound,
             onBack = onBack,
         )
-        LevelSelector(
+        LevelMapSelector(
             itemCount = state.unlocked + 1,
             currentIndex = state.levelIndex,
             isMarked = { i -> (state.stars[i] ?: 0) > 0 },
             onSelect = vm::selectLevel,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
         )
         GameBoard(
             level = level,
