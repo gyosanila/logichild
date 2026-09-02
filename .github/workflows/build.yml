@@ -155,10 +155,13 @@ jobs:
         if: always() && github.event_name != 'pull_request'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Hasil build dikirim ke topik Logichild di grup Tukang Jawa (thread 10),
+          # BUKAN ke grup lain. Chat id & thread id publik — aman di-hardcode.
+          TG_CHAT: "-1004387027306"
+          TG_THREAD: "10"
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "::warning::Telegram secrets not set, skipping notification"
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::warning::TELEGRAM_BOT_TOKEN not set, skipping notification"
             exit 0
           fi
           SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
@@ -166,34 +169,34 @@ jobs:
           if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
             printf '📦 Logichild v%s (code %s) — AAB + release APK\nRepo: ${GITHUB_REPOSITORY}\nUpload AAB ke Play Console' \
               "$REL" "${{ steps.relver.outputs.version_code }}" > /tmp/cap.txt
-            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            curl -s -F "chat_id=${TG_CHAT}" -F "message_thread_id=${TG_THREAD}" \
                  -F "document=@app/build/outputs/bundle/release/app-release.aab" \
                  -F "caption=</tmp/cap.txt" \
-                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" -o /dev/null -w "AAB send http=%{http_code}\n"
             printf '✅ Release v%s signed (gyosanila) — ad ASLI' "$REL" > /tmp/cap2.txt
-            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            curl -s -F "chat_id=${TG_CHAT}" -F "message_thread_id=${TG_THREAD}" \
                  -F "document=@app/build/outputs/apk/release/app-release.apk" \
                  -F "caption=</tmp/cap2.txt" \
-                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" -o /dev/null -w "APK release send http=%{http_code}\n"
             if [ -f "app/build/outputs/mapping/release/mapping.txt" ]; then
               printf '🗺️ mapping.txt v%s — upload ke Play Console (Deobfuscation files)' "$REL" > /tmp/cap4.txt
-              curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              curl -s -F "chat_id=${TG_CHAT}" -F "message_thread_id=${TG_THREAD}" \
                    -F "document=@app/build/outputs/mapping/release/mapping.txt" \
                    -F "caption=</tmp/cap4.txt" \
-                   "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+                   "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" -o /dev/null -w "mapping send http=%{http_code}\n"
             fi
           elif [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
             printf '✅ Build #%s sukses (debug v1.0.0-debug)\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" > /tmp/caption.txt
-            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            curl -s -F "chat_id=${TG_CHAT}" -F "message_thread_id=${TG_THREAD}" \
                  -F "document=@app/build/outputs/apk/debug/app-debug.apk" \
                  -F "caption=</tmp/caption.txt" \
-                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" -o /dev/null -w "APK debug send http=%{http_code}\n"
           else
             printf '@randang_bot ❌ Build #%s GAGAL\nRepo: ${GITHUB_REPOSITORY}\nCommit: %s\nCek log: %s' \
               "${{ github.run_number }}" "$SHA_SHORT" \
               "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" > /tmp/caption.txt
-            curl -s -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            curl -s -F "chat_id=${TG_CHAT}" -F "message_thread_id=${TG_THREAD}" \
                  -F "text=</tmp/caption.txt" \
-                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" > /dev/null
+                 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -o /dev/null -w "gagal-notif send http=%{http_code}\n"
           fi
