@@ -56,4 +56,40 @@ object LevelGen {
         }
         return null
     }
+
+    /**
+     * JUMLAH PERINTAH minimum start→finish (BFS state posisi+arah).
+     * Bedanya dengan [bfs]: belok (LEFT/RIGHT) juga dihitung 1 perintah,
+     * karena di game belok = 1 blok instruksi. Dipakai rating 5★ biar adil:
+     * rute tercepat (termasuk beloknya) = 5 bintang.
+     */
+    fun bestInstructions(start: Pos, startDir: Dir, finish: Pos, w: Int, h: Int, cones: Set<Pos>): Int? {
+        val seen = Array(w) { Array(h) { BooleanArray(4) } }
+        val queue = ArrayDeque<Array4>()
+        val s0 = startDir.ordinal
+        seen[start.x][start.y][s0] = true
+        queue.add(Array4(start.x, start.y, s0, 0))
+        while (queue.isNotEmpty()) {
+            val (x, y, di, cost) = queue.removeFirst()
+            if (x == finish.x && y == finish.y) return cost
+            val d = Dir.entries[di]
+            // Belok kiri/kanan: diam di tempat, 1 perintah.
+            for (nd in listOf((di + 3) % 4, (di + 1) % 4)) {
+                if (!seen[x][y][nd]) {
+                    seen[x][y][nd] = true
+                    queue.add(Array4(x, y, nd, cost + 1))
+                }
+            }
+            // Maju: 1 perintah.
+            val nx = x + d.dx
+            val ny = y + d.dy
+            if (nx in 0 until w && ny in 0 until h && Pos(nx, ny) !in cones && !seen[nx][ny][di]) {
+                seen[nx][ny][di] = true
+                queue.add(Array4(nx, ny, di, cost + 1))
+            }
+        }
+        return null
+    }
+
+    private data class Array4(val x: Int, val y: Int, val dir: Int, val cost: Int)
 }

@@ -90,7 +90,8 @@ object FruitLevelGen {
             for (k in 0 until perm.size - 1) d += dist[perm[k]][perm[k + 1]]
             if (d < best) best = d
         }
-        return best
+        // Setiap buah butuh 1 perintah PICK tambahan di posisinya.
+        return if (best == Int.MAX_VALUE) best else best + level.fruits.size
     }
 
     /** Jarak langkah terpendek dari → ke (boleh hadap arah mana pun di awal). */

@@ -100,7 +100,12 @@ class MainActivity : ComponentActivity() {
                         LaunchedEffect(Unit) {
                             loadInterstitial(this@MainActivity)
                             delay(1500)
-                            awaitAndShowInterstitial(this@MainActivity, 2500)
+                            // Fresh install: launch PERTAMA tanpa iklan splash.
+                            // Iklan mulai muncul dari launch berikutnya.
+                            val sp = this@MainActivity.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+                            val firstRun = !sp.getBoolean("launched_before", false)
+                            if (!firstRun) awaitAndShowInterstitial(this@MainActivity, 2500)
+                            sp.edit().putBoolean("launched_before", true).apply()
                             splash = false
                         }
                     } else {
@@ -734,6 +739,12 @@ private fun MainMenuScreen(
             strings.offlineTag,
             color = Color.White,
             fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "v${BuildConfig.VERSION_NAME}",
+            color = Color.White.copy(alpha = 0.55f),
+            fontSize = 11.sp,
         )
     }
 }

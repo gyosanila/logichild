@@ -201,14 +201,14 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
             if (!after.crashed) {
                 if (after.fruitsLeft.isEmpty()) {
                     val lv = FruitLevelGen.generate(after.level, Random(after.level * 104729L))
-                    // Rating 1-5: 5★ = rute paling hemat DAN tanpa ghost preview.
+                    // Rating 1-5: 5★ = program PALING HEMAT (BFS sudah hitung
+                    // belok + PICK per buah). Ghost cuma preview — bukan solusi,
+                    // jadi tidak mengurangi rating.
                     val best = FruitLevelGen.minStepsToCollect(lv)
                     val steps = after.commands.size
-                    val shadowMode = readShadowMode(prefs)
-                    val ghostShown = shadowMode == "on" || (shadowMode == "auto" && after.level <= 5)
                     val rating = when {
-                        steps <= best && !ghostShown -> 5
-                        steps <= best -> 4
+                        steps <= best -> 5
+                        steps <= best + 2 -> 4
                         steps <= best * 2 -> 3
                         steps <= best * 3 -> 2
                         else -> 1

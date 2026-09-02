@@ -240,16 +240,16 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                     is StepResult.Won -> {
                         val lv = level
                         val prevStars = _uiState.value.stars[lv.index] ?: 0
-                        // Rating 1-5: 5★ = rute paling hemat DAN tanpa ghost preview.
-                        // Ghost cuma tampil di level 1-5, jadi 5★ baru bisa di level 6+.
-                        val best = LevelGen.bfs(lv.start, lv.finish, lv.width, lv.height, lv.cones)
+                        // Rating 1-5: 5★ = program PALING HEMAT. BFS dihitung per
+                        // perintah (termasuk belok), jadi rute tercepat = 5★.
+                        // Ghost cuma preview posisi akhir — bukan solusi, jadi
+                        // tidak mengurangi rating.
+                        val best = LevelGen.bestInstructions(lv.start, lv.startDir, lv.finish, lv.width, lv.height, lv.cones)
                             ?: s.instructions.size
                         val steps = s.instructions.size
-                        val shadowMode = readShadowMode(prefs)
-                        val ghostShown = shadowMode == "on" || (shadowMode == "auto" && lv.index < 5)
                         val rating = when {
-                            steps <= best && !ghostShown -> 5
-                            steps <= best -> 4
+                            steps <= best -> 5
+                            steps <= best + 2 -> 4
                             steps <= best * 2 -> 3
                             steps <= best * 3 -> 2
                             else -> 1

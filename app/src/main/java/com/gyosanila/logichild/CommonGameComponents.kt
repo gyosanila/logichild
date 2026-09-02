@@ -23,7 +23,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
@@ -51,60 +51,75 @@ import com.gyosanila.logichild.ui.OceanBlue
 import com.gyosanila.logichild.ui.SunYellow
 import com.gyosanila.logichild.ui.TextDark
 
-// ─── Toolbar (sama di semua game): kiri icon+judul, kanan audio+home ─
+// ─── Toolbar (sama di semua game): emoji+judul CENTER, kanan audio + peta ─
 
 @Composable
 fun Toolbar(
     emoji: String,
     title: String,
-    onBack: (() -> Unit)?,
+    onBack: (() -> Unit)? = null,          // tombol peta → kembali ke roadmap
     soundOn: Boolean? = null,
     onToggleSound: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
-        // Kiri: icon + judul
-        Text(emoji, fontSize = 32.sp)
-        Spacer(Modifier.width(10.dp))
-        Text(
-            title,
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.weight(1f),
-        )
-        // Kanan: audio + home
-        if (soundOn != null && onToggleSound != null) {
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier.size(40.dp),
-                onClick = onToggleSound,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        if (soundOn) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                        contentDescription = null,
-                        tint = TextDark,
-                    )
-                }
-            }
-            Spacer(Modifier.width(6.dp))
+        // Emoji + judul: center horizontal (bukan nempel kiri).
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.align(Alignment.Center),
+        ) {
+            Text(emoji, fontSize = 24.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+            )
         }
-        if (onBack != null) {
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier.size(40.dp),
-                onClick = onBack,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Home, contentDescription = "Menu", tint = TextDark)
+        // Kanan: audio + tombol peta (balik ke peta level).
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.align(Alignment.CenterEnd),
+        ) {
+            if (soundOn != null && onToggleSound != null) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(38.dp),
+                    onClick = onToggleSound,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            if (soundOn) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                            contentDescription = null,
+                            tint = TextDark,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.width(6.dp))
+            }
+            if (onBack != null) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(38.dp),
+                    onClick = onBack,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Filled.Map,
+                            contentDescription = null,
+                            tint = TextDark,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
         }
