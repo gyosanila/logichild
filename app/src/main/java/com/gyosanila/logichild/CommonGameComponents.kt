@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
@@ -51,13 +52,15 @@ import com.gyosanila.logichild.ui.OceanBlue
 import com.gyosanila.logichild.ui.SunYellow
 import com.gyosanila.logichild.ui.TextDark
 
-// ─── Toolbar (sama di semua game): emoji+judul CENTER, kanan audio + peta ─
+// ─── Toolbar SATU komponen buat semua halaman (roadmap & game) ─────────
+// Emoji+judul CENTER; kiri: tombol back (panah); kanan: audio + tombol peta.
 
 @Composable
 fun Toolbar(
     emoji: String,
     title: String,
-    onBack: (() -> Unit)? = null,          // tombol peta → kembali ke roadmap
+    onBack: (() -> Unit)? = null,          // panah kiri → halaman di atasnya
+    onOpenMap: (() -> Unit)? = null,       // ikon peta → roadmap level
     soundOn: Boolean? = null,
     onToggleSound: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -65,9 +68,22 @@ fun Toolbar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
-        // Emoji + judul: center horizontal (bukan nempel kiri).
+        if (onBack != null) {
+            CircleToolbarButton(
+                onClick = onBack,
+                modifier = Modifier.align(Alignment.CenterStart),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = TextDark,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        // Emoji + judul: center horizontal.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.align(Alignment.Center),
@@ -82,46 +98,51 @@ fun Toolbar(
                 maxLines = 1,
             )
         }
-        // Kanan: audio + tombol peta (balik ke peta level).
+        // Kanan: audio + tombol peta.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.align(Alignment.CenterEnd),
         ) {
             if (soundOn != null && onToggleSound != null) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(38.dp),
-                    onClick = onToggleSound,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            if (soundOn) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                            contentDescription = null,
-                            tint = TextDark,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                CircleToolbarButton(onClick = onToggleSound) {
+                    Icon(
+                        if (soundOn) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                        contentDescription = null,
+                        tint = TextDark,
+                        modifier = Modifier.size(20.dp),
+                    )
                 }
                 Spacer(Modifier.width(6.dp))
             }
-            if (onBack != null) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(38.dp),
-                    onClick = onBack,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.Map,
-                            contentDescription = null,
-                            tint = TextDark,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+            if (onOpenMap != null) {
+                CircleToolbarButton(onClick = onOpenMap) {
+                    Icon(
+                        Icons.Filled.Map,
+                        contentDescription = null,
+                        tint = TextDark,
+                        modifier = Modifier.size(20.dp),
+                    )
                 }
             }
+        }
+    }
+}
+
+/** Lingkaran putih tombol toolbar — dipakai back/audio/peta biar seragam. */
+@Composable
+private fun CircleToolbarButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.92f),
+        onClick = onClick,
+        modifier = modifier.size(40.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            content()
         }
     }
 }

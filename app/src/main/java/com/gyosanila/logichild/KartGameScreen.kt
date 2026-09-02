@@ -133,7 +133,7 @@ fun KartGameScreen(
             title = strings.playCar,
             soundOn = state.soundOn,
             onToggleSound = vm::toggleSound,
-            onBack = onBack,
+            onOpenMap = onBack,
         )
         Text(
             "${strings.level} ${state.levelIndex + 1}",

@@ -19,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -75,46 +74,12 @@ fun RoadmapScreen(
             .fillMaxSize()
             .background(SkyBlue),
     ) {
-        // ── Header ──
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-        ) {
-            // Tombol kembali: lingkaran putih + ikon panah vektor (simetris).
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.92f),
-                onClick = onBack,
-                modifier = Modifier
-                    .size(44.dp)
-                    .align(Alignment.CenterStart),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
-                        tint = TextDark,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
-            }
-            // Judul: benar-benar center di layar.
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.align(Alignment.Center),
-            ) {
-                Text(emoji, fontSize = 24.sp)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    title,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Black,
-                    maxLines = 1,
-                )
-            }
-        }
+        // Header pakai komponen Toolbar yang SAMA dengan halaman game.
+        Toolbar(
+            emoji = emoji,
+            title = title,
+            onBack = onBack,
+        )
         Text(
             strings.roadmapPick,
             color = Color.White,

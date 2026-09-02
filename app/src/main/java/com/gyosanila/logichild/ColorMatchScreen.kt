@@ -73,13 +73,9 @@ fun ColorMatchScreen(
         Toolbar(
             emoji = "🎨",
             title = strings.playColor,
-            onBack = onBack,
-            soundOn = vm.sounds.enabled,
-            onToggleSound = {
-                vm.sounds.enabled = !vm.sounds.enabled
-                context.getSharedPreferences("kartcilik_prefs", android.content.Context.MODE_PRIVATE)
-                    .edit().putBoolean("sound_on", vm.sounds.enabled).apply()
-            },
+            soundOn = state.soundOn,
+            onToggleSound = vm::toggleSound,
+            onOpenMap = onBack,
         )
 
         Text(

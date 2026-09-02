@@ -24,6 +24,7 @@ data class ColorUiState(
     val won: Boolean = false,
     val reward: Reward = Reward.NONE,
     val confettiTick: Int = 0,
+    val soundOn: Boolean = true,
 )
 
 class ColorMatchViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,6 +34,18 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
 
     private val _uiState = MutableStateFlow(ColorUiState())
     val uiState: StateFlow<ColorUiState> = _uiState.asStateFlow()
+
+    init {
+        sounds.enabled = prefs.getBoolean("sound_on", true)
+        _uiState.update { it.copy(soundOn = sounds.enabled) }
+    }
+
+    fun toggleSound() {
+        sounds.enabled = !sounds.enabled
+        prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
+        _uiState.update { it.copy(soundOn = sounds.enabled) }
+        if (sounds.enabled) sounds.tap()
+    }
 
     /** Baca semua bintang (per level, tanpa batas). */
     private fun readStars(): Map<Int, Int> {

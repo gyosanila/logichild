@@ -132,7 +132,9 @@ fun FruitGameScreen(
         Toolbar(
             emoji = "🍎",
             title = strings.playFruit,
-            onBack = onBack,
+            soundOn = state.soundOn,
+            onToggleSound = vm::toggleSound,
+            onOpenMap = onBack,
         )
 
         Text(

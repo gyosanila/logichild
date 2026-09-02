@@ -37,6 +37,7 @@ data class FruitUiState(
     val exhausted: Boolean = false,
     val reward: Reward = Reward.NONE,
     val stars: Map<Int, Int> = emptyMap(),
+    val soundOn: Boolean = true,
 )
 
 class FruitGameViewModel(application: Application) : AndroidViewModel(application) {
@@ -58,8 +59,15 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
         val savedLevel = prefs.getInt("fruit_level", 1)
-        _uiState.update { it.copy(level = savedLevel, unlocked = maxOf(savedLevel, 1)) }
+        _uiState.update { it.copy(soundOn = sounds.enabled, level = savedLevel, unlocked = maxOf(savedLevel, 1)) }
         newLevel(savedLevel)
+    }
+
+    fun toggleSound() {
+        sounds.enabled = !sounds.enabled
+        prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
+        _uiState.update { it.copy(soundOn = sounds.enabled) }
+        if (sounds.enabled) sounds.tap()
     }
 
     private fun newLevel(level: Int) {
