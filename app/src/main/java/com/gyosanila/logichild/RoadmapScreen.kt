@@ -3,6 +3,8 @@ package com.gyosanila.logichild
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -16,15 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -34,210 +34,189 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gyosanila.logichild.ui.LocalStrings
-import com.gyosanila.logichild.ui.SkyBlue
 import com.gyosanila.logichild.ui.SunYellow
 import com.gyosanila.logichild.ui.TextDark
-import kotlin.math.roundToInt
+import kotlin.math.cos
+import kotlin.math.sin
 
-/**
- * Halaman ROADMAP — pilih level di peta jalur berliku.
- *
- * - Langit + awan FIX di atas (tidak ikut scroll), rumput + jalan yang scroll.
- * - Header simetris: tombol ← bulat (ikon vektor, center), judul di tengah layar.
- * - Node: selesai = hijau + meter bintang 5 (★ isi kuning sesuai rating),
- *   aktif/frontier = kuning + ring putih + ✨, kebuka = putih,
- *   terkunci = abu + 🔒 (2 preview di depan).
- * - Auto-scroll ke level frontier. Ukuran node KONSTAN (tidak ada efek zoom).
- */
+/** Shared horizontal adventure map used by all three games. */
 @Composable
 fun RoadmapScreen(
     emoji: String,
     title: String,
-    unlockedCount: Int,          // level 1-based yang bisa dimainkan
-    stars: Map<Int, Int>,        // level 1-based → jumlah bintang 1..5
-    onSelect: (Int) -> Unit,     // level 1-based
+    unlockedCount: Int,
+    stars: Map<Int, Int>,
+    onSelect: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
     val strings = LocalStrings.current
-    val total = unlockedCount.coerceAtLeast(1) + 2   // +2 node terkunci preview
+    val total = unlockedCount.coerceAtLeast(1) + 2
+    val scroll = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(SkyBlue),
+            .background(Color(0xFFF8CA55)),
     ) {
-        // Header pakai komponen Toolbar yang SAMA dengan halaman game.
-        Toolbar(
-            emoji = emoji,
-            title = title,
-            onBack = onBack,
-        )
+        Toolbar(emoji = emoji, title = title, onBack = onBack)
         Text(
             strings.roadmapPick,
-            color = Color.White,
+            color = Color(0xFF6B4025),
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
         )
-        Spacer(Modifier.height(4.dp))
-
-        // ── Peta: langit tetap di atas, dunia (rumput+jalan) scroll ──
-        val skyH = 150.dp
-        val rowH = 118.dp
         BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
         ) {
-            val mapW = maxWidth
-            val scrollAreaH = (maxHeight - skyH).coerceAtLeast(0.dp)
-            val density = LocalDensity.current
-
-            Column(Modifier.fillMaxSize()) {
-                // Langit + awan: FIX (tidak ikut scroll).
-                SkyBand(skyH, Modifier.fillMaxWidth().height(skyH))
-
-                // Dunia scroll: rumput + jalan + dekorasi + node.
-                val scroll = rememberScrollState()
-                LaunchedEffect(unlockedCount) {
-                    // Level frontier (terakhir yang kebuka) di-auto-center.
-                    val nodeY = 70.dp + rowH * (unlockedCount - 1)
-                    val target = (nodeY - scrollAreaH / 2f + rowH / 2f).coerceAtLeast(0.dp)
-                    scroll.scrollTo(with(density) { target.toPx() }.roundToInt())
-                }
-
+            val colW = 156.dp
+            val worldW = (colW * total + 100.dp).coerceAtLeast(maxWidth)
+            val worldH = maxHeight.coerceAtLeast(470.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .horizontalScroll(scroll),
+            ) {
                 Box(
-                    Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .verticalScroll(scroll),
+                    modifier = Modifier
+                        .width(worldW)
+                        .height(worldH),
                 ) {
-                    val worldH = (rowH * total + 90.dp).coerceAtLeast(scrollAreaH)
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(worldH),
-                    ) {
-                        // Rumput (latar penuh) + jalan S-curve + dekorasi.
-                        Canvas(Modifier.fillMaxSize()) {
-                            val w = size.width
-                            drawRect(
-                                Brush.verticalGradient(
-                                    listOf(Color(0xFF8CD95E), Color(0xFF6FB83F)),
-                                    startY = 0f, endY = size.height,
-                                ),
-                            )
-                            // Jalan aspal (S-curve vertikal)
-                            val rowPx = rowH.toPx()
-                            val pts = List(total) { i ->
-                                Offset(
-                                    if (i % 2 == 0) w * 0.24f else w * 0.76f,
-                                    70.dp.toPx() + i * rowPx,
-                                )
-                            }
-                            val road = Path()
-                            pts.forEachIndexed { i, p ->
-                                if (i == 0) road.moveTo(p.x, p.y)
-                                else {
-                                    val prev = pts[i - 1]
-                                    val midY = (prev.y + p.y) / 2f
-                                    road.cubicTo(prev.x, midY, p.x, midY, p.x, p.y)
-                                }
-                            }
-                            drawPath(
-                                road,
-                                Color(0xFF939CA8),
-                                style = Stroke(20.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
-                            )
-                            // Garis tengah putus-putus
-                            val dashes = mutableListOf<Offset>()
-                            for (i in 0 until pts.size - 1) {
-                                dashes += bezierPts(pts[i], pts[i + 1], 20)
-                            }
-                            var k = 0
-                            while (k < dashes.size - 5) {
-                                drawLine(Color.White, dashes[k], dashes[k + 3], strokeWidth = 5.dp.toPx(), cap = StrokeCap.Round)
-                                k += 10
-                            }
-                            // Semak & bunga di pinggir jalan
-                            for (i in 0 until total - 1) {
-                                val mid = (pts[i].x + pts[i + 1].x) / 2f
-                                val my = (pts[i].y + pts[i + 1].y) / 2f
-                                val side = if (pts[i].x < pts[i + 1].x) -1f else 1f
-                                drawBush(mid + side * w * 0.13f, my, 1f)
-                                if (i % 2 == 1) {
-                                    drawFlower(mid + side * w * 0.24f, my + 34.dp.toPx(), 1f, Color(0xFFEF5350))
-                                }
-                            }
-                        }
-                        // Bendera start & piala
-                        Text(
-                            "🚩",
-                            fontSize = 28.sp,
+                    AdventureMapCanvas(total, colW, Modifier.fillMaxSize())
+                    Text(
+                        "🚩",
+                        fontSize = 34.sp,
+                        modifier = Modifier.offset(x = 46.dp, y = 238.dp),
+                    )
+                    Text(
+                        "🏆",
+                        fontSize = 40.sp,
+                        modifier = Modifier.offset(x = colW * total - 66.dp, y = 236.dp),
+                    )
+                    Text(
+                        "START",
+                        color = Color(0xFF6B4025),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.offset(x = 35.dp, y = 300.dp),
+                    )
+                    Text(
+                        "FINISH",
+                        color = Color(0xFF6B4025),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.offset(x = colW * total - 88.dp, y = 300.dp),
+                    )
+                    repeat(total) { index ->
+                        val level = index + 1
+                        val node = mapNode(index, colW)
+                        val locked = level > unlockedCount
+                        val current = !locked && level == unlockedCount
+                        RoadmapNode(
+                            level = level,
+                            star = if (locked) 0 else stars[level] ?: 0,
+                            locked = locked,
+                            current = current,
+                            onClick = { if (!locked) onSelect(level) },
                             modifier = Modifier.offset(
-                                x = (mapW * 0.24f).value.dp - 16.dp,
-                                y = 70.dp - 42.dp,
+                                x = node.x - node.radius,
+                                y = node.y - node.radius,
                             ),
                         )
-                        Text(
-                            "🏆",
-                            fontSize = 34.sp,
-                            modifier = Modifier.offset(
-                                x = (mapW * (if ((total - 1) % 2 == 0) 0.24f else 0.76f)).value.dp - 18.dp,
-                                y = rowH * total + 8.dp,
-                            ),
-                        )
-                        // Node level
-                        for (i in 0 until total) {
-                            val level = i + 1
-                            val locked = level > unlockedCount
-                            val isCurrent = !locked && level == unlockedCount
-                            val star = if (locked) 0 else stars[level] ?: 0
-                            val cxDp = (mapW * (if (i % 2 == 0) 0.24f else 0.76f)).value
-                            val cyDp = 70.dp.value + i * rowH.value
-                            val sizeDp = if (isCurrent) 58f else 50f
-                            RoadmapNode(
-                                level = level,
-                                star = star,
-                                locked = locked,
-                                isCurrent = isCurrent,
-                                onClick = { if (!locked) onSelect(level) },
-                                modifier = Modifier.offset(
-                                    x = (cxDp - sizeDp / 2f).dp,
-                                    y = (cyDp - sizeDp / 2f).dp,
-                                ),
-                            )
-                        }
                     }
                 }
             }
         }
+        Text(
+            "SWIPE  ←  →   •   PILIH LEVEL PETUALANGAN",
+            color = Color(0xFF6B4025),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFFEFB2))
+                .padding(vertical = 8.dp),
+        )
     }
 }
 
-/** Pita langit + awan — posisi tetap, tidak ikut scroll. */
+private data class NodePosition(val x: androidx.compose.ui.unit.Dp, val y: androidx.compose.ui.unit.Dp, val radius: androidx.compose.ui.unit.Dp)
+
+private fun mapNode(index: Int, colW: androidx.compose.ui.unit.Dp): NodePosition {
+    val y = when (index % 6) {
+        0 -> 294.dp
+        1 -> 190.dp
+        2 -> 330.dp
+        3 -> 145.dp
+        4 -> 275.dp
+        else -> 165.dp
+    }
+    val radius = if (index % 6 == 3) 52.dp else 45.dp
+    return NodePosition(78.dp + colW * index, y, radius)
+}
+
 @Composable
-private fun SkyBand(height: Dp, modifier: Modifier = Modifier) {
-    Canvas(modifier.height(height)) {
-        val w = size.width
-        drawRect(
-            Brush.verticalGradient(
-                listOf(Color(0xFF6FC4F5), Color(0xFFBEE9FD)),
-                startY = 0f, endY = size.height,
-            ),
-        )
-        drawCloud(110.dp.toPx(), 55.dp.toPx(), 1f)
-        drawCloud(w - 150.dp.toPx(), 95.dp.toPx(), 0.8f)
-        drawCloud(300.dp.toPx(), 30.dp.toPx(), 0.6f)
+private fun AdventureMapCanvas(total: Int, colW: androidx.compose.ui.unit.Dp, modifier: Modifier) {
+    Canvas(modifier) {
+        val points = (0 until total).map { i ->
+            Offset((78.dp + colW * i).toPx(), mapNode(i, colW).y.toPx())
+        }
+        drawRect(Brush.verticalGradient(listOf(Color(0xFFF8CA55), Color(0xFFECAF43))))
+        val road = Path()
+        points.forEachIndexed { i, point ->
+            if (i == 0) road.moveTo(point.x, point.y)
+            else {
+                val previous = points[i - 1]
+                val dx = point.x - previous.x
+                road.cubicTo(
+                    previous.x + dx * .28f, previous.y,
+                    point.x - dx * .28f, point.y,
+                    point.x, point.y,
+                )
+            }
+        }
+        drawPath(road, Color(0xFFB5672E), style = Stroke(width = 112.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(road, Color(0xFFE88E3E), style = Stroke(width = 104.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(road, Color(0xFFF6B65B), style = Stroke(width = 80.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawDashedRoad(points)
+        for (i in 0 until total + 2) {
+            val x = (36.dp + colW * i).toPx()
+            val y = if (i % 2 == 0) 95.dp.toPx() else 445.dp.toPx()
+            drawBush(x, y, if (i % 3 == 0) 1.15f else .85f)
+            if (i % 2 == 1) drawFlower(x + 35.dp.toPx(), y + 38.dp.toPx(), Color(0xFFEF6672))
+            if (i % 4 == 0) drawCrystal(x + 65.dp.toPx(), y + 8.dp.toPx())
+        }
+    }
+}
+
+private fun DrawScope.drawDashedRoad(points: List<Offset>) {
+    for (i in 0 until points.size - 1) {
+        val a = points[i]
+        val b = points[i + 1]
+        for (step in 0 until 8) {
+            val start = step / 8f
+            val end = (step + .42f) / 8f
+            drawLine(
+                Color(0xFFFFE6A0),
+                Offset(a.x + (b.x - a.x) * start, a.y + (b.y - a.y) * start),
+                Offset(a.x + (b.x - a.x) * end, a.y + (b.y - a.y) * end),
+                strokeWidth = 6.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
     }
 }
 
@@ -246,112 +225,100 @@ private fun RoadmapNode(
     level: Int,
     star: Int,
     locked: Boolean,
-    isCurrent: Boolean,
+    current: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
 ) {
-    val size = if (isCurrent) 58.dp else 50.dp
-    val bg = when {
-        locked -> Color(0xFFC3CBD3)
-        isCurrent -> SunYellow
-        star > 0 -> Color(0xFF66BB6A)
-        else -> Color.White
+    val radius = if (current) 52.dp else 45.dp
+    val color = when {
+        locked -> Color(0xFFAAB5C2)
+        current -> SunYellow
+        star > 0 -> Color(0xFF7860A5)
+        else -> Color(0xFF8C78B5)
     }
-    Box(modifier.size(size), contentAlignment = Alignment.Center) {
-        Surface(
-            shape = CircleShape,
-            color = bg,
-            onClick = onClick,
-            modifier = Modifier
-                .fillMaxSize()
-                .border(
-                    width = if (isCurrent) 4.dp else 0.dp,
-                    color = Color.White,
-                    shape = CircleShape,
-                )
-                .shadow(6.dp, CircleShape),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                when {
-                    locked -> Icon(Icons.Filled.Lock, null, tint = Color(0xFF6B727C), modifier = Modifier.size(18.dp))
-                    star > 0 -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Surface(
+                shape = RoundedCornerShape(38.dp),
+                color = color,
+                onClick = onClick,
+                modifier = Modifier
+                    .size(radius * 2)
+                    .shadow(7.dp, RoundedCornerShape(38.dp))
+                    .border(5.dp, if (current) Color.White else Color(0xFF574073), RoundedCornerShape(38.dp)),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (locked) {
+                        Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF3D4855), modifier = Modifier.size(27.dp))
+                    } else {
                         Text(
                             "$level",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Black,
                             color = Color.White,
+                            fontSize = if (current) 38.sp else 34.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 2.dp),
                         )
-                        Spacer(Modifier.height(1.dp))
-                        StarMeter(star)
                     }
-                    else -> Text(
-                        "$level",
-                        fontSize = if (isCurrent) 20.sp else 17.sp,
-                        fontWeight = FontWeight.Black,
-                        color = if (isCurrent) Color.White else TextDark,
-                    )
                 }
             }
+            if (current) Text("✦", color = Color.White, fontSize = 25.sp, modifier = Modifier.offset(y = (-55).dp))
         }
-        if (isCurrent) {
-            Text("✨", fontSize = 17.sp, modifier = Modifier.align(Alignment.TopCenter))
-        }
+        if (!locked) StarBadge(star) else Spacer(Modifier.height(38.dp))
     }
 }
 
-/**
- * 5 slot bintang mini: ★ kuning sesuai rating, ☆ putih transparan sisanya.
- */
 @Composable
-private fun StarMeter(star: Int) {
-    val n = star.coerceIn(0, 5)
-    Row {
-        repeat(5) { i ->
-            Text(
-                if (i < n) "★" else "☆",
-                fontSize = 7.sp,
-                color = if (i < n) Color(0xFFFFE082) else Color.White.copy(alpha = 0.6f),
-            )
+private fun StarBadge(star: Int) {
+    val count = star.coerceIn(0, 5)
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = Color(0xFFFFF8DA),
+        shadowElevation = 3.dp,
+        modifier = Modifier
+            .padding(top = 7.dp)
+            .height(34.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            repeat(5) { i ->
+                Text(
+                    if (i < count) "★" else "☆",
+                    color = if (i < count) Color(0xFFF0B928) else Color(0xFFB9A77B),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                )
+            }
         }
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.bezierPts(
-    a: Offset, b: Offset, steps: Int,
-): List<Offset> {
-    val midY = (a.y + b.y) / 2f
-    return List(steps + 1) { i ->
-        val t = i.toFloat() / steps
-        val mt = 1 - t
-        Offset(
-            mt * mt * mt * a.x + 3 * mt * mt * t * a.x + 3 * mt * t * t * b.x + t * t * t * b.x,
-            mt * mt * mt * a.y + 3 * mt * mt * t * midY + 3 * mt * t * t * midY + t * t * t * b.y,
-        )
-    }
+private fun DrawScope.drawBush(x: Float, y: Float, scale: Float) {
+    drawCircle(Color(0xFF3F973F), 25f * scale, Offset(x - 20f * scale, y))
+    drawCircle(Color(0xFF56B34A), 29f * scale, Offset(x + 7f * scale, y - 10f * scale))
+    drawCircle(Color(0xFF32863B), 21f * scale, Offset(x + 32f * scale, y + 4f * scale))
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCloud(
-    cx: Float, cy: Float, s: Float,
-) {
-    val c = Color.White.copy(alpha = 0.85f)
-    drawCircle(c, 20f * s, Offset(cx - 16f * s, cy + 4f * s))
-    drawCircle(c, 26f * s, Offset(cx, cy))
-    drawCircle(c, 18f * s, Offset(cx + 18f * s, cy + 6f * s))
-}
-
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBush(
-    cx: Float, cy: Float, s: Float,
-) {
-    drawCircle(Color(0xFF66BB6A), 12f * s, Offset(cx, cy))
-    drawCircle(Color(0xFF81C784), 10f * s, Offset(cx + 7f * s, cy - 4f * s))
-}
-
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFlower(
-    cx: Float, cy: Float, s: Float, color: Color,
-) {
+private fun DrawScope.drawFlower(x: Float, y: Float, color: Color) {
     repeat(5) { k ->
-        val ang = k * 2 * Math.PI / 5
-        drawCircle(color, 4f * s, Offset(cx + 6f * s * Math.cos(ang).toFloat(), cy + 6f * s * Math.sin(ang).toFloat()))
+        val angle = k * 2 * Math.PI / 5
+        drawCircle(color, 8f, Offset(x + cos(angle).toFloat() * 13f, y + sin(angle).toFloat() * 13f))
     }
-    drawCircle(Color(0xFFFFD23C), 3.2f * s, Offset(cx, cy))
+    drawCircle(Color(0xFFFFD22F), 6f, Offset(x, y))
+}
+
+private fun DrawScope.drawCrystal(x: Float, y: Float) {
+    val p = Path().apply {
+        moveTo(x, y - 28f); lineTo(x + 20f, y - 5f); lineTo(x + 10f, y + 25f)
+        lineTo(x - 16f, y + 20f); lineTo(x - 25f, y - 5f); close()
+    }
+    drawPath(p, Color(0xFF6E8DE0), style = Stroke(3f, join = StrokeJoin.Round))
+    drawPath(p, Color(0xFF6E8DE0))
+    drawLine(Color(0xFFC8E5FF), Offset(x - 3f, y - 20f), Offset(x + 7f, y + 14f), 4f)
 }
