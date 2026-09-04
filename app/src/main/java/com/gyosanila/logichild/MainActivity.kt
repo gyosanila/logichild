@@ -86,6 +86,17 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
         initAds(applicationContext)
+        // Android/backup tertentu dapat memulihkan preferences setelah reinstall.
+        // Jangan biarkan lock/splash state dari instalasi lama ikut terbawa.
+        val installPrefs = getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+        val installId = packageManager.getPackageInfo(packageName, 0).firstInstallTime
+        if (installPrefs.getLong("install_identity", 0L) != installId) {
+            installPrefs.edit()
+                .remove("screen_locked")
+                .remove("launched_before")
+                .putLong("install_identity", installId)
+                .apply()
+        }
         setContent {
             KartCilikTheme {
                 val context = LocalContext.current

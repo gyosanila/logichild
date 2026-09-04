@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ import com.gyosanila.logichild.ui.SunYellow
 import com.gyosanila.logichild.ui.TextDark
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlinx.coroutines.delay
 
 /** Shared horizontal adventure map used by all three games. */
 @Composable
@@ -84,6 +87,17 @@ fun RoadmapScreen(
             val colW = 156.dp
             val worldW = (colW * total + 100.dp).coerceAtLeast(maxWidth)
             val worldH = maxHeight.coerceAtLeast(470.dp)
+            val density = LocalDensity.current
+            // Saat roadmap dibuka, pusatkan node level terakhir yang terbuka.
+            LaunchedEffect(unlockedCount, worldW, maxWidth) {
+                delay(60) // tunggu horizontalScroll selesai mengukur content
+                val latestX = 78.dp + colW * (unlockedCount.coerceAtLeast(1) - 1)
+                val target = (latestX - maxWidth / 2f).coerceAtLeast(0.dp)
+                val maxScrollDp = (worldW - maxWidth).coerceAtLeast(0.dp)
+                scroll.scrollTo(
+                    with(density) { target.coerceAtMost(maxScrollDp).roundToPx() },
+                )
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
