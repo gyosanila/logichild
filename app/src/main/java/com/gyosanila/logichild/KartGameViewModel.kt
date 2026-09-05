@@ -53,6 +53,8 @@ class GameSounds(context: Context) {
     private val sApplause = pool.load(context, R.raw.applause, 1)
     private val sFanfare = pool.load(context, R.raw.fanfare, 1)
     private val sSparkle = pool.load(context, R.raw.sparkle, 1)
+    private val sTap = pool.load(context, R.raw.tap, 1)
+    private val sStep = pool.load(context, R.raw.step, 1)
 
     // Load SoundPool itu async — simpan status siap & pending play.
     private val ready = mutableSetOf<Int>()
@@ -84,15 +86,15 @@ class GameSounds(context: Context) {
     var enabled = true
 
     fun tap() {
-        if (enabled) play(sSparkle, 0.4f, 1.6f)
+        if (enabled) play(sTap, 0.24f)
     }
 
     fun move() {
-        if (enabled) play(sSparkle, 0.5f, 1.4f)
+        if (enabled) play(sStep, 0.28f)
     }
 
     fun turn() {
-        if (enabled) play(sSparkle, 0.5f, 1.2f)
+        if (enabled) play(sTap, 0.20f, 0.85f)
     }
 
     fun crash() {
