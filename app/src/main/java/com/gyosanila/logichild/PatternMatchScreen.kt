@@ -64,18 +64,20 @@ fun PatternMatchScreen(
             ) {
                 Text(strings.patternAsk, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
                 Spacer(Modifier.size(18.dp))
+                val compact = state.sequence.size > 4
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     state.sequence.forEach { token ->
+                        val tileSize = if (compact) 52.dp else 64.dp
                         Surface(
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
                             color = if (token == "?") Color.White else Color(0xFFFFF1B2),
-                            modifier = Modifier.size(64.dp),
+                            modifier = Modifier.size(tileSize),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(token, fontSize = if (token == "?") 34.sp else 36.sp, fontWeight = FontWeight.Black, color = TextDark)
+                                Text(token, fontSize = if (token == "?") 30.sp else if (compact) 30.sp else 36.sp, fontWeight = FontWeight.Black, color = TextDark)
                             }
                         }
                     }
