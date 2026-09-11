@@ -207,7 +207,6 @@ private fun MainNav(
                 GameChoice.Menu -> MainMenuScreen(
                     onKart = { game = GameChoice.RoadmapKart },
                     onFruit = { game = GameChoice.RoadmapFruit },
-                    onColor = { game = GameChoice.RoadmapColor },
                     onSettings = { mathGate = true },
                 )
                 GameChoice.RoadmapKart -> RoadmapScreen(
@@ -596,7 +595,6 @@ private fun BreakOverlay(strings: com.gyosanila.logichild.ui.AppStrings, onKeepP
 private fun MainMenuScreen(
     onKart: () -> Unit,
     onFruit: () -> Unit,
-    onColor: () -> Unit,
     onSettings: () -> Unit,
 ) {
     val strings = LocalStrings.current
@@ -686,37 +684,6 @@ private fun MainMenuScreen(
                     Text(
                         strings.playFruitDesc,
                         color = TextDark,
-                        fontSize = 14.sp,
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = BerryPurple,
-            onClick = onColor,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            ) {
-                Text("🎨", fontSize = 48.sp)
-                Spacer(Modifier.width(20.dp))
-                Column {
-                    Text(
-                        strings.playColor,
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                    Text(
-                        strings.playColorDesc,
-                        color = Color.White.copy(alpha = 0.9f),
                         fontSize = 14.sp,
                     )
                 }
