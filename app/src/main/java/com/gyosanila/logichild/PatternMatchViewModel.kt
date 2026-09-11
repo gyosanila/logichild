@@ -1,0 +1,89 @@
+package com.gyosanila.logichild
+
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
+import com.gyosanila.logichild.game.Reward
+import com.gyosanila.logichild.ui.StringsEn
+import com.gyosanila.logichild.ui.StringsId
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlin.random.Random
+
+data class PatternUiState(
+    val level: Int = 1,
+    val unlocked: Int = 1,
+    val sequence: List<String> = emptyList(),
+    val choices: List<String> = emptyList(),
+    val answer: String = "",
+    val mistakes: Int = 0,
+    val stars: Map<Int, Int> = emptyMap(),
+    val won: Boolean = false,
+    val reward: Reward = Reward.NONE,
+    val confettiTick: Int = 0,
+    val soundOn: Boolean = true,
+)
+
+class PatternMatchViewModel(application: Application) : AndroidViewModel(application) {
+    private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+    val sounds = GameSounds(application)
+    private val _uiState = MutableStateFlow(PatternUiState())
+    val uiState: StateFlow<PatternUiState> = _uiState.asStateFlow()
+
+    init {
+        sounds.enabled = prefs.getBoolean("sound_on", true)
+        val level = prefs.getInt("pattern_level", 1)
+        _uiState.update { it.copy(soundOn = sounds.enabled, unlocked = maxOf(1, level)) }
+        loadLevel(level)
+    }
+
+    fun toggleSound() {
+        sounds.enabled = !sounds.enabled
+        prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
+        _uiState.update { it.copy(soundOn = sounds.enabled) }
+        if (sounds.enabled) sounds.tap()
+    }
+
+    fun loadLevel(level: Int) {
+        val safe = level.coerceAtLeast(1)
+        val rng = Random(safe * 7919)
+        val pool = when {
+            safe <= 3 -> listOf("🍎", "🍌", "🍊", "🍇")
+            safe <= 6 -> listOf("🔴", "🔵", "🟡", "🟢")
+            else -> listOf("⭐", "🌙", "🌈", "☀️")
+        }
+        val a = pool[rng.nextInt(pool.size)]
+        var b = pool[rng.nextInt(pool.size)]
+        while (b == a) b = pool[rng.nextInt(pool.size)]
+        val pattern = if (safe % 3 == 0) listOf(a, b, a, b, "?") else listOf(a, b, a, "?")
+        val answer = b
+        val wrong = pool.filter { it != answer }.shuffled(rng).take(if (safe <= 4) 1 else 2)
+        val choices = (wrong + answer).shuffled(rng)
+        _uiState.update { it.copy(level = safe, sequence = pattern, choices = choices, answer = answer, mistakes = 0, won = false, reward = Reward.NONE) }
+    }
+
+    fun answer(choice: String) {
+        val s = _uiState.value
+        if (s.won || choice !in s.choices) return
+        if (choice == s.answer) {
+            val rating = when (s.mistakes) { 0 -> 5; 1 -> 4; 2 -> 3; 3 -> 2; else -> 1 }
+            val previous = prefs.getInt("pstar_${s.level}", 0)
+            val best = maxOf(previous, rating)
+            val next = maxOf(s.unlocked, s.level + 1)
+            val reward = when { s.level % 10 == 0 -> Reward.BIG; s.level % 5 == 0 -> Reward.SMALL; else -> Reward.NONE }
+            val st = if (prefs.getString("lang", "id") == "en") StringsEn else StringsId
+            val praise = when (rating) { 5 -> st.praise5; 4 -> st.praise4; 3 -> st.praise3; 2 -> st.praise2; else -> st.praise1 }
+            if (reward == Reward.BIG) sounds.bigWin(praise) else sounds.win(praise)
+            prefs.edit().putInt("pstar_${s.level}", best).putInt("pattern_level", next).putInt("punlocked", next).apply()
+            _uiState.update { it.copy(won = true, stars = it.stars + (s.level to best), unlocked = next, reward = reward, confettiTick = it.confettiTick + 1) }
+        } else {
+            _uiState.update { it.copy(mistakes = it.mistakes + 1) }
+            sounds.tap()
+        }
+    }
+
+    fun nextLevel() = loadLevel(_uiState.value.level + 1)
+    fun replay() = loadLevel(_uiState.value.level)
+}

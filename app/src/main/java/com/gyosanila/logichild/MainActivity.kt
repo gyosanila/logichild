@@ -73,7 +73,7 @@ import com.gyosanila.logichild.ui.TextDark
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-enum class GameChoice { Menu, Kart, Fruit, Color, RoadmapKart, RoadmapFruit, RoadmapColor, Settings }
+enum class GameChoice { Menu, Kart, Fruit, Pattern, Color, RoadmapKart, RoadmapFruit, RoadmapPattern, RoadmapColor, Settings }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -207,6 +207,7 @@ private fun MainNav(
                 GameChoice.Menu -> MainMenuScreen(
                     onKart = { game = GameChoice.RoadmapKart },
                     onFruit = { game = GameChoice.RoadmapFruit },
+                    onPattern = { game = GameChoice.RoadmapPattern },
                     onSettings = { mathGate = true },
                 )
                 GameChoice.RoadmapKart -> RoadmapScreen(
@@ -231,6 +232,17 @@ private fun MainNav(
                     onSelect = { startLevel = it; game = GameChoice.Fruit },
                     onBack = { game = GameChoice.Menu },
                 )
+                GameChoice.RoadmapPattern -> RoadmapScreen(
+                    emoji = "🧩",
+                    title = strings.playPattern,
+                    unlockedCount = prefs.getInt("punlocked", 1),
+                    stars = prefs.all.filterKeys { it.startsWith("pstar_") }
+                        .mapNotNull { (k, v) ->
+                            k.removePrefix("pstar_").toIntOrNull()?.let { it to ((v as? Int) ?: 0) }
+                        }.toMap(),
+                    onSelect = { startLevel = it; game = GameChoice.Pattern },
+                    onBack = { game = GameChoice.Menu },
+                )
                 GameChoice.RoadmapColor -> RoadmapScreen(
                     emoji = "🎨",
                     title = strings.playColor,
@@ -249,6 +261,10 @@ private fun MainNav(
                 GameChoice.Fruit -> FruitGameScreen(
                     startLevel = startLevel,
                     onBack = { game = GameChoice.RoadmapFruit },
+                )
+                GameChoice.Pattern -> PatternMatchScreen(
+                    startLevel = startLevel,
+                    onBack = { game = GameChoice.RoadmapPattern },
                 )
                 GameChoice.Color -> ColorMatchScreen(
                     startLevel = startLevel,
@@ -595,6 +611,7 @@ private fun BreakOverlay(strings: com.gyosanila.logichild.ui.AppStrings, onKeepP
 private fun MainMenuScreen(
     onKart: () -> Unit,
     onFruit: () -> Unit,
+    onPattern: () -> Unit,
     onSettings: () -> Unit,
 ) {
     val strings = LocalStrings.current
@@ -684,6 +701,37 @@ private fun MainMenuScreen(
                     Text(
                         strings.playFruitDesc,
                         color = TextDark,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = BerryPurple,
+            onClick = onPattern,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(110.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            ) {
+                Text("🧩", fontSize = 48.sp)
+                Spacer(Modifier.width(20.dp))
+                Column {
+                    Text(
+                        strings.playPattern,
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        strings.playPatternDesc,
+                        color = Color.White.copy(alpha = 0.9f),
                         fontSize = 14.sp,
                     )
                 }

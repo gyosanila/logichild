@@ -93,6 +93,11 @@ data class AppStrings(
     val colorPurple: String,
     val colorOrange: String,
     val colorPink: String,
+    // Game 4: Susun Pola
+    val playPattern: String,
+    val playPatternDesc: String,
+    val patternAsk: String,
+    val patternTryAgain: String,
     // Roadmap
     val roadmapPick: String,
 )
@@ -176,6 +181,10 @@ val StringsId = AppStrings(
     colorPurple = "Ungu",
     colorOrange = "Oranye",
     colorPink = "Pink",
+    playPattern = "Susun Pola",
+    playPatternDesc = "Lengkapi urutan gambar!",
+    patternAsk = "Apa yang berikutnya?",
+    patternTryAgain = "Coba lagi ya!",
     roadmapPick = "Pilih level!",
 )
 
@@ -258,6 +267,10 @@ val StringsEn = AppStrings(
     colorPurple = "purple",
     colorOrange = "orange",
     colorPink = "pink",
+    playPattern = "Pattern Puzzle",
+    playPatternDesc = "Complete the picture sequence!",
+    patternAsk = "What comes next?",
+    patternTryAgain = "Try again!",
     roadmapPick = "Pick a level!",
 )
 
