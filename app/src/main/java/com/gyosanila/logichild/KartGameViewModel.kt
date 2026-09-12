@@ -128,9 +128,9 @@ class GameSounds(context: Context) {
     fun reward(rating: Int) {
         if (!enabled) return
         val volume = when {
-            rating >= 5 -> 0.75f
-            rating >= 3 -> 0.65f
-            else -> 0.5f
+            rating >= 5 -> 0.28f
+            rating >= 3 -> 0.22f
+            else -> 0.16f
         }
         play(sApplause, volume)
     }

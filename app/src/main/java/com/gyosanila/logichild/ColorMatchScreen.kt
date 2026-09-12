@@ -97,12 +97,31 @@ fun ColorMatchScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 // Instruksi
-                Text(
-                    String.format(strings.colorAsk, vm.colorName(state.target, strings)),
-                    color = Color.White,
-                    fontSize = 34.sp,
-                    fontWeight = FontWeight.Black,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        String.format(strings.colorAsk, vm.colorName(state.target, strings)),
+                        color = TextDark,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White,
+                        onClick = vm::repeatInstruction,
+                        shadowElevation = 4.dp,
+                        modifier = Modifier.size(56.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("🔊", fontSize = 26.sp)
+                        }
+                    }
+                }
                 if (state.mistakes > 0) {
                     Spacer(Modifier.height(6.dp))
                     Text(

@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -622,179 +623,92 @@ private fun MainMenuScreen(
             .fillMaxSize()
             .background(SkyBlue)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_app_logo),
-            contentDescription = null,
-            modifier = Modifier
-                .size(110.dp)
-                .clip(RoundedCornerShape(26.dp)),
-        )
-        Spacer(Modifier.height(10.dp))
-        Text(
-            strings.appName,
-            color = Color.White,
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Black,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            strings.menuPick,
-            color = Color.White,
-            fontSize = 16.sp,
-        )
-        Spacer(Modifier.height(28.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_app_logo),
+                contentDescription = null,
+                modifier = Modifier.size(58.dp).clip(RoundedCornerShape(16.dp)),
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(strings.appName, color = TextDark, fontSize = 25.sp, fontWeight = FontWeight.Black)
+                Text("v${BuildConfig.VERSION_NAME}", color = TextDark.copy(alpha = 0.65f), fontSize = 11.sp)
+            }
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                onClick = onSettings,
+                shadowElevation = 3.dp,
+            ) {
+                Text("⚙️", fontSize = 25.sp, modifier = Modifier.padding(10.dp))
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Text(strings.menuPick, color = TextDark, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(16.dp))
 
         Surface(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(22.dp),
             color = SunYellow,
             onClick = onKart,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
+            modifier = Modifier.fillMaxWidth().height(88.dp),
+            shadowElevation = 4.dp,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            ) {
-                Text("🚗", fontSize = 48.sp)
-                Spacer(Modifier.width(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 20.dp)) {
+                Text("▶️", fontSize = 34.sp)
+                Spacer(Modifier.width(14.dp))
                 Column {
-                    Text(
-                        strings.playCar,
-                        color = TextDark,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                    Text(
-                        strings.playCarDesc,
-                        color = TextDark,
-                        fontSize = 14.sp,
-                    )
+                    Text("${strings.playCar} — ${strings.level} 1", color = TextDark, fontSize = 21.sp, fontWeight = FontWeight.Black)
+                    Text(strings.menuPick, color = TextDark.copy(alpha = 0.75f), fontSize = 13.sp)
                 }
             }
         }
-        Spacer(Modifier.height(14.dp))
-
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = GrassGreen,
-            onClick = onFruit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            ) {
-                Text("🍎", fontSize = 48.sp)
-                Spacer(Modifier.width(20.dp))
-                Column {
-                    Text(
-                        strings.playFruit,
-                        color = TextDark,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                    Text(
-                        strings.playFruitDesc,
-                        color = TextDark,
-                        fontSize = 14.sp,
-                    )
-                }
-            }
+        Spacer(Modifier.height(16.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MenuGameTile("🚗", strings.playCar, strings.playCarDesc, SunYellow, TextDark, onKart)
+            MenuGameTile("🍎", strings.playFruit, strings.playFruitDesc, GrassGreen, TextDark, onFruit)
         }
-        Spacer(Modifier.height(14.dp))
-
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = BerryPurple,
-            onClick = onPattern,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            ) {
-                Text("🧩", fontSize = 48.sp)
-                Spacer(Modifier.width(20.dp))
-                Column {
-                    Text(
-                        strings.playPattern,
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                    Text(
-                        strings.playPatternDesc,
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 14.sp,
-                    )
-                }
-            }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MenuGameTile("🧩", strings.playPattern, strings.playPatternDesc, BerryPurple, Color.White, onPattern)
+            MenuGameTile("🎨", strings.playColor, strings.playColorDesc, Color(0xFF6B7FD7), Color.White, onColor)
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(18.dp))
+        Text(strings.offlineTag, color = TextDark.copy(alpha = 0.7f), fontSize = 12.sp)
+    }
+}
 
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = BerryPurple,
-            onClick = onColor,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
+@Composable
+private fun RowScope.MenuGameTile(
+    emoji: String,
+    title: String,
+    description: String,
+    background: Color,
+    foreground: Color,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = background,
+        onClick = onClick,
+        modifier = Modifier.weight(1f).height(142.dp),
+        shadowElevation = 3.dp,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(10.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            ) {
-                Text("🎨", fontSize = 48.sp)
-                Spacer(Modifier.width(20.dp))
-                Column {
-                    Text(strings.playColor, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
-                    Text(strings.playColorDesc, color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
-                }
-            }
+            Text(emoji, fontSize = 42.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(title, color = foreground, fontSize = 18.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+            Text(description, color = foreground.copy(alpha = 0.82f), fontSize = 11.sp, textAlign = TextAlign.Center, maxLines = 2)
         }
-        Spacer(Modifier.height(14.dp))
-
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = Color.White.copy(alpha = 0.25f),
-            onClick = onSettings,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(vertical = 12.dp),
-            ) {
-                Text("⚙️", fontSize = 20.sp)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    strings.settings,
-                    color = Color.White,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-        Spacer(Modifier.height(24.dp))
-        Text(
-            strings.offlineTag,
-            color = Color.White,
-            fontSize = 12.sp,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            "v${BuildConfig.VERSION_NAME}",
-            color = Color.White.copy(alpha = 0.55f),
-            fontSize = 11.sp,
-        )
     }
 }

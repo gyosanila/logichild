@@ -24,6 +24,7 @@ class GameVoiceClips(private val context: Context) {
         player?.runCatching { stop() }
         player?.release()
         player = MediaPlayer.create(context, resourceId)?.also { p ->
+            p.setVolume(1.0f, 1.0f)
             p.setOnCompletionListener { it.release(); if (player === it) player = null }
             p.start()
         }

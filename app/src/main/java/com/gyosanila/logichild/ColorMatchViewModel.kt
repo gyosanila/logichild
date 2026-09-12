@@ -145,6 +145,11 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun isEnglish() = prefs.getString("lang", "id") == "en"
 
+    fun repeatInstruction() {
+        val s = _uiState.value
+        voice.instruction(s.target, isEnglish())
+    }
+
     /** Instruksi yang dibacakan dari rekaman suara natural. */
     fun speakInstruction(strings: com.gyosanila.logichild.ui.AppStrings) {
         val s = _uiState.value

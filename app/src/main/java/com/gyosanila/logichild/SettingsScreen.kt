@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gyosanila.logichild.ui.BerryPurple
 import com.gyosanila.logichild.ui.LocalStrings
 import com.gyosanila.logichild.ui.SkyBlue
 import com.gyosanila.logichild.ui.TextDark
@@ -65,7 +66,7 @@ fun SettingsScreen(
         ) {
             Text(
                 "⚙️ ${strings.settingsTitle}",
-                color = androidx.compose.ui.graphics.Color.White,
+                color = TextDark,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
                 modifier = Modifier.weight(1f),
@@ -228,13 +229,13 @@ fun SettingsScreen(
 private fun SettingSection(title: String, content: @Composable () -> Unit) {
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.22f),
+        color = androidx.compose.ui.graphics.Color.White,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
                 title,
-                color = androidx.compose.ui.graphics.Color.White,
+                color = TextDark,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -255,7 +256,7 @@ private fun OptionRow(
             val isSel = value == selected
             Surface(
                 shape = RoundedCornerShape(14.dp),
-                color = if (isSel) TextDark.copy(alpha = 0.25f) else androidx.compose.ui.graphics.Color.White.copy(alpha = 0.10f),
+                color = if (isSel) BerryPurple else androidx.compose.ui.graphics.Color(0xFFF4F6FA),
                 onClick = { onSelect(value) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -265,12 +266,12 @@ private fun OptionRow(
                 ) {
                     Text(
                         if (isSel) "● " else "○ ",
-                        color = androidx.compose.ui.graphics.Color.White,
+                        color = if (isSel) androidx.compose.ui.graphics.Color.White else TextDark,
                         fontSize = 15.sp,
                     )
                     Text(
                         label,
-                        color = androidx.compose.ui.graphics.Color.White,
+                        color = if (isSel) androidx.compose.ui.graphics.Color.White else TextDark,
                         fontSize = 15.sp,
                         fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
                     )
