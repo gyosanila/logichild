@@ -44,6 +44,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     private val sounds = GameSounds(application)
+    private val voice = GameVoiceClips(application)
 
     private val _uiState = MutableStateFlow(
         FruitUiState(
@@ -58,6 +59,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
+        voice.enabled = sounds.enabled
         val savedLevel = prefs.getInt("fruit_level", 1)
         _uiState.update { it.copy(soundOn = sounds.enabled, level = savedLevel, unlocked = maxOf(savedLevel, 1)) }
         newLevel(savedLevel)
@@ -65,6 +67,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun toggleSound() {
         sounds.enabled = !sounds.enabled
+        voice.enabled = sounds.enabled
         prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
         _uiState.update { it.copy(soundOn = sounds.enabled) }
         if (sounds.enabled) sounds.tap()
@@ -181,6 +184,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                         val ny = cur.robot.y + cur.dir.dy
                         if (nx < 0 || ny < 0 || nx >= cur.size || ny >= cur.size || cur.rocks.contains(Pos(nx, ny))) {
                             sounds.crash()
+                            voice.tryAgain(prefs.getString("lang", "id") == "en")
                             _uiState.update { it.copy(running = false, crashed = true) }
                             return@launch
                         }
@@ -238,12 +242,8 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                         2 -> st.praise2
                         else -> st.praise1
                     }
-                    when {
-                        reward == Reward.BIG -> sounds.bigWin(st.praise5)
-                        rating >= 4 -> sounds.win(praise)
-                        rating == 3 -> sounds.win(praise)
-                        else -> sounds.clap(praise)
-                    }
+                    voice.feedback(rating, prefs.getString("lang", "id") == "en")
+                    sounds.reward(rating)
                     prefs.edit()
                         .putInt("fruit_level", after.level + 1)
                         .putInt("fstar_${after.level}", newStars)

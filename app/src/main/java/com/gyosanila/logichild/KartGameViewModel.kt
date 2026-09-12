@@ -153,6 +153,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     val sounds = GameSounds(application)
+    private val voice = GameVoiceClips(application)
 
     private val _uiState = MutableStateFlow(
         KartGameUiState(
@@ -169,6 +170,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
+        voice.enabled = sounds.enabled
         val lastLevel = prefs.getInt("kart_last_level", 0)
         _uiState.update { it.copy(soundOn = sounds.enabled, levelIndex = lastLevel) }
         resetLevel(lastLevel)
@@ -186,6 +188,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleSound() {
         sounds.enabled = !sounds.enabled
+        voice.enabled = sounds.enabled
         prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
         _uiState.update { it.copy(soundOn = sounds.enabled) }
         if (sounds.enabled) sounds.tap()
@@ -248,6 +251,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                     is StepResult.Turned -> sounds.turn()
                     is StepResult.Crashed -> {
                         sounds.crash()
+                        voice.tryAgain(prefs.getString("lang", "id") == "en")
                         _uiState.update { it.copy(running = false, crashed = true, crashCell = result.at) }
                         delay(600)
                         _uiState.update { it.copy(crashed = false, crashCell = null) }
@@ -288,12 +292,8 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                             2 -> st.praise2
                             else -> st.praise1
                         }
-                        when {
-                            reward == Reward.BIG -> sounds.bigWin(st.praise5)
-                            rating >= 4 -> sounds.win(praise)
-                            rating == 3 -> sounds.win(praise)
-                            else -> sounds.clap(praise)
-                        }
+                        voice.feedback(rating, prefs.getString("lang", "id") == "en")
+                        sounds.reward(rating)
                         prefs.edit()
                             .putInt("star_${lv.index}", newStars)
                             .putInt("unlocked", newUnlocked)

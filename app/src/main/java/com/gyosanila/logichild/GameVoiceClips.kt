@@ -4,7 +4,8 @@ import android.content.Context
 import android.media.MediaPlayer
 
 /** Rekaman suara manusia/natural khusus Cocok Warna, offline. */
-class ColorVoice(private val context: Context) {
+class GameVoiceClips(private val context: Context) {
+    var enabled = true
     private var player: MediaPlayer? = null
 
     private val idFind = intArrayOf(
@@ -19,6 +20,7 @@ class ColorVoice(private val context: Context) {
     )
 
     private fun play(resourceId: Int) {
+        if (!enabled) return
         player?.runCatching { stop() }
         player?.release()
         player = MediaPlayer.create(context, resourceId)?.also { p ->

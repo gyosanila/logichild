@@ -29,11 +29,13 @@ data class PatternUiState(
 class PatternMatchViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     val sounds = GameSounds(application)
+    private val voice = GameVoiceClips(application)
     private val _uiState = MutableStateFlow(PatternUiState())
     val uiState: StateFlow<PatternUiState> = _uiState.asStateFlow()
 
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
+        voice.enabled = sounds.enabled
         val level = prefs.getInt("pattern_level", 1)
         _uiState.update { it.copy(soundOn = sounds.enabled, unlocked = maxOf(1, level)) }
         loadLevel(level)
@@ -41,6 +43,7 @@ class PatternMatchViewModel(application: Application) : AndroidViewModel(applica
 
     fun toggleSound() {
         sounds.enabled = !sounds.enabled
+        voice.enabled = sounds.enabled
         prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
         _uiState.update { it.copy(soundOn = sounds.enabled) }
         if (sounds.enabled) sounds.tap()
@@ -75,11 +78,13 @@ class PatternMatchViewModel(application: Application) : AndroidViewModel(applica
             val reward = when { s.level % 10 == 0 -> Reward.BIG; s.level % 5 == 0 -> Reward.SMALL; else -> Reward.NONE }
             val st = if (prefs.getString("lang", "id") == "en") StringsEn else StringsId
             val praise = when (rating) { 5 -> st.praise5; 4 -> st.praise4; 3 -> st.praise3; 2 -> st.praise2; else -> st.praise1 }
-            if (reward == Reward.BIG) sounds.bigWin(praise) else sounds.win(praise)
+            voice.feedback(rating, prefs.getString("lang", "id") == "en")
+            sounds.reward(rating)
             prefs.edit().putInt("pstar_${s.level}", best).putInt("pattern_level", next).putInt("punlocked", next).apply()
             _uiState.update { it.copy(won = true, stars = it.stars + (s.level to best), unlocked = next, reward = reward, confettiTick = it.confettiTick + 1) }
         } else {
             _uiState.update { it.copy(mistakes = it.mistakes + 1) }
+            voice.tryAgain(prefs.getString("lang", "id") == "en")
             sounds.tap()
         }
     }

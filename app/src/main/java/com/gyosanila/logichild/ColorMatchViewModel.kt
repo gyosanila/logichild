@@ -28,18 +28,20 @@ data class ColorUiState(
 class ColorMatchViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     val sounds = GameSounds(application)
-    private val voice = ColorVoice(application)
+    private val voice = GameVoiceClips(application)
 
     private val _uiState = MutableStateFlow(ColorUiState())
     val uiState: StateFlow<ColorUiState> = _uiState.asStateFlow()
 
     init {
         sounds.enabled = prefs.getBoolean("sound_on", true)
+        voice.enabled = sounds.enabled
         _uiState.update { it.copy(soundOn = sounds.enabled) }
     }
 
     fun toggleSound() {
         sounds.enabled = !sounds.enabled
+        voice.enabled = sounds.enabled
         prefs.edit().putBoolean("sound_on", sounds.enabled).apply()
         _uiState.update { it.copy(soundOn = sounds.enabled) }
         if (sounds.enabled) sounds.tap()
