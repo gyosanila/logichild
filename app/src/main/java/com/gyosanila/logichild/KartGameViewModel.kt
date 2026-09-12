@@ -59,17 +59,16 @@ class GameSounds(context: Context) {
     // Load SoundPool itu async — simpan status siap & pending play.
     private val ready = mutableSetOf<Int>()
     private var pending: Triple<Int, Float, Float>? = null
+    private val pendingQueue = ArrayDeque<Triple<Int, Float, Float>>()
 
     init {
         pool.setOnLoadCompleteListener { _, sampleId, status ->
             if (status == 0) {
                 ready += sampleId
-                pending?.let { (id, vol, rate) ->
-                    if (id == sampleId) {
-                        pool.play(id, vol, vol, 1, 0, rate)
-                        pending = null
-                    }
-                }
+                pending?.let { pendingQueue.addLast(it); pending = null }
+                val queued = pendingQueue.filter { it.first == sampleId }
+                pendingQueue.removeAll(queued.toSet())
+                queued.forEach { (_, vol, rate) -> pool.play(sampleId, vol, vol, 1, 0, rate) }
             }
         }
     }
@@ -78,23 +77,22 @@ class GameSounds(context: Context) {
         if (soundId in ready) {
             pool.play(soundId, vol, vol, 1, 0, rate)
         } else {
-            // Belum ke-load (baru buka app) → tunggu, nanti diputar pas siap.
-            pending = Triple(soundId, vol, rate)
+            pendingQueue.addLast(Triple(soundId, vol, rate))
         }
     }
 
     var enabled = true
 
     fun tap() {
-        if (enabled) play(sTap, 0.24f)
+        if (enabled) play(sTap, 0.32f)
     }
 
     fun move() {
-        if (enabled) play(sStep, 0.28f)
+        if (enabled) play(sStep, 0.46f)
     }
 
     fun turn() {
-        if (enabled) play(sTap, 0.20f, 0.85f)
+        if (enabled) play(sTap, 0.28f, 0.85f)
     }
 
     fun crash() {
@@ -128,9 +126,9 @@ class GameSounds(context: Context) {
     fun reward(rating: Int) {
         if (!enabled) return
         val volume = when {
-            rating >= 5 -> 0.28f
-            rating >= 3 -> 0.22f
-            else -> 0.16f
+            rating >= 5 -> 0.14f
+            rating >= 3 -> 0.11f
+            else -> 0.08f
         }
         play(sApplause, volume)
     }

@@ -650,6 +650,16 @@ private fun MainMenuScreen(
             }
         }
         Spacer(Modifier.height(14.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            modifier = Modifier.padding(vertical = 2.dp),
+        ) {
+            Text("☁️", fontSize = 24.sp)
+            Text("🌈", fontSize = 24.sp)
+            Text("✨", fontSize = 24.sp)
+            Text("🧸", fontSize = 24.sp)
+        }
+        Spacer(Modifier.height(10.dp))
         Text(strings.menuPick, color = TextDark, fontSize = 17.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
 

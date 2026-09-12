@@ -1,5 +1,7 @@
 package com.gyosanila.logichild
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,16 +70,21 @@ fun PatternMatchScreen(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp),
                 ) {
                     state.sequence.forEach { token ->
-                        val tileSize = if (compact) 52.dp else 64.dp
+                        val tileSize = when {
+                            state.sequence.size >= 8 -> 44.dp
+                            compact -> 52.dp
+                            else -> 64.dp
+                        }
                         Surface(
                             shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
                             color = if (token == "?") Color.White else Color(0xFFFFF1B2),
                             modifier = Modifier.size(tileSize),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(token, fontSize = if (token == "?") 30.sp else if (compact) 30.sp else 36.sp, fontWeight = FontWeight.Black, color = TextDark)
+                                Text(token, fontSize = if (token == "?") 30.sp else if (compact) 28.sp else 36.sp, fontWeight = FontWeight.Black, color = TextDark)
                             }
                         }
                     }
@@ -87,17 +94,17 @@ fun PatternMatchScreen(
                     Text(strings.patternTryAgain, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.size(30.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                    state.choices.forEach { choice ->
-                        Surface(
-                            shape = RoundedCornerShape(24.dp),
-                            color = Color.White,
-                            onClick = { vm.answer(choice) },
-                            modifier = Modifier.size(104.dp),
-                            shadowElevation = 8.dp,
-                        ) {
-                            Box(contentAlignment = Alignment.Center) { Text(choice, fontSize = 52.sp) }
+                if (state.choices.size >= 4) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        state.choices.chunked(2).forEach { rowChoices ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                rowChoices.forEach { choice -> PatternChoice(choice, vm) }
+                            }
                         }
+                    }
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                        state.choices.forEach { choice -> PatternChoice(choice, vm) }
                     }
                 }
             }
@@ -119,5 +126,18 @@ fun PatternMatchScreen(
                 onReplay = vm::replay,
             )
         }
+    }
+}
+
+@Composable
+private fun PatternChoice(choice: String, vm: PatternMatchViewModel) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        onClick = { vm.answer(choice) },
+        modifier = Modifier.size(104.dp),
+        shadowElevation = 8.dp,
+    ) {
+        Box(contentAlignment = Alignment.Center) { Text(choice, fontSize = 52.sp) }
     }
 }

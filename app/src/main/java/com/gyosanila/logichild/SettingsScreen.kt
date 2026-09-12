@@ -135,7 +135,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(6.dp))
             Text(
                 strings.timerNote,
-                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
+                color = TextDark.copy(alpha = 0.7f),
                 fontSize = 13.sp,
             )
         }
@@ -162,7 +162,7 @@ fun SettingsScreen(
             val ttsTest = remember { TtsSpeaker(context) }
             Surface(
                 shape = RoundedCornerShape(14.dp),
-                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f),
+                color = androidx.compose.ui.graphics.Color(0xFFF4F6FA),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
@@ -184,7 +184,7 @@ fun SettingsScreen(
             ) {
                 Text(
                     "📮 ${strings.feedbackLabel}",
-                    color = androidx.compose.ui.graphics.Color.White,
+                    color = TextDark,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(14.dp),
@@ -199,7 +199,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(10.dp))
             Surface(
                 shape = RoundedCornerShape(14.dp),
-                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f),
+                color = androidx.compose.ui.graphics.Color(0xFFF4F6FA),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
@@ -215,7 +215,7 @@ fun SettingsScreen(
             ) {
                 Text(
                     "🔊 ${strings.testSoundLabel}",
-                    color = androidx.compose.ui.graphics.Color.White,
+                    color = TextDark,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(14.dp),

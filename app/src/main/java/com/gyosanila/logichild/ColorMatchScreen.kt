@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -97,28 +101,33 @@ fun ColorMatchScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 // Instruksi
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
+                Surface(
+                    shape = RoundedCornerShape(22.dp),
+                    color = Color.White,
+                    shadowElevation = 5.dp,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        String.format(strings.colorAsk, vm.colorName(state.target, strings)),
-                        color = TextDark,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Black,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.White,
-                        onClick = vm::repeatInstruction,
-                        shadowElevation = 4.dp,
-                        modifier = Modifier.size(56.dp),
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 18.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("🔊", fontSize = 26.sp)
+                        Text(
+                            String.format(strings.colorAsk, vm.colorName(state.target, strings)),
+                            color = TextDark,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0xFFE8E4FF),
+                            onClick = vm::repeatInstruction,
+                            modifier = Modifier.size(52.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.VolumeUp, contentDescription = "Repeat", tint = Color(0xFF5746A8), modifier = Modifier.size(29.dp))
+                            }
                         }
                     }
                 }
