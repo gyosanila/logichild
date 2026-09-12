@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import com.gyosanila.logichild.game.Reward
-import com.gyosanila.logichild.ui.StringsEn
-import com.gyosanila.logichild.ui.StringsId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +28,7 @@ data class ColorUiState(
 class ColorMatchViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     val sounds = GameSounds(application)
-    private val tts = TtsSpeaker(application)
+    private val voice = ColorVoice(application)
 
     private val _uiState = MutableStateFlow(ColorUiState())
     val uiState: StateFlow<ColorUiState> = _uiState.asStateFlow()
@@ -105,20 +103,8 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
                 levelNumber % 10 == 5 -> Reward.SMALL
                 else -> Reward.NONE
             }
-            val st = if (prefs.getString("lang", "id") == "en") StringsEn else StringsId
-            val praise = when (rating) {
-                5 -> st.praise5
-                4 -> st.praise4
-                3 -> st.praise3
-                2 -> st.praise2
-                else -> st.praise1
-            }
-            when {
-                reward == Reward.BIG -> sounds.bigWin(st.praise5)
-                rating >= 4 -> sounds.win(praise)
-                rating == 3 -> sounds.win(praise)
-                else -> sounds.clap(praise)
-            }
+            voice.feedback(rating, isEnglish())
+            sounds.reward(rating)
             prefs.edit()
                 .putInt("cstar_${s.level}", newStars)
                 .putInt("cunlocked", newUnlocked)
@@ -135,7 +121,8 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
             }
         } else {
             _uiState.update { it.copy(mistakes = it.mistakes + 1) }
-            sounds.crash()
+            voice.tryAgain(isEnglish())
+            sounds.tap()
         }
     }
 
@@ -154,9 +141,11 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
             else -> strings.colorPink
         }
 
-    /** Instruksi yang dibacakan: "Cari yang merah!" */
+    private fun isEnglish() = prefs.getString("lang", "id") == "en"
+
+    /** Instruksi yang dibacakan dari rekaman suara natural. */
     fun speakInstruction(strings: com.gyosanila.logichild.ui.AppStrings) {
         val s = _uiState.value
-        tts.speak(String.format(strings.colorAsk, colorName(s.target, strings)))
+        voice.instruction(s.target, isEnglish())
     }
 }

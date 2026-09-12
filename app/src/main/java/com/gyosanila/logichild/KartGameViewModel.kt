@@ -124,6 +124,20 @@ class GameSounds(context: Context) {
         play(sApplause, 0.5f)
     }
 
+    /** Efek menang tanpa TTS, dipakai saat game memakai rekaman suara sendiri. */
+    fun reward(rating: Int) {
+        if (!enabled) return
+        if (rating >= 5) {
+            play(sFanfare, 0.85f)
+            play(sApplause, 0.75f)
+        } else if (rating >= 3) {
+            play(sApplause, 0.7f)
+            play(sSparkle, 0.45f, 1.15f)
+        } else {
+            play(sApplause, 0.45f)
+        }
+    }
+
     fun stop() {
         pool.autoPause()
         tts.stop()
