@@ -127,6 +127,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.androidx.lifecycle.runtime.compose)
     debugImplementation(libs.androidx.ui.tooling)
+    testImplementation("junit:junit:4.13.2")
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

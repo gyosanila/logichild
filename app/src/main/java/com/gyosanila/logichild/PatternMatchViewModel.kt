@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlin.random.Random
 
 data class PatternUiState(
     val level: Int = 1,
@@ -24,12 +23,6 @@ data class PatternUiState(
     val reward: Reward = Reward.NONE,
     val confettiTick: Int = 0,
     val soundOn: Boolean = true,
-)
-
-data class PatternPuzzle(
-    val sequence: List<String>,
-    val answer: String,
-    val choices: List<String>,
 )
 
 class PatternMatchViewModel(application: Application) : AndroidViewModel(application) {
@@ -57,39 +50,7 @@ class PatternMatchViewModel(application: Application) : AndroidViewModel(applica
 
     fun loadLevel(level: Int) {
         val safe = level.coerceAtLeast(1)
-        val rng = Random(safe * 7919)
-        val puzzle = if (safe == 9) {
-            PatternPuzzle(
-                sequence = listOf("⭐", "🌙", "⭐", "🌙", "?"),
-                answer = "⭐",
-                choices = listOf("🌙", "⭐", "🌈"),
-            )
-        } else {
-            val pool = when {
-                safe <= 3 -> listOf("🍎", "🍌", "🍊", "🍇")
-                safe <= 6 -> listOf("🔴", "🔵", "🟡", "🟢")
-                else -> listOf("⭐", "🌙", "🌈", "☀️")
-            }
-            val a = pool[rng.nextInt(pool.size)]
-            var b = pool[rng.nextInt(pool.size)]
-            while (b == a) b = pool[rng.nextInt(pool.size)]
-            val sequence = if (safe % 3 == 0) listOf(a, b, a, b, "?") else listOf(a, b, a, "?")
-            val answer = if (safe % 3 == 0) a else b
-            val wrong = pool.filter { it != answer }.shuffled(rng).take(if (safe <= 4) 1 else 2)
-            PatternPuzzle(sequence, answer, (wrong + answer).shuffled(rng))
-        }
-        check(puzzle.sequence.count { it == "?" } == 1)
-        check(puzzle.sequence.size >= 4)
-        check(puzzle.answer in puzzle.choices)
-        check(puzzle.choices.distinct().size == puzzle.choices.size)
-        if (puzzle.sequence.size == 5) {
-            check(puzzle.sequence[0] == puzzle.sequence[2])
-            check(puzzle.sequence[1] == puzzle.sequence[3])
-            check(puzzle.answer == puzzle.sequence[0])
-        } else {
-            check(puzzle.sequence[0] == puzzle.sequence[2])
-            check(puzzle.answer == puzzle.sequence[1])
-        }
+        val puzzle = PatternPuzzleFactory.create(safe)
         _uiState.update { it.copy(level = safe, sequence = puzzle.sequence, choices = puzzle.choices, answer = puzzle.answer, mistakes = 0, won = false, reward = Reward.NONE) }
     }
 
