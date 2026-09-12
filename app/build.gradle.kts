@@ -58,8 +58,15 @@ android {
 
     buildTypes {
         debug {
-            // Tandai build debug: versi jadi "1.0.0-debug"
+            // Debug tetap memakai R8 + resource shrinking agar masalah obfuscation
+            // dan resource yang hilang ketahuan saat testing, bukan baru di release.
+            isMinifyEnabled = true
+            isShrinkResources = true
             versionNameSuffix = "-debug"
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         release {
             isMinifyEnabled = true
