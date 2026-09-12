@@ -124,18 +124,15 @@ class GameSounds(context: Context) {
         play(sApplause, 0.5f)
     }
 
-    /** Efek menang tanpa TTS, dipakai saat game memakai rekaman suara sendiri. */
+    /** Reward level selesai: hanya tepuk tangan + voice MP3 dari game. */
     fun reward(rating: Int) {
         if (!enabled) return
-        if (rating >= 5) {
-            play(sFanfare, 0.85f)
-            play(sApplause, 0.75f)
-        } else if (rating >= 3) {
-            play(sApplause, 0.7f)
-            play(sSparkle, 0.45f, 1.15f)
-        } else {
-            play(sApplause, 0.45f)
+        val volume = when {
+            rating >= 5 -> 0.75f
+            rating >= 3 -> 0.65f
+            else -> 0.5f
         }
+        play(sApplause, volume)
     }
 
     fun stop() {
