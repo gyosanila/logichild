@@ -208,6 +208,7 @@ private fun MainNav(
                     onKart = { game = GameChoice.RoadmapKart },
                     onFruit = { game = GameChoice.RoadmapFruit },
                     onPattern = { game = GameChoice.RoadmapPattern },
+                    onColor = { game = GameChoice.RoadmapColor },
                     onSettings = { mathGate = true },
                 )
                 GameChoice.RoadmapKart -> RoadmapScreen(
@@ -612,6 +613,7 @@ private fun MainMenuScreen(
     onKart: () -> Unit,
     onFruit: () -> Unit,
     onPattern: () -> Unit,
+    onColor: () -> Unit,
     onSettings: () -> Unit,
 ) {
     val strings = LocalStrings.current
@@ -734,6 +736,28 @@ private fun MainMenuScreen(
                         color = Color.White.copy(alpha = 0.9f),
                         fontSize = 14.sp,
                     )
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = BerryPurple,
+            onClick = onColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(110.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            ) {
+                Text("🎨", fontSize = 48.sp)
+                Spacer(Modifier.width(20.dp))
+                Column {
+                    Text(strings.playColor, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                    Text(strings.playColorDesc, color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
                 }
             }
         }

@@ -26,6 +26,12 @@ data class PatternUiState(
     val soundOn: Boolean = true,
 )
 
+data class PatternPuzzle(
+    val sequence: List<String>,
+    val answer: String,
+    val choices: List<String>,
+)
+
 class PatternMatchViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
     val sounds = GameSounds(application)
@@ -52,19 +58,30 @@ class PatternMatchViewModel(application: Application) : AndroidViewModel(applica
     fun loadLevel(level: Int) {
         val safe = level.coerceAtLeast(1)
         val rng = Random(safe * 7919)
-        val pool = when {
-            safe <= 3 -> listOf("🍎", "🍌", "🍊", "🍇")
-            safe <= 6 -> listOf("🔴", "🔵", "🟡", "🟢")
-            else -> listOf("⭐", "🌙", "🌈", "☀️")
+        val puzzle = if (safe == 9) {
+            PatternPuzzle(
+                sequence = listOf("⭐", "🌙", "⭐", "🌙", "?"),
+                answer = "⭐",
+                choices = listOf("🌙", "⭐", "🌈"),
+            )
+        } else {
+            val pool = when {
+                safe <= 3 -> listOf("🍎", "🍌", "🍊", "🍇")
+                safe <= 6 -> listOf("🔴", "🔵", "🟡", "🟢")
+                else -> listOf("⭐", "🌙", "🌈", "☀️")
+            }
+            val a = pool[rng.nextInt(pool.size)]
+            var b = pool[rng.nextInt(pool.size)]
+            while (b == a) b = pool[rng.nextInt(pool.size)]
+            val sequence = if (safe % 3 == 0) listOf(a, b, a, b, "?") else listOf(a, b, a, "?")
+            val wrong = pool.filter { it != b }.shuffled(rng).take(if (safe <= 4) 1 else 2)
+            PatternPuzzle(sequence, b, (wrong + b).shuffled(rng))
         }
-        val a = pool[rng.nextInt(pool.size)]
-        var b = pool[rng.nextInt(pool.size)]
-        while (b == a) b = pool[rng.nextInt(pool.size)]
-        val pattern = if (safe % 3 == 0) listOf(a, b, a, b, "?") else listOf(a, b, a, "?")
-        val answer = b
-        val wrong = pool.filter { it != answer }.shuffled(rng).take(if (safe <= 4) 1 else 2)
-        val choices = (wrong + answer).shuffled(rng)
-        _uiState.update { it.copy(level = safe, sequence = pattern, choices = choices, answer = answer, mistakes = 0, won = false, reward = Reward.NONE) }
+        check(puzzle.sequence.count { it == "?" } == 1)
+        check(puzzle.sequence.size >= 4)
+        check(puzzle.answer in puzzle.choices)
+        check(puzzle.choices.distinct().size == puzzle.choices.size)
+        _uiState.update { it.copy(level = safe, sequence = puzzle.sequence, choices = puzzle.choices, answer = puzzle.answer, mistakes = 0, won = false, reward = Reward.NONE) }
     }
 
     fun answer(choice: String) {
