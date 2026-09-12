@@ -74,13 +74,22 @@ class PatternMatchViewModel(application: Application) : AndroidViewModel(applica
             var b = pool[rng.nextInt(pool.size)]
             while (b == a) b = pool[rng.nextInt(pool.size)]
             val sequence = if (safe % 3 == 0) listOf(a, b, a, b, "?") else listOf(a, b, a, "?")
-            val wrong = pool.filter { it != b }.shuffled(rng).take(if (safe <= 4) 1 else 2)
-            PatternPuzzle(sequence, b, (wrong + b).shuffled(rng))
+            val answer = if (safe % 3 == 0) a else b
+            val wrong = pool.filter { it != answer }.shuffled(rng).take(if (safe <= 4) 1 else 2)
+            PatternPuzzle(sequence, answer, (wrong + answer).shuffled(rng))
         }
         check(puzzle.sequence.count { it == "?" } == 1)
         check(puzzle.sequence.size >= 4)
         check(puzzle.answer in puzzle.choices)
         check(puzzle.choices.distinct().size == puzzle.choices.size)
+        if (puzzle.sequence.size == 5) {
+            check(puzzle.sequence[0] == puzzle.sequence[2])
+            check(puzzle.sequence[1] == puzzle.sequence[3])
+            check(puzzle.answer == puzzle.sequence[0])
+        } else {
+            check(puzzle.sequence[0] == puzzle.sequence[2])
+            check(puzzle.answer == puzzle.sequence[1])
+        }
         _uiState.update { it.copy(level = safe, sequence = puzzle.sequence, choices = puzzle.choices, answer = puzzle.answer, mistakes = 0, won = false, reward = Reward.NONE) }
     }
 
