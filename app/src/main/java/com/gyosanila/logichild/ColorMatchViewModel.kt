@@ -63,7 +63,10 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
     private fun optionsCountFor(level: Int) = when {
         level <= 3 -> 2
         level <= 6 -> 3
-        else -> 4
+        level <= 10 -> 4
+        level <= 15 -> 5
+        level <= 20 -> 6
+        else -> 7
     }
 
     private fun poolSizeFor(level: Int) = minOf(COLOR_COUNT, 2 + (level - 1) / 2)
