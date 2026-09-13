@@ -82,17 +82,21 @@ jobs:
       - name: Compile Kotlin (compile check)
         run: ./gradlew :app:compileDebugKotlin --no-daemon
 
-      # ── Versi release: dari tag v*, versionCode = jumlah tag (incremental) ──
+      # ── Versi release: tag vX.Y.Z, versionCode = X*100000 + Y*1000 + Z ──
       - name: Determine release version
         id: relver
         run: |
-          VC=$(git tag -l 'v*' | wc -l)
           if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
             VN="${GITHUB_REF#refs/tags/v}"
           else
             VN="${{ inputs.version }}"
-            VC=$((VC + 1))
           fi
+          if [[ ! "$VN" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version harus memakai format x.y.z, diterima: $VN"
+            exit 1
+          fi
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VN"
+          VC=$((10#$MAJOR * 100000 + 10#$MINOR * 1000 + 10#$PATCH))
           echo "version_name=${VN}" >> "$GITHUB_OUTPUT"
           echo "version_code=${VC}" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VN} (code ${VC})"
