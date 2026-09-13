@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -159,7 +158,6 @@ fun SettingsScreen(
 
         // ── Kotak Saran (buka Gmail, auto isi subject/body + info perangkat) ──
         SettingSection(strings.feedbackLabel) {
-            val ttsTest = remember { TtsSpeaker(context) }
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 color = androidx.compose.ui.graphics.Color(0xFFF4F6FA),
@@ -196,31 +194,7 @@ fun SettingsScreen(
                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f),
                 fontSize = 13.sp,
             )
-            Spacer(Modifier.height(10.dp))
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = androidx.compose.ui.graphics.Color(0xFFF4F6FA),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        val ok = ttsTest.speak("Halo! Suara berfungsi.")
-                        val status = ttsTest.statusInfo()
-                        Log.i("LogichildTTS", "tes: ok=$ok | $status")
-                        android.widget.Toast.makeText(
-                            context,
-                            if (ok) "TTS: $status" else "TTS gagal: $status",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                    },
-            ) {
-                Text(
-                    "🔊 ${strings.testSoundLabel}",
-                    color = TextDark,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(14.dp),
-                )
-            }
+
         }
     }
 }

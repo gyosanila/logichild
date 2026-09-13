@@ -2,6 +2,7 @@ package com.gyosanila.logichild
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,6 +45,7 @@ fun PatternMatchScreen(
     LaunchedEffect(Unit) { if (startLevel > 0) vm.loadLevel(startLevel) }
 
     Box(Modifier.fillMaxSize().background(SkyBlue)) {
+        PatternGardenDecor()
         Column(Modifier.fillMaxSize()) {
             Toolbar(
                 emoji = "🧩",
@@ -53,7 +56,7 @@ fun PatternMatchScreen(
             )
             Text(
                 "${strings.level} ${state.level}",
-                color = Color.White,
+                color = TextDark,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
@@ -64,7 +67,7 @@ fun PatternMatchScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text(strings.patternAsk, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                Text(strings.patternAsk, color = TextDark, fontSize = 28.sp, fontWeight = FontWeight.Black)
                 Spacer(Modifier.size(18.dp))
                 val compact = state.sequence.size > 4
                 Row(
@@ -128,6 +131,32 @@ fun PatternMatchScreen(
         }
     }
 }
+
+
+@Composable
+private fun PatternGardenDecor() {
+    Box(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            drawCircle(Color(0xFFFFD54F), radius = 42f, center = androidx.compose.ui.geometry.Offset(w - 70f, 82f))
+            drawArc(Color(0xFFF28B82), 190f, 160f, false, style = Stroke(11f), topLeft = androidx.compose.ui.geometry.Offset(w * .16f, 65f), size = androidx.compose.ui.geometry.Size(w * .68f, 235f))
+            drawArc(Color(0xFFFFC857), 190f, 160f, false, style = Stroke(11f), topLeft = androidx.compose.ui.geometry.Offset(w * .20f, 65f), size = androidx.compose.ui.geometry.Size(w * .60f, 205f))
+            drawArc(Color(0xFF75C878), 190f, 160f, false, style = Stroke(11f), topLeft = androidx.compose.ui.geometry.Offset(w * .24f, 65f), size = androidx.compose.ui.geometry.Size(w * .52f, 175f))
+            drawRect(Color(0xFF9BD77F), topLeft = androidx.compose.ui.geometry.Offset(0f, h - 145f), size = androidx.compose.ui.geometry.Size(w, 145f))
+            drawLine(Color(0xFF6CB56A), androidx.compose.ui.geometry.Offset(0f, h - 145f), androidx.compose.ui.geometry.Offset(w, h - 145f), strokeWidth = 5f)
+        }
+        Text("☁️", fontSize = 34.sp, modifier = Modifier.align(Alignment.TopStart).padding(start = 18.dp, top = 82.dp))
+        Text("☁️", fontSize = 28.sp, modifier = Modifier.align(Alignment.TopEnd).padding(end = 70.dp, top = 172.dp))
+        Text("🧩", fontSize = 36.sp, modifier = Modifier.align(Alignment.CenterStart).padding(start = 12.dp))
+        Text("⭐", fontSize = 30.sp, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp, top = 40.dp))
+        Text("🔷", fontSize = 28.sp, modifier = Modifier.align(Alignment.BottomStart).padding(start = 72.dp, bottom = 28.dp))
+        Text("🔶", fontSize = 28.sp, modifier = Modifier.align(Alignment.BottomEnd).padding(end = 72.dp, bottom = 30.dp))
+        Text("🌼", fontSize = 28.sp, modifier = Modifier.align(Alignment.BottomStart).padding(start = 18.dp, bottom = 84.dp))
+        Text("🌷", fontSize = 28.sp, modifier = Modifier.align(Alignment.BottomEnd).padding(end = 18.dp, bottom = 84.dp))
+    }
+}
+
 
 @Composable
 private fun PatternChoice(choice: String, vm: PatternMatchViewModel) {
