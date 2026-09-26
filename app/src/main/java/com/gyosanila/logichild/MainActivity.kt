@@ -74,7 +74,7 @@ import com.gyosanila.logichild.ui.TextDark
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-enum class GameChoice { Menu, Kart, Fruit, Pattern, Color, RoadmapKart, RoadmapFruit, RoadmapPattern, RoadmapColor, Settings }
+enum class GameChoice { Menu, Adventure, Kart, Fruit, Pattern, Color, RoadmapKart, RoadmapFruit, RoadmapPattern, RoadmapColor, Settings }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -140,6 +140,17 @@ private fun MainNav(
     val tts = remember { TtsSpeaker(context) }
 
     var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
+    var returnToAdventure by remember { mutableStateOf(false) }
+    var adventure by remember {
+        mutableStateOf(
+            AdventureState.fromStored(
+                prefs.getInt("adv_position", 1),
+                prefs.getInt("adv_stars", 0),
+                prefs.getInt("adv_fruits", 0),
+                prefs.getInt("adv_maps_done", 0) > 0,
+            ),
+        )
+    }
     var startLevel by rememberSaveable { mutableStateOf(1) }
     var mathGate by remember { mutableStateOf(false) }
 
@@ -149,7 +160,10 @@ private fun MainNav(
 
     // Back diblokir selama lock/istirahat — harus lewat "Main Lagi" + soal.
     BackHandler(enabled = game != GameChoice.Menu || locked || breakOverlay) {
-        if (!locked && !breakOverlay) game = GameChoice.Menu
+        if (!locked && !breakOverlay) {
+            game = GameChoice.Menu
+            returnToAdventure = false
+        }
     }
 
     var sessionStart by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -206,11 +220,33 @@ private fun MainNav(
         Box(Modifier.weight(1f)) {
             when (game) {
                 GameChoice.Menu -> MainMenuScreen(
+                    onAdventure = { game = GameChoice.Adventure },
                     onKart = { game = GameChoice.RoadmapKart },
                     onFruit = { game = GameChoice.RoadmapFruit },
                     onPattern = { game = GameChoice.RoadmapPattern },
                     onColor = { game = GameChoice.RoadmapColor },
                     onSettings = { mathGate = true },
+                )
+                GameChoice.Adventure -> AdventureScreen(
+                    state = adventure,
+                    onStateChange = { next ->
+                        adventure = next
+                        prefs.edit().putInt("adv_position", next.position)
+                            .putInt("adv_stars", next.stars)
+                            .putInt("adv_fruits", next.fruits)
+                            .putInt("adv_maps_done", if (next.mapComplete) 1 else 0)
+                            .apply()
+                    },
+                    onMiniGame = { key ->
+                        returnToAdventure = true
+                        when (key) {
+                            "color" -> { startLevel = (prefs.getInt("cunlocked", 1) - 1).coerceAtLeast(1); game = GameChoice.Color }
+                            "pattern" -> { startLevel = (prefs.getInt("punlocked", 1) - 1).coerceAtLeast(1); game = GameChoice.Pattern }
+                            "fruit" -> { startLevel = prefs.getInt("fruit_level", 1); game = GameChoice.Fruit }
+                            else -> { startLevel = (prefs.getInt("unlocked", 0) + 1).coerceAtLeast(1); game = GameChoice.Kart }
+                        }
+                    },
+                    onBack = { game = GameChoice.Menu },
                 )
                 GameChoice.RoadmapKart -> RoadmapScreen(
                     emoji = "🚗",
@@ -258,19 +294,19 @@ private fun MainNav(
                 )
                 GameChoice.Kart -> KartGameScreen(
                     startLevel = startLevel,
-                    onBack = { game = GameChoice.RoadmapKart },
+                    onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapKart; returnToAdventure = false },
                 )
                 GameChoice.Fruit -> FruitGameScreen(
                     startLevel = startLevel,
-                    onBack = { game = GameChoice.RoadmapFruit },
+                    onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapFruit; returnToAdventure = false },
                 )
                 GameChoice.Pattern -> PatternMatchScreen(
                     startLevel = startLevel,
-                    onBack = { game = GameChoice.RoadmapPattern },
+                    onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapPattern; returnToAdventure = false },
                 )
                 GameChoice.Color -> ColorMatchScreen(
                     startLevel = startLevel,
-                    onBack = { game = GameChoice.RoadmapColor },
+                    onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapColor; returnToAdventure = false },
                 )
                 GameChoice.Settings -> SettingsScreen(
                     onBack = { game = GameChoice.Menu },
@@ -611,6 +647,7 @@ private fun BreakOverlay(strings: com.gyosanila.logichild.ui.AppStrings, onKeepP
 
 @Composable
 private fun MainMenuScreen(
+    onAdventure: () -> Unit,
     onKart: () -> Unit,
     onFruit: () -> Unit,
     onPattern: () -> Unit,
@@ -666,16 +703,16 @@ private fun MainMenuScreen(
         Surface(
             shape = RoundedCornerShape(22.dp),
             color = SunYellow,
-            onClick = onKart,
+            onClick = onAdventure,
             modifier = Modifier.fillMaxWidth().height(88.dp),
             shadowElevation = 4.dp,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 20.dp)) {
-                Text("▶️", fontSize = 34.sp)
+                Text("🗺️", fontSize = 34.sp)
                 Spacer(Modifier.width(14.dp))
                 Column {
-                    Text("${strings.playCar} — ${strings.level} 1", color = TextDark, fontSize = 21.sp, fontWeight = FontWeight.Black)
-                    Text(strings.menuPick, color = TextDark.copy(alpha = 0.75f), fontSize = 13.sp)
+                    Text(strings.adventureTitle, color = TextDark, fontSize = 21.sp, fontWeight = FontWeight.Black)
+                    Text(strings.adventureContinue, color = TextDark.copy(alpha = 0.75f), fontSize = 13.sp)
                 }
             }
         }

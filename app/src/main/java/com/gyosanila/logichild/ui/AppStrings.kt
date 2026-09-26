@@ -100,6 +100,15 @@ data class AppStrings(
     val patternTryAgain: String,
     // Roadmap
     val roadmapPick: String,
+    val adventureTitle: String,
+    val adventureRoll: String,
+    val adventurePosition: String,
+    val adventureStars: String,
+    val adventureFruits: String,
+    val adventureBack: String,
+    val adventureContinue: String,
+    val adventureFinish: String,
+    val adventureChooseGame: String,
 )
 
 val StringsId = AppStrings(
@@ -186,6 +195,15 @@ val StringsId = AppStrings(
     patternAsk = "Apa yang berikutnya?",
     patternTryAgain = "Coba lagi ya!",
     roadmapPick = "Pilih level!",
+    adventureTitle = "Petualangan",
+    adventureRoll = "LEMPAR DADU",
+    adventurePosition = "Kotak %1\$d dari 24",
+    adventureStars = "Bintang",
+    adventureFruits = "Buah",
+    adventureBack = "Kembali",
+    adventureContinue = "LANJUT PETUALANGAN",
+    adventureFinish = "Petualangan selesai!",
+    adventureChooseGame = "Pilih permainan",
 )
 
 val StringsEn = AppStrings(
@@ -272,6 +290,15 @@ val StringsEn = AppStrings(
     patternAsk = "What comes next?",
     patternTryAgain = "Try again!",
     roadmapPick = "Pick a level!",
+    adventureTitle = "Adventure",
+    adventureRoll = "ROLL THE DICE",
+    adventurePosition = "Stop %1\$d of 24",
+    adventureStars = "Stars",
+    adventureFruits = "Fruit",
+    adventureBack = "Back",
+    adventureContinue = "CONTINUE ADVENTURE",
+    adventureFinish = "Adventure complete!",
+    adventureChooseGame = "Choose a game",
 )
 
 val LocalStrings = staticCompositionLocalOf { StringsId }
