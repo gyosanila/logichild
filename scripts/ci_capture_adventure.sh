@@ -5,7 +5,7 @@ PKG=com.gyosanila.logichild
 OUT_DIR="$GITHUB_WORKSPACE/ui-screenshots"
 mkdir -p "$OUT_DIR"
 
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r artifacts/app-debug.apk
 adb shell pm clear "$PKG" >/dev/null
 adb shell settings put system font_scale 1.0
 adb shell am force-stop "$PKG"
