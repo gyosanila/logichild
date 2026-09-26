@@ -5,9 +5,22 @@ PKG=com.gyosanila.logichild
 OUT_DIR="$GITHUB_WORKSPACE/ui-screenshots"
 mkdir -p "$OUT_DIR"
 
+# The emulator can report boot-complete before PackageManager is ready; wait for
+# the service rather than failing immediately on an early adb install.
+for attempt in $(seq 1 18); do
+  if adb shell service check package 2>&1 | grep -q 'found'; then
+    break
+  fi
+  echo "Waiting for PackageManager ($attempt/18)..."
+  sleep 5
+done
+adb shell service check package 2>&1 | grep -q 'found' || {
+  echo 'PackageManager did not become available after emulator boot.' >&2
+  adb logcat -d -t 300 || true
+  exit 1
+}
+
 adb install -r artifacts/app-debug.apk
-adb shell pm clear "$PKG" >/dev/null
-adb shell settings put system font_scale 1.0
 adb shell am force-stop "$PKG"
 adb shell am start -n "$PKG/.MainActivity"
 # Allow the splash and first Compose frame to settle on the virtual device.
