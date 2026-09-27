@@ -252,9 +252,10 @@ private fun MainNav(
                             .putInt("adv_maps_done", if (next.mapComplete) 1 else 0)
                             .apply()
                     },
-                    onMiniGame = { key ->
+                    onMiniGame = { picked ->
                         returnToAdventure = true
-                        when (key) {
+                        // CI hook: `--es adv_game color` biar capture deterministik.
+                        when (launch?.getStringExtra("adv_game") ?: picked) {
                             "color" -> { startLevel = (prefs.getInt("cunlocked", 1) - 1).coerceAtLeast(1); game = GameChoice.Color }
                             "pattern" -> { startLevel = (prefs.getInt("punlocked", 1) - 1).coerceAtLeast(1); game = GameChoice.Pattern }
                             "fruit" -> { startLevel = prefs.getInt("fruit_level", 1); game = GameChoice.Fruit }

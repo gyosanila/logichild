@@ -66,6 +66,13 @@ sleep 3;                                                       shot hat-board
 # Kotak game (4): mini game kebuka otomatis dalam mode petualangan, BACK balik ke Papan.
 open --es screen adventure --ei adv_pos 3 --ei adv_stars 2;    adb shell input tap "$WALK_X" "$WALK_Y"; sleep 6; shot minigame
 adb shell input keyevent KEYCODE_BACK; sleep 3;                shot minigame-back
+# Jalur menang: Cocokkan Warna level 1 = 2 lingkaran (merah kiri, biru kanan, y≈69%).
+# Tap dua-duanya: satu pasti benar (yang kedua diabaikan kalau sudah menang).
+open --es screen adventure --ei adv_pos 3 --ei adv_stars 2 --es adv_game color
+adb shell input tap "$WALK_X" "$WALK_Y"; sleep 6;               shot win-game
+adb shell input tap $((WIDTH * 34 / 100)) $((HEIGHT * 69 / 100)); sleep 0.5
+adb shell input tap $((WIDTH * 66 / 100)) $((HEIGHT * 69 / 100)); sleep 1; shot win-award
+sleep 3;                                                        shot win-back
 open --es screen adventure --ei adv_pos 23 --ei adv_stars 58 --ei adv_fruits 5;  adb shell input tap "$WALK_X" "$WALK_Y"; sleep 3; shot finish
 adb shell dumpsys activity activities | grep -E 'ResumedActivity|topResumedActivity' > "$OUT_DIR/activity.txt" || true
 adb logcat -d -t 400 '*:E' > "$OUT_DIR/logcat-errors.txt" || true
