@@ -393,8 +393,8 @@ fun AdventureScreen(
                 when (move.effect) {
                     AdventureTileEffect.Star, AdventureTileEffect.Gift -> { chip = 's' to 1; sounds.sparkle() }
                     AdventureTileEffect.Collect -> {
-                        sounds.sparkle(); appleFly.snapTo(0f); appleFly.animateTo(1f, tween(800)); chip = 'a' to 1
-                        if (next.outfits > state.outfits) { delay(300); outfitShow = next.outfits; sounds.reward(5) }
+                        sounds.sparkle(); appleFly.snapTo(0f); appleFly.animateTo(1f, tween(800))
+                        if (next.outfits > state.outfits) { outfitShow = next.outfits; sounds.reward(5) } else chip = 'a' to 1
                     }
                     AdventureTileEffect.MiniGame -> { delay(700); onMiniGame(MINI_GAMES.random()) }
                     AdventureTileEffect.Finish -> sounds.reward(5)

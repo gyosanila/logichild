@@ -336,7 +336,8 @@ private fun MainNav(
             }
         }
         // Satu banner permanen — AdView yang SAMA stay di menu & semua game.
-        PersistentBanner()
+        // Papan tanpa banner (PRD risiko: banner jangan dekat tombol JALAN).
+        if (game != GameChoice.Adventure) PersistentBanner()
     }
 
     if (mathGate) {
