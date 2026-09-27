@@ -109,19 +109,19 @@ fun HomeScreen(
         }
 
         // panggung peta
-        Box(Modifier.offset(u * 14, u * 72).width(u * 512).height(u * 348).shadow(12.dp, RoundedCornerShape(u * 30))
+        Box(Modifier.offset(u * 14, u * 70).width(u * 512).height(u * 336).shadow(12.dp, RoundedCornerShape(u * 30))
             .clip(RoundedCornerShape(u * 30)).background(Brush.verticalGradient(0f to c(0xB07C52), .7f to c(0x8B5E3C), 1f to c(0x7A4F31)))
             .clickable(onClick = onContinue)) {
-            Row(Modifier.offset(u * 24, u * 9).width(u * 464).height(u * 48), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.offset(u * 24, u * 6).width(u * 464).height(u * 52), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(strings.homeContinue, color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 18.5f).sp, maxLines = 1)
+                    Text(strings.homeContinue, color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 18.5f).sp, lineHeight = (u.value * 22).sp, maxLines = 1)
                     Text(strings.homeContinueSub.format(adventure.adventureNumber, adventure.position), color = c(0xF3DFC6),
-                        fontSize = (u.value * 11.5f).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        fontSize = (u.value * 11.5f).sp, lineHeight = (u.value * 14).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 StarChip(u, adventure.stars, c(0xFFF4D6))
             }
             // jendela pratinjau: papan asli, zoom di sekitar beruang (varian 1)
-            Canvas(Modifier.offset(u * 10, u * 62).width(u * 492).height(u * 230).clip(RoundedCornerShape(u * 20))
+            Canvas(Modifier.offset(u * 10, u * 60).width(u * 492).height(u * 204).clip(RoundedCornerShape(u * 20))
                 .border(u * 5, c(0xF0DCBB), RoundedCornerShape(u * 20)).clipToBounds()) {
                 // world y 340..760 (kotak + beruang) mengisi jendela; x fokus sekitar beruang
                 val s = size.height / 420f
@@ -135,13 +135,13 @@ fun HomeScreen(
                     Offset(0f, size.height - 70.dp.toPx()))
             }
             // batang musim
-            Row(Modifier.offset(u * 18, u * 302).width(u * 476), horizontalArrangement = Arrangement.spacedBy(u * 9)) {
+            Row(Modifier.offset(u * 18, u * 274).width(u * 476), horizontalArrangement = Arrangement.spacedBy(u * 9)) {
                 repeat(4) { i ->
                     Box(Modifier.weight(1f).height(u * 9).clip(RoundedCornerShape(u * 6)).background(
                         when { i < season -> c(0x7ED957); i == season -> GOLD; else -> Color.White.copy(alpha = .3f) }))
                 }
             }
-            Row(Modifier.offset(u * 18, u * 318).width(u * 476), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.offset(u * 18, u * 290).width(u * 476), horizontalArrangement = Arrangement.SpaceBetween) {
                 repeat(4) { i ->
                     val on = i == season
                     Box(Modifier.size(u * 27).then(if (on) Modifier.border(u * 3, GOLD, CircleShape) else Modifier).clip(CircleShape)
@@ -153,7 +153,7 @@ fun HomeScreen(
         }
 
         // tombol utama melayang di tepi bawah panggung
-        Row(Modifier.offset(u * 74, u * 400).width(u * 392).height(u * 60).shadow(10.dp, RoundedCornerShape(u * 22))
+        Row(Modifier.offset(u * 74, u * 380).width(u * 392).height(u * 58).shadow(10.dp, RoundedCornerShape(u * 22))
             .clip(RoundedCornerShape(u * 22)).background(Brush.verticalGradient(listOf(c(0x8AE765), c(0x4FAE2E))))
             .clickable(onClick = onContinue), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.size(u * 22)) {
@@ -165,7 +165,7 @@ fun HomeScreen(
         }
 
         // judul seksi
-        Row(Modifier.offset(u * 16, u * 476).width(u * 508), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.offset(u * 16, u * 460).width(u * 508), verticalAlignment = Alignment.CenterVertically) {
             Text(strings.homeMiniGame, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, letterSpacing = (u.value * 1.5f).sp,
                 modifier = Modifier.shadow(2.dp, RoundedCornerShape(u * 13)).clip(RoundedCornerShape(u * 13)).background(Color.White)
                     .padding(horizontal = u * 14, vertical = u * 8))
@@ -174,14 +174,15 @@ fun HomeScreen(
         }
 
         // rak mainan: tinggi & kemiringan beda
-        val tops = listOf(518, 532, 686, 670)
+        val tops = listOf(506, 516, 684, 686)
+        val heights = listOf(164, 154, 154, 160)
         val rots = listOf(-2.2f, 2f, 2.4f, -1.8f)
         val cols = listOf(c(0xB49BFB) to c(0x8B6BEA), c(0xFBB4CE) to c(0xEE8FB4), c(0x5FBDF0) to c(0x3A97D6), c(0x8BDF63) to c(0x5CB93A))
         games.take(4).forEachIndexed { i, g ->
-            Column(Modifier.offset(u * (16 + (i % 2) * 262), u * tops[i]).width(u * 246).height(u * (if (i == 0 || i == 3) 160 else 142))
+            Column(Modifier.offset(u * (16 + (i % 2) * 262), u * tops[i]).width(u * 246).height(u * heights[i])
                 .rotate(rots[i]).shadow(8.dp, RoundedCornerShape(u * 30)).clip(RoundedCornerShape(u * 30)).background(Color.White)
                 .clickable(onClick = g.onClick)) {
-                Box(Modifier.fillMaxWidth().height(u * 88).background(Brush.verticalGradient(listOf(cols[i].first, cols[i].second))),
+                Box(Modifier.fillMaxWidth().height(u * 84).background(Brush.verticalGradient(listOf(cols[i].first, cols[i].second))),
                     contentAlignment = Alignment.Center) {
                     Canvas(Modifier.fillMaxSize()) {
                         drawOval(Color.White.copy(alpha = .2f), Offset(-30 * u.toPx(), -40 * u.toPx()), Size(200 * u.toPx(), 110 * u.toPx()))
@@ -193,15 +194,15 @@ fun HomeScreen(
                         Text(" ${g.stars}", color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp)
                     }
                 }
-                Column(Modifier.padding(horizontal = u * 14, vertical = u * 9)) {
-                    Text(g.title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 15.5f).sp, maxLines = 1)
-                    Text(strings.homeGameSub.format(g.level, g.stars), color = GREY, fontSize = (u.value * 11.5f).sp, maxLines = 1)
+                Column(Modifier.padding(horizontal = u * 14, vertical = u * 8)) {
+                    Text(g.title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 15.5f).sp, lineHeight = (u.value * 19).sp, maxLines = 1)
+                    Text(strings.homeGameSub.format(g.level, g.stars), color = GREY, fontSize = (u.value * 11.5f).sp, lineHeight = (u.value * 14).sp, maxLines = 1)
                 }
             }
         }
 
         // baris bawah
-        Row(Modifier.offset(u * 16, u * 844).width(u * 508), horizontalArrangement = Arrangement.spacedBy(u * 16)) {
+        Row(Modifier.offset(u * 16, u * 862).width(u * 508), horizontalArrangement = Arrangement.spacedBy(u * 16)) {
             MiniCard(u, strings.adventureMapName.format(adventure.adventureNumber), strings.homeBoardSub, onContinue) { mapIcon(size.width / 34f) }
             MiniCard(u, strings.homeGift, strings.homeGiftSub.format(adventure.fruits, adventure.outfits), onContinue) {
                 apple(art, size.width / 2, size.height / 2 + size.width * .06f, size.width / 22f)
