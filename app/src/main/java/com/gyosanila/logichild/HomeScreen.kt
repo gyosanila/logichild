@@ -153,7 +153,7 @@ fun HomeScreen(
         }
 
         // tombol utama melayang di tepi bawah panggung
-        Row(Modifier.offset(u * 74, u * 380).width(u * 392).height(u * 58).shadow(10.dp, RoundedCornerShape(u * 22))
+        Row(Modifier.offset(u * 74, u * 394).width(u * 392).height(u * 58).shadow(10.dp, RoundedCornerShape(u * 22))
             .clip(RoundedCornerShape(u * 22)).background(Brush.verticalGradient(listOf(c(0x8AE765), c(0x4FAE2E))))
             .clickable(onClick = onContinue), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.size(u * 22)) {
@@ -165,7 +165,7 @@ fun HomeScreen(
         }
 
         // judul seksi
-        Row(Modifier.offset(u * 16, u * 460).width(u * 508), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.offset(u * 16, u * 464).width(u * 508), verticalAlignment = Alignment.CenterVertically) {
             Text(strings.homeMiniGame, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, letterSpacing = (u.value * 1.5f).sp,
                 modifier = Modifier.shadow(2.dp, RoundedCornerShape(u * 13)).clip(RoundedCornerShape(u * 13)).background(Color.White)
                     .padding(horizontal = u * 14, vertical = u * 8))
@@ -174,8 +174,8 @@ fun HomeScreen(
         }
 
         // rak mainan: tinggi & kemiringan beda
-        val tops = listOf(506, 516, 684, 686)
-        val heights = listOf(164, 154, 154, 160)
+        val tops = listOf(512, 522, 690, 692)
+        val heights = listOf(160, 152, 152, 156)
         val rots = listOf(-2.2f, 2f, 2.4f, -1.8f)
         val cols = listOf(c(0xB49BFB) to c(0x8B6BEA), c(0xFBB4CE) to c(0xEE8FB4), c(0x5FBDF0) to c(0x3A97D6), c(0x8BDF63) to c(0x5CB93A))
         games.take(4).forEachIndexed { i, g ->
