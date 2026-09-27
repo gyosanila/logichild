@@ -44,6 +44,7 @@ data class AdventureState(
     val stars: Int = 0,
     val fruits: Int = 0,
     val mapComplete: Boolean = false,
+    val adventureNumber: Int = 1,
 ) {
     /** Tiap 5 apel = 1 baju beruang. Diturunkan dari apel, jadi tidak perlu disimpan & tidak bisa hilang. */
     val outfits: Int get() = fruits / APPLES_PER_OUTFIT
@@ -68,11 +69,17 @@ data class AdventureState(
     companion object {
         const val APPLES_PER_OUTFIT = 5
 
-        fun fromStored(position: Int, stars: Int, fruits: Int, mapComplete: Boolean) = AdventureState(
+        fun fromStored(position: Int, stars: Int, fruits: Int, mapComplete: Boolean, adventureNumber: Int = 1) = AdventureState(
             position = position.coerceIn(1, AdventureBoard.MAP_LENGTH),
             stars = stars.coerceAtLeast(0),
             fruits = fruits.coerceAtLeast(0),
             mapComplete = mapComplete,
+            adventureNumber = adventureNumber.coerceAtLeast(1),
         )
     }
+
+    fun nextAdventure(): AdventureState = copy(position = 1, mapComplete = false, adventureNumber = adventureNumber + 1)
 }
+
+/** Level petualangan berurutan ganjil: petualangan 1=level 1, 2=3, 3=5, ... */
+fun adventureLevel(adventureNumber: Int): Int = ((adventureNumber.coerceAtLeast(1) - 1) * 2) + 1

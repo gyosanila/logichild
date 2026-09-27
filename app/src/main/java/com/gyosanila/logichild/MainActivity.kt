@@ -153,6 +153,7 @@ private fun MainNav(
                 launch?.getIntExtra("adv_stars", -1)?.takeIf { it >= 0 } ?: prefs.getInt("adv_stars", 0),
                 launch?.getIntExtra("adv_fruits", -1)?.takeIf { it >= 0 } ?: prefs.getInt("adv_fruits", 0),
                 prefs.getInt("adv_maps_done", 0) > 0,
+                prefs.getInt("adv_number", 1),
             ),
         )
     }
@@ -249,6 +250,7 @@ private fun MainNav(
                         prefs.edit().putInt("adv_position", next.position)
                             .putInt("adv_stars", next.stars)
                             .putInt("adv_fruits", next.fruits)
+                            .putInt("adv_number", next.adventureNumber)
                             .putInt("adv_maps_done", if (next.mapComplete) 1 else 0)
                             .apply()
                     },
@@ -256,10 +258,10 @@ private fun MainNav(
                         returnToAdventure = true
                         // CI hook: `--es adv_game color` biar capture deterministik.
                         when (launch?.getStringExtra("adv_game") ?: picked) {
-                            "color" -> { startLevel = (prefs.getInt("cunlocked", 1) - 1).coerceAtLeast(1); game = GameChoice.Color }
-                            "pattern" -> { startLevel = (prefs.getInt("punlocked", 1) - 1).coerceAtLeast(1); game = GameChoice.Pattern }
-                            "fruit" -> { startLevel = prefs.getInt("fruit_level", 1); game = GameChoice.Fruit }
-                            else -> { startLevel = (prefs.getInt("unlocked", 0) + 1).coerceAtLeast(1); game = GameChoice.Kart }
+                            "color" -> { startLevel = adventureLevel(adventure.adventureNumber); game = GameChoice.Color }
+                            "pattern" -> { startLevel = adventureLevel(adventure.adventureNumber); game = GameChoice.Pattern }
+                            "fruit" -> { startLevel = adventureLevel(adventure.adventureNumber); game = GameChoice.Fruit }
+                            else -> { startLevel = adventureLevel(adventure.adventureNumber); game = GameChoice.Kart }
                         }
                     },
                     onBack = { game = GameChoice.Menu },

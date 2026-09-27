@@ -47,6 +47,18 @@ class AdventureBoardTest {
         assertEquals(AdventureState(1, 42, 3, false), done)
     }
 
+    @Test fun adventureLevelsAdvanceByTwoStartingAtOne() {
+        assertEquals(1, adventureLevel(1))
+        assertEquals(3, adventureLevel(2))
+        assertEquals(5, adventureLevel(3))
+        assertEquals(1999, adventureLevel(1000))
+    }
+
+    @Test fun nextAdventureStartsAtTileOneAndKeepsRewards() {
+        val done = AdventureState(24, stars = 12, fruits = 6, mapComplete = true, adventureNumber = 1)
+        assertEquals(AdventureState(1, 12, 6, false, 2), done.nextAdventure())
+    }
+
     @Test fun everyFiveApplesUnlocksOutfit() {
         assertEquals(0, AdventureState(fruits = 4).outfits)
         assertEquals(1, AdventureState(fruits = 4).land(board.step(6)).outfits) // apel ke-5

@@ -588,7 +588,7 @@ fun AdventureScreen(
                         verticalAlignment = Alignment.CenterVertically) {
                         Canvas(Modifier.size(u * 22)) { val k = size.width / 28; at(size.width / 2, size.height / 2, k) { drawCircle(c(0xFFF3DC), 13f, Offset.Zero); flag(0f, 4f, .8f) } }
                         Spacer(Modifier.width(u * 6))
-                        Text(strings.adventureMapName, color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp, maxLines = 1)
+                        Text(strings.adventureMapName.format(state.adventureNumber, adventureLevel(state.adventureNumber)), color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp, maxLines = 1)
                     }
                     Spacer(Modifier.weight(.01f))
                     HudPill(u, "${state.stars}") { star(size.width / 2, size.height / 2, size.width * .44f, c(0xFFC94D), c(0xE0A22B), size.width * .06f) }
@@ -654,7 +654,9 @@ fun AdventureScreen(
 
         if (outfitShow > 0) OutfitReward(u, art, bearImg, outfitShow, time, strings.adventureNewOutfit) { outfitShow = 0 }
         if (state.mapComplete && !busy) MapComplete(u, art, bearImg, state, time,
-            onReplay = { onStateChange(state.restartMap()) }, onMenu = onBack)
+            onReplay = { onStateChange(state.restartMap()) },
+            onNext = { onStateChange(state.nextAdventure()) },
+            onMenu = onBack)
     }
 }
 
@@ -707,7 +709,7 @@ private fun StatRow(u: Dp, label: String, value: String) = Row(Modifier.fillMaxW
 
 /** Kotak 24: perayaan peta tamat (board.html v=3). */
 @Composable
-private fun MapComplete(u: Dp, art: Art, img: ImageBitmap, state: AdventureState, time: Float, onReplay: () -> Unit, onMenu: () -> Unit) {
+private fun MapComplete(u: Dp, art: Art, img: ImageBitmap, state: AdventureState, time: Float, onReplay: () -> Unit, onNext: () -> Unit, onMenu: () -> Unit) {
     val strings = LocalStrings.current
     Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) {}) {
         Canvas(Modifier.fillMaxSize()) {
@@ -731,7 +733,7 @@ private fun MapComplete(u: Dp, art: Art, img: ImageBitmap, state: AdventureState
             }
             confetti(time)
         }
-        Text(strings.adventureMapDone, color = c(0xFFF8EC), fontWeight = FontWeight.Black, fontSize = (u.value * 28).sp,
+        Text(strings.adventureMapDone.format(state.adventureNumber), color = c(0xFFF8EC), fontWeight = FontWeight.Black, fontSize = (u.value * 28).sp,
             modifier = Modifier.align(Alignment.TopCenter).padding(top = u * 192))
         Column(Modifier.align(Alignment.TopCenter).padding(top = u * 500, start = u * 52, end = u * 52).fillMaxWidth()
             .shadow(12.dp, RoundedCornerShape(u * 26)).clip(RoundedCornerShape(u * 26)).background(Color.White)
@@ -739,14 +741,20 @@ private fun MapComplete(u: Dp, art: Art, img: ImageBitmap, state: AdventureState
             StatRow(u, strings.adventureStarsTotal, "${state.stars}")
             StatRow(u, strings.adventureApplesTotal, "${state.fruits}")
             StatRow(u, strings.adventureTilesPassed, "24 / 24")
-            Row(Modifier.padding(top = u * 16), horizontalArrangement = Arrangement.spacedBy(u * 12)) {
-                Box(Modifier.weight(1f).height(u * 56).clip(RoundedCornerShape(u * 18))
-                    .background(Brush.verticalGradient(listOf(c(0x7ED957), c(0x4FAE2E)))).clickable(onClick = onReplay), contentAlignment = Alignment.Center) {
-                    Text(strings.playAgain, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (u.value * 16).sp)
+            Column(Modifier.padding(top = u * 14), verticalArrangement = Arrangement.spacedBy(u * 8)) {
+                Box(Modifier.fillMaxWidth().height(u * 48).clip(RoundedCornerShape(u * 16))
+                    .background(Brush.verticalGradient(listOf(c(0x7ED957), c(0x4FAE2E)))).clickable(onClick = onNext), contentAlignment = Alignment.Center) {
+                    Text(strings.adventureNext.format(adventureLevel(state.adventureNumber + 1)), color = Color.White, fontWeight = FontWeight.Black, fontSize = (u.value * 16).sp)
                 }
-                Box(Modifier.weight(1f).height(u * 56).clip(RoundedCornerShape(u * 18)).border(u * 3, c(0xDBE6F0), RoundedCornerShape(u * 18))
-                    .clickable(onClick = onMenu), contentAlignment = Alignment.Center) {
-                    Text(strings.adventureMenu, color = c(0x1E3A5F), fontWeight = FontWeight.Bold, fontSize = (u.value * 16).sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(u * 10)) {
+                    Box(Modifier.weight(1f).height(u * 42).clip(RoundedCornerShape(u * 14))
+                        .background(c(0xFFF3DC)).clickable(onClick = onReplay), contentAlignment = Alignment.Center) {
+                        Text(strings.playAgain, color = c(0x8B5E3C), fontWeight = FontWeight.Bold, fontSize = (u.value * 14).sp)
+                    }
+                    Box(Modifier.weight(1f).height(u * 42).clip(RoundedCornerShape(u * 14))
+                        .border(u * 2, c(0xDBE6F0), RoundedCornerShape(u * 14)).clickable(onClick = onMenu), contentAlignment = Alignment.Center) {
+                        Text(strings.adventureMenu, color = c(0x1E3A5F), fontWeight = FontWeight.Bold, fontSize = (u.value * 14).sp)
+                    }
                 }
             }
         }
