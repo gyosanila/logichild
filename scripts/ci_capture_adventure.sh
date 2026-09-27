@@ -21,6 +21,10 @@ adb shell service check package 2>&1 | grep -q 'found' || {
 }
 
 adb install -r artifacts/app-debug.apk
+# Dialog ANR bawaan emulator (Settings/System UI lambat di swiftshader) nutup layar & makan tap.
+adb shell settings put global hide_error_dialogs 1 || true
+adb shell settings put global anr_show_background 0 || true
+adb shell am force-stop com.android.settings || true
 # Emulator lambat sering munculin dialog "isn't responding" — tutup sebelum tiap capture.
 close_dialogs() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true; }
 shot() { close_dialogs; sleep 1; adb exec-out screencap -p > "$OUT_DIR/$1.png"; }
@@ -29,7 +33,15 @@ read -r WIDTH HEIGHT < <(adb shell wm size | python3 -c 'import re,sys; s=sys.st
 WALK_X=$((WIDTH / 2)); WALK_Y=$((HEIGHT - WIDTH * 70 / 540))
 
 # open <nama> [extras...] — buka app langsung ke layar tertentu (hook intent di MainActivity).
-open() { adb shell am force-stop "$PKG"; adb shell am start -n "$PKG/.MainActivity" "$@" >/dev/null; sleep 12; }
+open() {
+  adb shell am force-stop "$PKG"
+  adb shell am start -W -n "$PKG/.MainActivity" "$@" >/dev/null
+  for _ in $(seq 1 30); do
+    adb shell dumpsys window | grep -q "mCurrentFocus.*$PKG" && break
+    sleep 1
+  done
+  sleep 8  # frame Compose pertama di CPU emulator lambat
+}
 
 open;                                                          shot home
 open --es screen adventure --ei adv_pos 1;                     shot board-1

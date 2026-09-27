@@ -501,7 +501,7 @@ fun AdventureScreen(
                         val r = if (isCur) 46f else 44f
                         at(ax(i), ay(i)) {
                             val a = if (locked) .72f else 1f
-                            if (isCur) drawCircle(Brush.radialGradient(listOf(c(0xFFF0B0).copy(alpha = .85f), c(0xFFD24D).copy(alpha = 0f)), Offset.Zero, r + 20), r + 20)
+                            if (isCur) drawCircle(Brush.radialGradient(listOf(c(0xFFF0B0).copy(alpha = .85f), c(0xFFD24D).copy(alpha = 0f)), Offset.Zero, r + 20), r + 20, Offset.Zero)
                             drawOval(Color.Black.copy(alpha = .14f * a), Offset(-r * .95f, r * .62f - r * .34f), Size(r * 1.9f, r * .68f))
                             val blob = if (isCur) art.blob46 else art.blob44
                             at(0f, 5f) { drawPath(blob, rim.copy(alpha = a)) }
@@ -585,7 +585,7 @@ fun AdventureScreen(
                     Row(Modifier.weight(1f, fill = false).height(u * 46).shadow(4.dp, RoundedCornerShape(u * 20)).clip(RoundedCornerShape(u * 20))
                         .background(Brush.verticalGradient(listOf(c(0xA9744F), c(0x8B5E3C)))).padding(horizontal = u * 13),
                         verticalAlignment = Alignment.CenterVertically) {
-                        Canvas(Modifier.size(u * 22)) { val k = size.width / 28; at(size.width / 2, size.height / 2, k) { drawCircle(c(0xFFF3DC), 13f); flag(0f, 4f, .8f) } }
+                        Canvas(Modifier.size(u * 22)) { val k = size.width / 28; at(size.width / 2, size.height / 2, k) { drawCircle(c(0xFFF3DC), 13f, Offset.Zero); flag(0f, 4f, .8f) } }
                         Spacer(Modifier.width(u * 6))
                         Text(strings.adventureMapName, color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp, maxLines = 1)
                     }
