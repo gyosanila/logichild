@@ -48,6 +48,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -455,7 +456,7 @@ fun AdventureScreen(
                     }
                     for (fb in 0 until 78) {
                         val fx = 8 + fb * 37 + prand(fb * 3.9) * 22; val fy = 736 + prand(fb * 5.5) * 112
-                        at(fx, fy, .8f + prand(fb * 7.1) * .75f, wsin(fx / 160f) * 8f) { drawPath(art.tuft, c(0x3F8F34), style = Stroke(3.8f, cap = StrokeCap.Round)) }
+                        at(fx, fy, .8f + prand(fb * 7.1) * .75f, wsin(fx / 160f) * 8f) { drawPath(art.tuft, lerp(c(0x3F8F34), c(0xDCEBF5), frost(fx)), style = Stroke(3.8f, cap = StrokeCap.Round)) }
                     }
                     // jalan pasir
                     at(0f, 6f) { drawPath(art.road, c(0xB8834B).copy(alpha = .55f), style = Stroke(80f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
@@ -554,7 +555,7 @@ fun AdventureScreen(
                     for (fi in 0 until 16) {
                         val fx = 40f + fi * 180
                         at(fx, 700 + prand(fi * 6.6) * 24, .9f + prand(fi * 4.4) * .5f, wsin(fx / 150f) * 8f) {
-                            drawPath(art.tuft, c(0x3F8F34).copy(alpha = .85f), style = Stroke(4f, cap = StrokeCap.Round))
+                            drawPath(art.tuft, lerp(c(0x3F8F34), c(0xDCEBF5), frost(fx)).copy(alpha = .85f), style = Stroke(4f, cap = StrokeCap.Round))
                         }
                     }
                 }

@@ -60,6 +60,12 @@ open --es screen adventure --ei adv_pos 15 --ei adv_stars 30;  shot zone-autumn
 open --es screen adventure --ei adv_pos 19 --ei adv_fruits 4;  shot zone-winter
 adb shell input tap "$WALK_X" "$WALK_Y"; sleep 1.2;            shot apple
 sleep 1;                                                       shot hadiah
+# Topi: apel ke-10 (outfit ke-2).
+open --es screen adventure --ei adv_pos 19 --ei adv_fruits 9;  adb shell input tap "$WALK_X" "$WALK_Y"; sleep 2.2; shot hat
+sleep 3;                                                       shot hat-board
+# Kotak game (4): mini game kebuka otomatis dalam mode petualangan, BACK balik ke Papan.
+open --es screen adventure --ei adv_pos 3 --ei adv_stars 2;    adb shell input tap "$WALK_X" "$WALK_Y"; sleep 6; shot minigame
+adb shell input keyevent KEYCODE_BACK; sleep 3;                shot minigame-back
 open --es screen adventure --ei adv_pos 23 --ei adv_stars 58 --ei adv_fruits 5;  adb shell input tap "$WALK_X" "$WALK_Y"; sleep 3; shot finish
 adb shell dumpsys activity activities | grep -E 'ResumedActivity|topResumedActivity' > "$OUT_DIR/activity.txt" || true
 adb logcat -d -t 400 '*:E' > "$OUT_DIR/logcat-errors.txt" || true
