@@ -121,6 +121,9 @@ jobs:
           echo "version_code=${VC}" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VN} (code ${VC})"
 
+      - name: Run JVM unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
       # ── Dev: push ke main → debug APK aja ──
       - name: Build APK debug (dev)
         if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build_type == 'debug')) }}

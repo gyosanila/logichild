@@ -101,7 +101,7 @@ fun HomeScreen(
                 .background(Brush.verticalGradient(listOf(c(0xA9744F), c(0x8B5E3C)))).padding(horizontal = u * 15),
                 verticalArrangement = Arrangement.Center) {
                 Text(strings.appName, color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 17).sp, lineHeight = (u.value * 19).sp)
-                Text("v${BuildConfig.VERSION_NAME}", color = c(0xF6DFC6), fontSize = (u.value * 11).sp, lineHeight = (u.value * 13).sp)
+                Text("v${BuildConfig.VERSION_NAME.removeSuffix("-debug")}", color = c(0xF6DFC6), fontSize = (u.value * 11).sp, lineHeight = (u.value * 13).sp)
             }
             Spacer(Modifier.weight(1f))
             Box(Modifier.size(u * 46).shadow(4.dp, CircleShape).clip(CircleShape).background(Color.White).clickable(onClick = onSettings),
@@ -205,9 +205,9 @@ fun HomeScreen(
 
         // baris bawah
         Row(Modifier.offset(u * 16, u * 862).width(u * 508), horizontalArrangement = Arrangement.spacedBy(u * 16)) {
-            MiniCard(u, strings.adventureMapName.format(adventure.adventureNumber), strings.homeBoardSub, onContinue) { mapIcon(size.width / 34f) }
-            MiniCard(u, strings.homeGift, strings.homeGiftSub.format(adventure.fruits, adventure.outfits), onContinue) {
-                apple(art, size.width / 2, size.height / 2 + size.width * .06f, size.width / 22f)
+            MiniCard(u, strings.homeBoardTitle, strings.homeBoardSub.format(adventure.adventureNumber), onContinue) { mapIcon(size.width / 34f) }
+            MiniCard(u, strings.homeGift, strings.homeGiftSub, onContinue, badge = strings.homeNewBadge) {
+                rewardChest(size.width / 34f)
             }
         }
         }
@@ -223,20 +223,25 @@ private fun StarChip(u: Dp, n: Int, bg: Color) = Row(Modifier.clip(RoundedCorner
 }
 
 @Composable
-private fun RowScope.MiniCard(u: Dp, title: String, sub: String, onClick: () -> Unit, icon: DrawScope.() -> Unit) =
-    Row(Modifier.weight(1f).height(u * 74).shadow(8.dp, RoundedCornerShape(u * 24)).clip(RoundedCornerShape(u * 24)).background(Color.White)
-        .clickable(onClick = onClick).padding(horizontal = u * 15), verticalAlignment = Alignment.CenterVertically) {
-        Canvas(Modifier.size(u * 32), onDraw = icon)
-        Spacer(Modifier.width(u * 12))
-        Column(Modifier.weight(1f)) {
-            Text(title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp, maxLines = 1)
-            Text(sub, color = GREY, fontSize = (u.value * 11.5f).sp, maxLines = 1)
+private fun RowScope.MiniCard(u: Dp, title: String, sub: String, onClick: () -> Unit, badge: String? = null, icon: DrawScope.() -> Unit) =
+    Box(Modifier.weight(1f).height(u * 74)) {
+        Row(Modifier.fillMaxSize().shadow(8.dp, RoundedCornerShape(u * 24)).clip(RoundedCornerShape(u * 24)).background(Color.White)
+            .clickable(onClick = onClick).padding(horizontal = u * 15), verticalAlignment = Alignment.CenterVertically) {
+            Canvas(Modifier.size(u * 32), onDraw = icon)
+            Spacer(Modifier.width(u * 12))
+            Column(Modifier.weight(1f)) {
+                Text(title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp, maxLines = 1)
+                Text(sub, color = GREY, fontSize = (u.value * 11.5f).sp, maxLines = 1)
+            }
+            Canvas(Modifier.size(u * 20)) {
+                val k = size.width / 22f
+                drawPath(Path().apply { moveTo(8 * k, 4 * k); lineTo(15 * k, 11 * k); lineTo(8 * k, 18 * k) }, c(0xC3D2DF),
+                    style = Stroke(3.2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            }
         }
-        Canvas(Modifier.size(u * 20)) {
-            val k = size.width / 22f
-            drawPath(Path().apply { moveTo(8 * k, 4 * k); lineTo(15 * k, 11 * k); lineTo(8 * k, 18 * k) }, c(0xC3D2DF),
-                style = Stroke(3.2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
-        }
+        if (badge != null) Text(badge, Modifier.align(Alignment.TopEnd).offset(u * 5, -u * 7)
+            .clip(RoundedCornerShape(u * 12)).background(c(0xE84A4A)).padding(horizontal = u * 8, vertical = u * 3),
+            color = Color.White, fontWeight = FontWeight.Bold, fontSize = (u.value * 10.5f).sp)
     }
 
 /** Langit + matahari + awan + pohon sakura + rumput + pagar semak (home.html #bg/#field/#amb). */
@@ -306,4 +311,12 @@ private fun DrawScope.gameIcon(art: Art, i: Int, cx: Float, cy: Float, k: Float)
             drawRoundRect(c(0xFFE066), Offset(-24f, -3f), Size(9f, 7f), CornerRadius(3f)) }
         else -> apple(art, 0f, 0f, 2.6f)
     }
+}
+
+private fun DrawScope.rewardChest(k: Float) = withTransform({ translate(17 * k, 17 * k); scale(k, k, Offset.Zero) }) {
+    drawRoundRect(c(0x8B5E3C), Offset(-12f, -4f), Size(24f, 18f), CornerRadius(3f))
+    drawRoundRect(c(0xD7A654), Offset(-14f, -10f), Size(28f, 9f), CornerRadius(4f))
+    drawRoundRect(c(0xF5CE68), Offset(-2f, -10f), Size(5f, 24f), CornerRadius(2f))
+    drawRoundRect(c(0xF5CE68), Offset(-13f, 5f), Size(26f, 3f), CornerRadius(1.5f))
+    drawCircle(c(0xFFF1B8), 2f, Offset(0f, 0f))
 }

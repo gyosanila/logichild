@@ -42,6 +42,19 @@ class AdventureBoardTest {
         assertTrue(AdventureState(23).land(board.step(23)).mapComplete)
     }
 
+    @Test fun miniGameChoiceCyclesWithoutAdjacentRepeats() {
+        val cycle = (0..4).map(::adventureMiniGame)
+        assertEquals(listOf("kart", "fruit", "pattern", "color", "kart"), cycle)
+    }
+
+    @Test fun landingMiniGameAdvancesPersistedRoundRobinIndex() {
+        val state = AdventureState(position = 3, miniGameIndex = 5)
+            .land(board.step(3))
+        assertEquals(6, state.miniGameIndex)
+        val restored = AdventureState.fromStored(state.position, state.stars, state.fruits, state.mapComplete, state.adventureNumber, state.miniGameIndex)
+        assertEquals("pattern", adventureMiniGame(restored.miniGameIndex))
+    }
+
     @Test fun restartKeepsRewards() {
         val done = AdventureState(24, stars = 42, fruits = 3, mapComplete = true).restartMap()
         assertEquals(AdventureState(1, 42, 3, false), done)

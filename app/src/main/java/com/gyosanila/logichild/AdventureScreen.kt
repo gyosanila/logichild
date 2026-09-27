@@ -492,7 +492,6 @@ internal fun rememberWorldText(): Pair<List<TextLayoutResult>, TextLayoutResult>
     }
 }
 
-private val MINI_GAMES = listOf("kart", "fruit", "pattern", "color")
 
 @Composable
 fun AdventureScreen(
@@ -553,7 +552,7 @@ fun AdventureScreen(
                         sounds.sparkle(); appleFly.snapTo(0f); appleFly.animateTo(1f, tween(800))
                         if (next.outfits > state.outfits) { outfitShow = next.outfits; sounds.reward(5) } else chip = 'a' to 1
                     }
-                    AdventureTileEffect.MiniGame -> { delay(700); onMiniGame(MINI_GAMES.random()) }
+                    AdventureTileEffect.MiniGame -> { delay(700); onMiniGame(adventureMiniGame(next.miniGameIndex - 1)) }
                     AdventureTileEffect.Finish -> sounds.reward(5)
                     else -> Unit
                 }

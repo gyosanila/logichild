@@ -45,6 +45,8 @@ data class AdventureState(
     val fruits: Int = 0,
     val mapComplete: Boolean = false,
     val adventureNumber: Int = 1,
+    /** Jumlah petak mini-game yang pernah dipicu; dipakai untuk pilihan round-robin persisten. */
+    val miniGameIndex: Int = 0,
 ) {
     /** Tiap 5 apel = 1 baju beruang. Diturunkan dari apel, jadi tidak perlu disimpan & tidak bisa hilang. */
     val outfits: Int get() = fruits / APPLES_PER_OUTFIT
@@ -53,6 +55,7 @@ data class AdventureState(
     fun land(move: AdventureMove): AdventureState {
         val moved = copy(position = move.position)
         return when (move.effect) {
+            AdventureTileEffect.MiniGame -> moved.copy(miniGameIndex = miniGameIndex + 1)
             AdventureTileEffect.Star, AdventureTileEffect.Gift -> moved.copy(stars = stars + 1)
             AdventureTileEffect.Collect -> moved.copy(fruits = fruits + 1)
             AdventureTileEffect.Finish -> moved.copy(mapComplete = true)
@@ -69,12 +72,13 @@ data class AdventureState(
     companion object {
         const val APPLES_PER_OUTFIT = 5
 
-        fun fromStored(position: Int, stars: Int, fruits: Int, mapComplete: Boolean, adventureNumber: Int = 1) = AdventureState(
+        fun fromStored(position: Int, stars: Int, fruits: Int, mapComplete: Boolean, adventureNumber: Int = 1, miniGameIndex: Int = 0) = AdventureState(
             position = position.coerceIn(1, AdventureBoard.MAP_LENGTH),
             stars = stars.coerceAtLeast(0),
             fruits = fruits.coerceAtLeast(0),
             mapComplete = mapComplete,
             adventureNumber = adventureNumber.coerceAtLeast(1),
+            miniGameIndex = miniGameIndex.coerceAtLeast(0),
         )
     }
 
@@ -83,3 +87,6 @@ data class AdventureState(
 
 /** Level petualangan berurutan ganjil: petualangan 1=level 1, 2=3, 3=5, ... */
 fun adventureLevel(adventureNumber: Int): Int = ((adventureNumber.coerceAtLeast(1) - 1) * 2) + 1
+
+/** Siklus stabil: urutan peta mini-game berputar tanpa mengulang game sebelumnya. */
+fun adventureMiniGame(index: Int): String = listOf("kart", "fruit", "pattern", "color")[index.mod(4)]

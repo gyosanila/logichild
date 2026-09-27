@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -154,6 +153,7 @@ private fun MainNav(
                 launch?.getIntExtra("adv_fruits", -1)?.takeIf { it >= 0 } ?: prefs.getInt("adv_fruits", 0),
                 prefs.getInt("adv_maps_done", 0) > 0,
                 prefs.getInt("adv_number", 1),
+                prefs.getInt("adv_minigame_index", 0),
             ),
         )
     }
@@ -226,9 +226,7 @@ private fun MainNav(
     }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
+        Modifier.fillMaxSize()
     ) {
         if (timerMin > 0 && !breakOverlay && !locked) {
             TimerBar(remainingSec, timerMin * 60)
@@ -255,6 +253,7 @@ private fun MainNav(
                             .putInt("adv_stars", next.stars)
                             .putInt("adv_fruits", next.fruits)
                             .putInt("adv_number", next.adventureNumber)
+                            .putInt("adv_minigame_index", next.miniGameIndex)
                             .putInt("adv_maps_done", if (next.mapComplete) 1 else 0)
                             .apply()
                     },
@@ -342,9 +341,8 @@ private fun MainNav(
                 )
             }
         }
-        // Satu banner permanen — AdView yang SAMA stay di menu & semua game.
-        // Papan tanpa banner (PRD risiko: banner jangan dekat tombol JALAN).
-        if (game != GameChoice.Adventure) PersistentBanner()
+        // Satu PersistentBanner di root semua layar (Home, Papan, dan mini game).
+        PersistentBanner()
     }
 
     if (mathGate) {
