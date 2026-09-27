@@ -155,8 +155,8 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /** Pilih level dari selector (1-based, maks = level yang sudah kebuka). */
-    fun selectLevel(level: Int) {
-        if (level > _uiState.value.unlocked) return
+    fun selectLevel(level: Int, force: Boolean = false) {
+        if (!force && level > _uiState.value.unlocked) return
         prefs.edit().putInt("fruit_level", level).apply()
         newLevel(level)
     }

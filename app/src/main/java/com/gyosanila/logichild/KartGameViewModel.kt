@@ -179,8 +179,8 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     val level: Level get() = LevelGen.generate(_uiState.value.levelIndex)
 
-    fun selectLevel(index: Int) {
-        if (index > _uiState.value.unlocked) return
+    fun selectLevel(index: Int, force: Boolean = false) {
+        if (!force && index > _uiState.value.unlocked) return
         runJob?.cancel()
         prefs.edit().putInt("kart_last_level", index).apply()
         _uiState.update { it.copy(levelIndex = index) }

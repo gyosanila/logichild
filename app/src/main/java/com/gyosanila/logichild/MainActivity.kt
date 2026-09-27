@@ -233,14 +233,18 @@ private fun MainNav(
         if (timerMin > 0 && !breakOverlay && !locked) {
             TimerBar(remainingSec, timerMin * 60)
         }
+        fun starSum(prefix: String) = prefs.all.filterKeys { it.startsWith(prefix) }.values.sumOf { (it as? Int) ?: 0 }
         Box(Modifier.weight(1f)) {
             when (game) {
-                GameChoice.Menu -> MainMenuScreen(
-                    onAdventure = { game = GameChoice.Adventure },
-                    onKart = { game = GameChoice.RoadmapKart },
-                    onFruit = { game = GameChoice.RoadmapFruit },
-                    onPattern = { game = GameChoice.RoadmapPattern },
-                    onColor = { game = GameChoice.RoadmapColor },
+                GameChoice.Menu -> HomeScreen(
+                    adventure = adventure,
+                    games = listOf(
+                        HomeGame(strings.playColor, prefs.getInt("cunlocked", 1), starSum("cstar_")) { game = GameChoice.RoadmapColor },
+                        HomeGame(strings.playPattern, prefs.getInt("punlocked", 1), starSum("pstar_")) { game = GameChoice.RoadmapPattern },
+                        HomeGame(strings.playCar, prefs.getInt("unlocked", 0) + 1, starSum("star_")) { game = GameChoice.RoadmapKart },
+                        HomeGame(strings.playFruit, prefs.getInt("fruit_level", 1), starSum("fstar_")) { game = GameChoice.RoadmapFruit },
+                    ),
+                    onContinue = { game = GameChoice.Adventure },
                     onSettings = { mathGate = true },
                 )
                 GameChoice.Adventure -> AdventureScreen(
@@ -666,121 +670,6 @@ private fun BreakOverlay(strings: com.gyosanila.logichild.ui.AppStrings, onKeepP
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MainMenuScreen(
-    onAdventure: () -> Unit,
-    onKart: () -> Unit,
-    onFruit: () -> Unit,
-    onPattern: () -> Unit,
-    onColor: () -> Unit,
-    onSettings: () -> Unit,
-) {
-    val strings = LocalStrings.current
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(SkyBlue)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_app_logo),
-                contentDescription = null,
-                modifier = Modifier.size(58.dp).clip(RoundedCornerShape(16.dp)),
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(strings.appName, color = TextDark, fontSize = 25.sp, fontWeight = FontWeight.Black)
-                Text("v${BuildConfig.VERSION_NAME}", color = TextDark.copy(alpha = 0.65f), fontSize = 11.sp)
-            }
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color.White,
-                onClick = onSettings,
-                shadowElevation = 3.dp,
-            ) {
-                Text("⚙️", fontSize = 25.sp, modifier = Modifier.padding(10.dp))
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
-            modifier = Modifier.padding(vertical = 2.dp),
-        ) {
-            Text("☁️", fontSize = 24.sp)
-            Text("🌈", fontSize = 24.sp)
-            Text("✨", fontSize = 24.sp)
-            Text("🧸", fontSize = 24.sp)
-        }
-        Spacer(Modifier.height(10.dp))
-        Text(strings.menuPick, color = TextDark, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(16.dp))
-
-        Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = SunYellow,
-            onClick = onAdventure,
-            modifier = Modifier.fillMaxWidth().height(88.dp),
-            shadowElevation = 4.dp,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 20.dp)) {
-                Text("🗺️", fontSize = 34.sp)
-                Spacer(Modifier.width(14.dp))
-                Column {
-                    Text(strings.adventureTitle, color = TextDark, fontSize = 21.sp, fontWeight = FontWeight.Black)
-                    Text(strings.adventureContinue, color = TextDark.copy(alpha = 0.75f), fontSize = 13.sp)
-                }
-            }
-        }
-        Spacer(Modifier.height(16.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MenuGameTile("🚗", strings.playCar, strings.playCarDesc, SunYellow, TextDark, onKart)
-            MenuGameTile("🍎", strings.playFruit, strings.playFruitDesc, GrassGreen, TextDark, onFruit)
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MenuGameTile("🧩", strings.playPattern, strings.playPatternDesc, BerryPurple, Color.White, onPattern)
-            MenuGameTile("🎨", strings.playColor, strings.playColorDesc, Color(0xFF6B7FD7), Color.White, onColor)
-        }
-        Spacer(Modifier.height(18.dp))
-        Text(strings.offlineTag, color = TextDark.copy(alpha = 0.7f), fontSize = 12.sp)
-    }
-}
-
-@Composable
-private fun RowScope.MenuGameTile(
-    emoji: String,
-    title: String,
-    description: String,
-    background: Color,
-    foreground: Color,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = RoundedCornerShape(22.dp),
-        color = background,
-        onClick = onClick,
-        modifier = Modifier.weight(1f).height(142.dp),
-        shadowElevation = 3.dp,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(10.dp),
-        ) {
-            Text(emoji, fontSize = 42.sp)
-            Spacer(Modifier.height(4.dp))
-            Text(title, color = foreground, fontSize = 18.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
-            Text(description, color = foreground.copy(alpha = 0.82f), fontSize = 11.sp, textAlign = TextAlign.Center, maxLines = 2)
         }
     }
 }

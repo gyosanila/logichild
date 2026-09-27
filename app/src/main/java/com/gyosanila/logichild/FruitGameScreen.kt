@@ -124,7 +124,7 @@ fun FruitGameScreen(
 
     // Level dari roadmap — kalau 0, pakai level terakhir.
     LaunchedEffect(Unit) {
-        if (startLevel > 0) vm.selectLevel(startLevel)
+        if (startLevel > 0) vm.selectLevel(startLevel, force = onAdventureDone != null)
     }
 
     Column(

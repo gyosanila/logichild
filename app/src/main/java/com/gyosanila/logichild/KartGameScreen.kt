@@ -122,7 +122,7 @@ fun KartGameScreen(
 
     // Level dari roadmap (kalau dipilih) — kalau 0, pakai level terakhir.
     LaunchedEffect(Unit) {
-        if (startLevel > 0) vm.selectLevel(startLevel - 1)
+        if (startLevel > 0) vm.selectLevel(startLevel - 1, force = onAdventureDone != null)
     }
 
     Column(

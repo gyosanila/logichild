@@ -84,16 +84,16 @@ import kotlin.math.sin
 // Semua angka di file ini diambil dari docs/design/mockups/board.html (dunia 2880×864,
 // layar 540×960, 24 kotak di X(i)=80+118i). Ubah mockup dulu, baru angka di sini.
 
-private const val WORLD_W = 2880f
+internal const val WORLD_W = 2880f
 private const val WORLD_H = 864f
 private const val LOOP = 4f
 private val YARR = intArrayOf(553, 615, 583, 489, 428, 461, 553, 615, 583, 489, 428, 461,
     553, 615, 583, 489, 428, 461, 553, 615, 583, 489, 428, 461)
-private fun ax(i: Int) = 80f + i * 118f
-private fun ay(i: Int) = YARR[i].toFloat()
+internal fun ax(i: Int) = 80f + i * 118f
+internal fun ay(i: Int) = YARR[i].toFloat()
 private fun prand(n: Double): Float { val s = sin(n * 127.13) * 43758.5453; return (s - floor(s)).toFloat() }
 private fun frost(x: Float) = ((x - 1820f) / 420f).coerceIn(0f, 1f)
-private fun c(hex: Long) = Color(hex or 0xFF000000)
+internal fun c(hex: Long) = Color(hex or 0xFF000000)
 private fun svg(d: String): Path = PathParser().parsePathString(d).toPath()
 
 private enum class Season(val x0: Float, val patch: Color) {
@@ -101,7 +101,7 @@ private enum class Season(val x0: Float, val patch: Color) {
     companion object { fun at(x: Float) = entries.last { x >= it.x0 || it == Spring } }
 }
 
-private class Art {
+internal class Art {
     val road: Path = Path().apply {
         val k = 1.05f
         val p = (0 until 24).map { Offset(ax(it), ay(it)) }
@@ -153,10 +153,10 @@ private class Art {
     }
 }
 
-private inline fun DrawScope.at(x: Float, y: Float, s: Float = 1f, rot: Float = 0f, block: DrawScope.() -> Unit) =
+internal inline fun DrawScope.at(x: Float, y: Float, s: Float = 1f, rot: Float = 0f, block: DrawScope.() -> Unit) =
     withTransform({ translate(x, y); if (rot != 0f) rotate(rot, Offset.Zero); if (s != 1f) scale(s, s, Offset.Zero) }, block)
 
-private fun DrawScope.star(cx: Float, cy: Float, r: Float, fill: Color, stroke: Color? = null, sw: Float = 0f) {
+internal fun DrawScope.star(cx: Float, cy: Float, r: Float, fill: Color, stroke: Color? = null, sw: Float = 0f) {
     val p = Path()
     for (i in 0 until 10) {
         val a = -PI / 2 + i * PI / 5; val rr = if (i % 2 == 1) r * .44f else r
@@ -168,7 +168,7 @@ private fun DrawScope.star(cx: Float, cy: Float, r: Float, fill: Color, stroke: 
     if (stroke != null) drawPath(p, stroke, style = Stroke(sw, join = StrokeJoin.Round))
 }
 
-private fun DrawScope.apple(art: Art, x: Float, y: Float, s: Float) = at(x, y, s) {
+internal fun DrawScope.apple(art: Art, x: Float, y: Float, s: Float) = at(x, y, s) {
     drawPath(art.appleBody, c(0xFF6B6B)); drawPath(art.appleLeaf, c(0x4FAE2E))
     drawRoundRect(c(0x6B4423), Offset(-1f, -8f), Size(2f, 5f), CornerRadius(1f))
 }
@@ -215,7 +215,7 @@ private fun DrawScope.flag(x: Float, y: Float, s: Float) = at(x, y, s) {
     drawPath(Path().apply { moveTo(1.4f, -19f); lineTo(15f, -14.5f); lineTo(1.4f, -10f); close() }, c(0xE04747))
 }
 
-private fun DrawScope.cloud(x: Float, y: Float, s: Float, op: Float, face: Boolean) = at(x, y, s) {
+internal fun DrawScope.cloud(x: Float, y: Float, s: Float, op: Float, face: Boolean) = at(x, y, s) {
     val w = Color.White.copy(alpha = op)
     fun e(cx: Float, cy: Float, rx: Float, ry: Float, col: Color) = drawOval(col, Offset(cx - rx, cy - ry), Size(rx * 2, ry * 2))
     e(0f, 0f, 46f, 24f, w); e(-34f, 8f, 30f, 17f, w); e(32f, 9f, 34f, 19f, w); e(6f, -14f, 28f, 19f, w)
@@ -246,14 +246,14 @@ private fun DrawScope.tree(art: Art, x: Float, y: Float, s: Float, kind: Season,
     drawCircle(cols[4].copy(alpha = .6f), 8f, Offset(-8f, -50f))
 }
 
-private fun DrawScope.bush(x: Float, y: Float, s: Float, snow: Float) = at(x, y, s) {
+internal fun DrawScope.bush(x: Float, y: Float, s: Float, snow: Float) = at(x, y, s) {
     drawOval(Color.Black.copy(alpha = .13f), Offset(-34f, -3f), Size(68f, 18f))
     drawCircle(c(0x4FAE4A), 17f, Offset(-18f, -8f)); drawCircle(c(0x4FAE4A), 18f, Offset(16f, -9f))
     drawCircle(c(0x5CBB52), 20f, Offset(0f, -20f)); drawCircle(c(0x8ADA7A).copy(alpha = .7f), 8f, Offset(-7f, -26f))
     if (snow > .25f) drawOval(Color.White.copy(alpha = .88f * snow), Offset(-30f, -31f), Size(60f, 22f))
 }
 
-private fun DrawScope.flower(x: Float, y: Float, s: Float, col: Color) = at(x, y, s) {
+internal fun DrawScope.flower(x: Float, y: Float, s: Float, col: Color) = at(x, y, s) {
     drawRoundRect(c(0x3F8F34), Offset(-1.6f, 0f), Size(3.2f, 17f), CornerRadius(1.6f))
     for (i in 0 until 5) {
         val a = i * 72 * PI / 180
@@ -329,6 +329,169 @@ private fun DrawScope.bear(art: Art, img: ImageBitmap, x: Float, feetY: Float, s
         }
     }
 
+/** Dunia papan (koordinat world 2880×864). Dipakai Papan & pratinjau di Home. */
+internal fun DrawScope.drawWorld(
+    art: Art, bearImg: ImageBitmap, numbers: List<TextLayoutResult>, startLabel: TextLayoutResult,
+    state: AdventureState, t: Float, visW: Float, cam: Float, hopFrom: Int, hopTo: Int, f: Float,
+) {
+    val arc = sin(f * PI).toFloat()
+    val i0 = hopFrom - 1; val i1 = hopTo - 1
+    val bx = ax(i0) + (ax(i1) - ax(i0)) * f; val by = ay(i0) + (ay(i1) - ay(i0)) * f
+    val cur = hopTo - 1; val moving = f < 1f
+    fun wsin(ph: Float) = sin((t / LOOP + ph) * 2 * PI).toFloat()
+    val bob = sin(t * PI).toFloat()
+    // langit + awan (parallax 0.1)
+    drawRect(Brush.verticalGradient(0f to c(0x8FD4F7), .72f to c(0xBFE9FF), 1f to c(0xE7F8FF), endY = 260f), size = Size(visW, 260f))
+    at(-cam * .1f, 0f) {
+        drawCircle(Brush.radialGradient(listOf(c(0xFFF3B0).copy(alpha = .95f), c(0xFFE066).copy(alpha = 0f)), Offset(470f, 96f), 120f), 120f, Offset(470f, 96f))
+        drawCircle(c(0xFFE98A), 42f, Offset(470f, 96f))
+        for ((cx, cy, sc, op, face) in listOf(
+            listOf(190f, 112f, 1.05f, .97f, 1f), listOf(742f, 74f, .8f, .92f, 0f), listOf(1180f, 138f, 1.12f, .95f, 1f),
+            listOf(1742f, 88f, .72f, .88f, 0f), listOf(2300f, 122f, .96f, .92f, 0f), listOf(2680f, 68f, .82f, .9f, 0f),
+        )) cloud(cx + wsin(cx / 420f) * 11f, cy + bob * 3f, sc, op, face > 0f)
+        rainbow(330f + 112f, 258f, 1f, 10f, 112f, 11f, RAINBOW + c(0xA78BFA))
+    }
+    at(-cam, 0f) {
+        art.hills.forEach { (p, col) -> drawPath(p, col.copy(alpha = .9f)) }
+        // tanah per musim
+        drawRect(Brush.horizontalGradient(
+            0f to c(0xA6DE78), .22f to c(0x8ACD5E), .28f to c(0x8FD24F), .46f to c(0x63B537), .52f to c(0xD3D06A),
+            .62f to c(0xC3C259), .72f to c(0xCFD79C), .80f to c(0xE4EDD6), .88f to c(0xF2F9FD), 1f to c(0xDCEBF5),
+            startX = 0f, endX = WORLD_W), Offset(0f, 250f), Size(WORLD_W, 614f))
+        drawRect(Brush.verticalGradient(0f to Color.White.copy(alpha = .3f), .22f to Color.Transparent, .6f to Color.Transparent,
+            1f to Color.Black.copy(alpha = .1f), startY = 250f, endY = 864f), Offset(0f, 250f), Size(WORLD_W, 614f))
+        drawPath(art.horizon, Color.White.copy(alpha = .15f))
+        for (gi in 0 until 46) {
+            val gx = prand(gi * 3.7) * WORLD_W; val gy = 300 + prand(gi * 5.1) * 520; val gs = .7f + prand(gi * 7.3) * .8f
+            val fr = frost(gx)
+            drawOval((if (fr > .5f) c(0xCFE2F0) else Season.at(gx).patch).copy(alpha = .16f * (1 - fr * .7f)),
+                Offset(gx - 58 * gs, gy - 16 * gs), Size(116 * gs, 32 * gs))
+        }
+        for (ti in 0 until 14) {
+            val tx = 120 + ti * 205 + prand(ti * 9.1) * 70; val fr = frost(tx)
+            val kind = if (fr > .6f) Season.Winter else if (fr > .12f) Season.Autumn else Season.at(tx)
+            tree(art, tx, 262f, .8f + prand(ti * 2.3) * .35f, kind, wsin(tx / 260f) * 2.6f)
+        }
+        for (fb in 0 until 78) {
+            val fx = 8 + fb * 37 + prand(fb * 3.9) * 22; val fy = 736 + prand(fb * 5.5) * 112
+            at(fx, fy, .8f + prand(fb * 7.1) * .75f, wsin(fx / 160f) * 8f) { drawPath(art.tuft, lerp(c(0x3F8F34), c(0xDCEBF5), frost(fx)), style = Stroke(3.8f, cap = StrokeCap.Round)) }
+        }
+        // jalan pasir
+        at(0f, 6f) { drawPath(art.road, c(0xB8834B).copy(alpha = .55f), style = Stroke(80f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
+        drawPath(art.road, c(0xC8955B), style = Stroke(78f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(art.road, c(0xEFCF97), style = Stroke(70f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(art.road, c(0xF7E3BC), style = Stroke(48f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(art.road, c(0xE8C48D).copy(alpha = .9f), style = Stroke(6f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 26f))))
+        clipRect(2145f, 240f, WORLD_W, 740f) {
+            drawPath(art.road, Color.White.copy(alpha = .45f), style = Stroke(78f, cap = StrokeCap.Round))
+            drawPath(art.road, c(0xF2FAFF).copy(alpha = .5f), style = Stroke(52f, cap = StrokeCap.Round))
+        }
+        for ((v, kind, col) in DECO) {
+            val (x, y, sc) = Triple(v[0], v[1], v[2]); val fr = frost(x); val cold = fr > .25f
+            when (kind) {
+                'B' -> bush(x, y, sc, fr)
+                'F' -> flower(x, y, sc, if (cold) c(0xEAF4FF) else DECO_COLORS.getValue(col))
+                'C' -> crystal(x, y, sc)
+                'M' -> mushroom(x, y, sc)
+                'P' -> pumpkin(x, y, sc)
+                else -> snowman(x, y, sc)
+            }
+        }
+        // partikel musim (kelopak, kilau, daun, salju)
+        for (px in 0 until 60) {
+            val baseX = 20 + px * 47.5f + prand(px * 4.1) * 30
+            val x = baseX + wsin(px * .13f) * 30; val y = 250 + (prand(px * 6.3) * 560 + t * 140) % 560
+            val rot = prand(px * 8.8) * 90 - 45 + t * (if (px % 2 == 1) 46 else -46)
+            val sc = .8f + prand(px * 3.1) * .7f
+            when (Season.at(baseX)) {
+                Season.Spring -> at(x, y, sc, rot) { drawOval(c(0xFFB6C9).copy(alpha = .8f), Offset(-7f, -3.4f), Size(14f, 6.8f)) }
+                Season.Summer -> at(x, y, sc) { drawCircle(c(0xFFF7C2).copy(alpha = .85f), 4f, Offset.Zero) }
+                Season.Autumn -> at(x, y, sc, rot) { drawPath(art.leaf, listOf(c(0xE08A2E), c(0xC9702A), c(0xEFA23C), c(0xD2762A))[px % 4].copy(alpha = .9f)) }
+                Season.Winter -> drawCircle(Color.White.copy(alpha = .95f), 2.4f + prand(px * 2.6) * 2.4f, Offset(x, y))
+            }
+        }
+        // kotak
+        for (i in 0 until 24) {
+            val isCur = i == cur && !moving; val done = i < cur; val locked = i > cur + 4
+            val (top, rim) = when {
+                done -> c(0x7ED957) to c(0x5CB93A); isCur -> c(0xFFD24D) to c(0xE8A81F)
+                locked -> c(0xCFCFCF) to c(0xAFAFAF); else -> c(0xFFF3DC) to c(0xE3CBA6)
+            }
+            val r = if (isCur) 46f else 44f
+            at(ax(i), ay(i)) {
+                val a = if (locked) .72f else 1f
+                if (isCur) drawCircle(Brush.radialGradient(listOf(c(0xFFF0B0).copy(alpha = .85f), c(0xFFD24D).copy(alpha = 0f)), Offset.Zero, r + 20), r + 20, Offset.Zero)
+                drawOval(Color.Black.copy(alpha = .14f * a), Offset(-r * .95f, r * .62f - r * .34f), Size(r * 1.9f, r * .68f))
+                val blob = if (isCur) art.blob46 else art.blob44
+                at(0f, 5f) { drawPath(blob, rim.copy(alpha = a)) }
+                drawPath(blob, top.copy(alpha = a))
+                at(-6f, -7f) { drawPath(if (isCur) art.hi46 else art.hi44, Color.White.copy(alpha = if (locked) .16f else .3f)) }
+                if (isCur) drawPath(art.ring, c(0xFFC94D), style = Stroke(4f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 13f), t * 12)))
+                val bxr = r * .62f; val byr = -r * .54f
+                val (ring, icon) = when (AdventureBoard.tileEffect(i + 1)) {
+                    AdventureTileEffect.Star -> c(0xFFC94D) to 's'
+                    AdventureTileEffect.MiniGame -> c(0x3F7FD6) to 'g'
+                    AdventureTileEffect.Bonus -> c(0xA78BFA) to 'r'
+                    AdventureTileEffect.Collect -> c(0xFF6B6B) to 'a'
+                    AdventureTileEffect.Gift -> c(0xA78BFA) to 'h'
+                    else -> Color.Transparent to ' '
+                }
+                if (icon != ' ') {
+                    drawCircle(Color.White, 14f, Offset(bxr, byr)); drawCircle(ring, 14f, Offset(bxr, byr), style = Stroke(3f))
+                    when (icon) {
+                        's' -> star(bxr, byr, 9.6f, c(0xFFC94D)); 'g' -> controller(bxr, byr, .62f)
+                        'r' -> rainbow(bxr, byr + 2, .62f); 'a' -> apple(art, bxr, byr, .72f); else -> gift(art, bxr, byr + 1, .66f)
+                    }
+                }
+                when (i) {
+                    0 -> at(0f, -r * 1.42f) {
+                        drawRoundRect(c(0x8B5E3C), Offset(-38f, -17f), Size(76f, 34f), CornerRadius(9f))
+                        drawRoundRect(c(0xA9744F), Offset(-34f, -13f), Size(68f, 26f), CornerRadius(7f))
+                        drawRect(c(0x8B5E3C), Offset(-3f, 16f), Size(6f, 14f))
+                        drawText(startLabel, topLeft = Offset(-startLabel.size.width / 2f, -startLabel.size.height / 2f))
+                    }
+                    23 -> trophy(art, 0f, -r * .95f, .95f, state.mapComplete)
+                    else -> {
+                        val n = numbers[i]; val o = Offset(-n.size.width / 2f, -n.size.height / 2f - 4f)
+                        drawText(n, color = Color.White, topLeft = o, drawStyle = Stroke(4f, join = StrokeJoin.Round))
+                        drawText(n, topLeft = o)
+                    }
+                }
+                if (locked) lockIcon(art, 0f, -2f, 1.35f)
+            }
+        }
+        // beruang (lompat 1 kotak, ± 74 unit ke atas)
+        drawOval(Color.Black.copy(alpha = .22f - .12f * arc), Offset(bx - (26 - 9 * arc), by - 26 - 7), Size((26 - 9 * arc) * 2, 14f))
+        if (moving && f > .03f && f < .92f) {
+            val dust = c(0xFFF6DE).copy(alpha = .8f * (1 - f))
+            drawCircle(dust, 9 + 22 * f, Offset(ax(i0) - 16, ay(i0) - 8)); drawCircle(dust, 6 + 15 * f, Offset(ax(i0) + 18, ay(i0) - 14))
+        }
+        if (moving) bear(art, bearImg, bx, by - 28 - arc * 74, 122f, state.outfits, 1 + .07f * arc, -7 * arc)
+        else bear(art, bearImg, bx, by - 28 + bob * 3.2f, 122f, state.outfits, 1 + bob * .014f)
+        if (!moving) listOf(floatArrayOf(-46f, -30f, 6f), floatArrayOf(48f, -14f, 4.4f), floatArrayOf(-30f, 26f, 4f), floatArrayOf(58f, 20f, 5f))
+            .forEachIndexed { k, sp -> star(bx + sp[0], by + sp[1], sp[2], Color.White.copy(alpha = .55f + k * .12f)) }
+        for (fi in 0 until 16) {
+            val fx = 40f + fi * 180
+            at(fx, 700 + prand(fi * 6.6) * 24, .9f + prand(fi * 4.4) * .5f, wsin(fx / 150f) * 8f) {
+                drawPath(art.tuft, lerp(c(0x3F8F34), c(0xDCEBF5), frost(fx)).copy(alpha = .85f), style = Stroke(4f, cap = StrokeCap.Round))
+            }
+        }
+    }
+}
+
+/** Label kotak 1..24 + papan "MULAI", diukur sekali. */
+@Composable
+internal fun rememberWorldText(): Pair<List<TextLayoutResult>, TextLayoutResult> {
+    val strings = LocalStrings.current
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    return remember(density, strings) {
+        val st = TextStyle(fontSize = with(density) { 32f.toSp() }, fontWeight = FontWeight.Bold, color = c(0x4A2E14))
+        (1..24).map { measurer.measure(it.toString(), st) } to
+            measurer.measure(strings.adventureStart, TextStyle(fontSize = with(density) { 17f.toSp() }, fontWeight = FontWeight.Bold, color = c(0xFFF8EC)))
+    }
+}
+
 private val MINI_GAMES = listOf("kart", "fruit", "pattern", "color")
 
 @Composable
@@ -350,14 +513,7 @@ fun AdventureScreen(
     val sounds = remember { GameSounds(context) }
     DisposableEffect(Unit) { onDispose { sounds.release() } }
     val scope = rememberCoroutineScope()
-    val measurer = rememberTextMeasurer()
-    val numbers: List<TextLayoutResult> = remember(density) {
-        val st = TextStyle(fontSize = with(density) { 32f.toSp() }, fontWeight = FontWeight.Bold, color = c(0x4A2E14))
-        (1..24).map { measurer.measure(it.toString(), st) }
-    }
-    val startLabel = remember(density, strings) {
-        measurer.measure(strings.adventureStart, TextStyle(fontSize = with(density) { 17f.toSp() }, fontWeight = FontWeight.Bold, color = c(0xFFF8EC)))
-    }
+    val (numbers, startLabel) = rememberWorldText()
 
     val time by rememberInfiniteTransition(label = "t").animateFloat(
         0f, 40f, infiniteRepeatable(tween(40_000, easing = LinearEasing), RepeatMode.Restart), label = "t",
@@ -413,152 +569,13 @@ fun AdventureScreen(
             val t = time
             val s = (size.height - worldTopPx) / WORLD_H
             val visW = size.width / s
-            val f = hop.value; val arc = sin(f * PI).toFloat()
+            val f = hop.value
             val i0 = hopFrom - 1; val i1 = hopTo - 1
             val bx = ax(i0) + (ax(i1) - ax(i0)) * f; val by = ay(i0) + (ay(i1) - ay(i0)) * f
             val cam = (bx - 250f * visW / 540f).coerceIn(0f, WORLD_W - visW)
-            val cur = hopTo - 1; val moving = f < 1f
-            fun wsin(ph: Float) = sin((t / LOOP + ph) * 2 * PI).toFloat()
-            val bob = sin(t * PI).toFloat()
 
             withTransform({ translate(0f, worldTopPx); scale(s, s, Offset.Zero) }) {
-                // langit + awan (parallax 0.1)
-                drawRect(Brush.verticalGradient(0f to c(0x8FD4F7), .72f to c(0xBFE9FF), 1f to c(0xE7F8FF), endY = 260f), size = Size(visW, 260f))
-                at(-cam * .1f, 0f) {
-                    drawCircle(Brush.radialGradient(listOf(c(0xFFF3B0).copy(alpha = .95f), c(0xFFE066).copy(alpha = 0f)), Offset(470f, 96f), 120f), 120f, Offset(470f, 96f))
-                    drawCircle(c(0xFFE98A), 42f, Offset(470f, 96f))
-                    for ((cx, cy, sc, op, face) in listOf(
-                        listOf(190f, 112f, 1.05f, .97f, 1f), listOf(742f, 74f, .8f, .92f, 0f), listOf(1180f, 138f, 1.12f, .95f, 1f),
-                        listOf(1742f, 88f, .72f, .88f, 0f), listOf(2300f, 122f, .96f, .92f, 0f), listOf(2680f, 68f, .82f, .9f, 0f),
-                    )) cloud(cx + wsin(cx / 420f) * 11f, cy + bob * 3f, sc, op, face > 0f)
-                    rainbow(330f + 112f, 258f, 1f, 10f, 112f, 11f, RAINBOW + c(0xA78BFA))
-                }
-                at(-cam, 0f) {
-                    art.hills.forEach { (p, col) -> drawPath(p, col.copy(alpha = .9f)) }
-                    // tanah per musim
-                    drawRect(Brush.horizontalGradient(
-                        0f to c(0xA6DE78), .22f to c(0x8ACD5E), .28f to c(0x8FD24F), .46f to c(0x63B537), .52f to c(0xD3D06A),
-                        .62f to c(0xC3C259), .72f to c(0xCFD79C), .80f to c(0xE4EDD6), .88f to c(0xF2F9FD), 1f to c(0xDCEBF5),
-                        startX = 0f, endX = WORLD_W), Offset(0f, 250f), Size(WORLD_W, 614f))
-                    drawRect(Brush.verticalGradient(0f to Color.White.copy(alpha = .3f), .22f to Color.Transparent, .6f to Color.Transparent,
-                        1f to Color.Black.copy(alpha = .1f), startY = 250f, endY = 864f), Offset(0f, 250f), Size(WORLD_W, 614f))
-                    drawPath(art.horizon, Color.White.copy(alpha = .15f))
-                    for (gi in 0 until 46) {
-                        val gx = prand(gi * 3.7) * WORLD_W; val gy = 300 + prand(gi * 5.1) * 520; val gs = .7f + prand(gi * 7.3) * .8f
-                        val fr = frost(gx)
-                        drawOval((if (fr > .5f) c(0xCFE2F0) else Season.at(gx).patch).copy(alpha = .16f * (1 - fr * .7f)),
-                            Offset(gx - 58 * gs, gy - 16 * gs), Size(116 * gs, 32 * gs))
-                    }
-                    for (ti in 0 until 14) {
-                        val tx = 120 + ti * 205 + prand(ti * 9.1) * 70; val fr = frost(tx)
-                        val kind = if (fr > .6f) Season.Winter else if (fr > .12f) Season.Autumn else Season.at(tx)
-                        tree(art, tx, 262f, .8f + prand(ti * 2.3) * .35f, kind, wsin(tx / 260f) * 2.6f)
-                    }
-                    for (fb in 0 until 78) {
-                        val fx = 8 + fb * 37 + prand(fb * 3.9) * 22; val fy = 736 + prand(fb * 5.5) * 112
-                        at(fx, fy, .8f + prand(fb * 7.1) * .75f, wsin(fx / 160f) * 8f) { drawPath(art.tuft, lerp(c(0x3F8F34), c(0xDCEBF5), frost(fx)), style = Stroke(3.8f, cap = StrokeCap.Round)) }
-                    }
-                    // jalan pasir
-                    at(0f, 6f) { drawPath(art.road, c(0xB8834B).copy(alpha = .55f), style = Stroke(80f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
-                    drawPath(art.road, c(0xC8955B), style = Stroke(78f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-                    drawPath(art.road, c(0xEFCF97), style = Stroke(70f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-                    drawPath(art.road, c(0xF7E3BC), style = Stroke(48f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-                    drawPath(art.road, c(0xE8C48D).copy(alpha = .9f), style = Stroke(6f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 26f))))
-                    clipRect(2145f, 240f, WORLD_W, 740f) {
-                        drawPath(art.road, Color.White.copy(alpha = .45f), style = Stroke(78f, cap = StrokeCap.Round))
-                        drawPath(art.road, c(0xF2FAFF).copy(alpha = .5f), style = Stroke(52f, cap = StrokeCap.Round))
-                    }
-                    for ((v, kind, col) in DECO) {
-                        val (x, y, sc) = Triple(v[0], v[1], v[2]); val fr = frost(x); val cold = fr > .25f
-                        when (kind) {
-                            'B' -> bush(x, y, sc, fr)
-                            'F' -> flower(x, y, sc, if (cold) c(0xEAF4FF) else DECO_COLORS.getValue(col))
-                            'C' -> crystal(x, y, sc)
-                            'M' -> mushroom(x, y, sc)
-                            'P' -> pumpkin(x, y, sc)
-                            else -> snowman(x, y, sc)
-                        }
-                    }
-                    // partikel musim (kelopak, kilau, daun, salju)
-                    for (px in 0 until 60) {
-                        val baseX = 20 + px * 47.5f + prand(px * 4.1) * 30
-                        val x = baseX + wsin(px * .13f) * 30; val y = 250 + (prand(px * 6.3) * 560 + t * 140) % 560
-                        val rot = prand(px * 8.8) * 90 - 45 + t * (if (px % 2 == 1) 46 else -46)
-                        val sc = .8f + prand(px * 3.1) * .7f
-                        when (Season.at(baseX)) {
-                            Season.Spring -> at(x, y, sc, rot) { drawOval(c(0xFFB6C9).copy(alpha = .8f), Offset(-7f, -3.4f), Size(14f, 6.8f)) }
-                            Season.Summer -> at(x, y, sc) { drawCircle(c(0xFFF7C2).copy(alpha = .85f), 4f, Offset.Zero) }
-                            Season.Autumn -> at(x, y, sc, rot) { drawPath(art.leaf, listOf(c(0xE08A2E), c(0xC9702A), c(0xEFA23C), c(0xD2762A))[px % 4].copy(alpha = .9f)) }
-                            Season.Winter -> drawCircle(Color.White.copy(alpha = .95f), 2.4f + prand(px * 2.6) * 2.4f, Offset(x, y))
-                        }
-                    }
-                    // kotak
-                    for (i in 0 until 24) {
-                        val isCur = i == cur && !moving; val done = i < cur; val locked = i > cur + 4
-                        val (top, rim) = when {
-                            done -> c(0x7ED957) to c(0x5CB93A); isCur -> c(0xFFD24D) to c(0xE8A81F)
-                            locked -> c(0xCFCFCF) to c(0xAFAFAF); else -> c(0xFFF3DC) to c(0xE3CBA6)
-                        }
-                        val r = if (isCur) 46f else 44f
-                        at(ax(i), ay(i)) {
-                            val a = if (locked) .72f else 1f
-                            if (isCur) drawCircle(Brush.radialGradient(listOf(c(0xFFF0B0).copy(alpha = .85f), c(0xFFD24D).copy(alpha = 0f)), Offset.Zero, r + 20), r + 20, Offset.Zero)
-                            drawOval(Color.Black.copy(alpha = .14f * a), Offset(-r * .95f, r * .62f - r * .34f), Size(r * 1.9f, r * .68f))
-                            val blob = if (isCur) art.blob46 else art.blob44
-                            at(0f, 5f) { drawPath(blob, rim.copy(alpha = a)) }
-                            drawPath(blob, top.copy(alpha = a))
-                            at(-6f, -7f) { drawPath(if (isCur) art.hi46 else art.hi44, Color.White.copy(alpha = if (locked) .16f else .3f)) }
-                            if (isCur) drawPath(art.ring, c(0xFFC94D), style = Stroke(4f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 13f), t * 12)))
-                            val bxr = r * .62f; val byr = -r * .54f
-                            val (ring, icon) = when (AdventureBoard.tileEffect(i + 1)) {
-                                AdventureTileEffect.Star -> c(0xFFC94D) to 's'
-                                AdventureTileEffect.MiniGame -> c(0x3F7FD6) to 'g'
-                                AdventureTileEffect.Bonus -> c(0xA78BFA) to 'r'
-                                AdventureTileEffect.Collect -> c(0xFF6B6B) to 'a'
-                                AdventureTileEffect.Gift -> c(0xA78BFA) to 'h'
-                                else -> Color.Transparent to ' '
-                            }
-                            if (icon != ' ') {
-                                drawCircle(Color.White, 14f, Offset(bxr, byr)); drawCircle(ring, 14f, Offset(bxr, byr), style = Stroke(3f))
-                                when (icon) {
-                                    's' -> star(bxr, byr, 9.6f, c(0xFFC94D)); 'g' -> controller(bxr, byr, .62f)
-                                    'r' -> rainbow(bxr, byr + 2, .62f); 'a' -> apple(art, bxr, byr, .72f); else -> gift(art, bxr, byr + 1, .66f)
-                                }
-                            }
-                            when (i) {
-                                0 -> at(0f, -r * 1.42f) {
-                                    drawRoundRect(c(0x8B5E3C), Offset(-38f, -17f), Size(76f, 34f), CornerRadius(9f))
-                                    drawRoundRect(c(0xA9744F), Offset(-34f, -13f), Size(68f, 26f), CornerRadius(7f))
-                                    drawRect(c(0x8B5E3C), Offset(-3f, 16f), Size(6f, 14f))
-                                    drawText(startLabel, topLeft = Offset(-startLabel.size.width / 2f, -startLabel.size.height / 2f))
-                                }
-                                23 -> trophy(art, 0f, -r * .95f, .95f, state.mapComplete)
-                                else -> {
-                                    val n = numbers[i]; val o = Offset(-n.size.width / 2f, -n.size.height / 2f - 4f)
-                                    drawText(n, color = Color.White, topLeft = o, drawStyle = Stroke(4f, join = StrokeJoin.Round))
-                                    drawText(n, topLeft = o)
-                                }
-                            }
-                            if (locked) lockIcon(art, 0f, -2f, 1.35f)
-                        }
-                    }
-                    // beruang (lompat 1 kotak, ± 74 unit ke atas)
-                    drawOval(Color.Black.copy(alpha = .22f - .12f * arc), Offset(bx - (26 - 9 * arc), by - 26 - 7), Size((26 - 9 * arc) * 2, 14f))
-                    if (moving && f > .03f && f < .92f) {
-                        val dust = c(0xFFF6DE).copy(alpha = .8f * (1 - f))
-                        drawCircle(dust, 9 + 22 * f, Offset(ax(i0) - 16, ay(i0) - 8)); drawCircle(dust, 6 + 15 * f, Offset(ax(i0) + 18, ay(i0) - 14))
-                    }
-                    if (moving) bear(art, bearImg, bx, by - 28 - arc * 74, 122f, state.outfits, 1 + .07f * arc, -7 * arc)
-                    else bear(art, bearImg, bx, by - 28 + bob * 3.2f, 122f, state.outfits, 1 + bob * .014f)
-                    if (!moving) listOf(floatArrayOf(-46f, -30f, 6f), floatArrayOf(48f, -14f, 4.4f), floatArrayOf(-30f, 26f, 4f), floatArrayOf(58f, 20f, 5f))
-                        .forEachIndexed { k, sp -> star(bx + sp[0], by + sp[1], sp[2], Color.White.copy(alpha = .55f + k * .12f)) }
-                    for (fi in 0 until 16) {
-                        val fx = 40f + fi * 180
-                        at(fx, 700 + prand(fi * 6.6) * 24, .9f + prand(fi * 4.4) * .5f, wsin(fx / 150f) * 8f) {
-                            drawPath(art.tuft, lerp(c(0x3F8F34), c(0xDCEBF5), frost(fx)).copy(alpha = .85f), style = Stroke(4f, cap = StrokeCap.Round))
-                        }
-                    }
-                }
+                drawWorld(art, bearImg, numbers, startLabel, state, t, visW, cam, hopFrom, hopTo, f)
             }
             // apel terbang ke HUD
             if (appleFly.value < 1f) {
@@ -588,7 +605,7 @@ fun AdventureScreen(
                         verticalAlignment = Alignment.CenterVertically) {
                         Canvas(Modifier.size(u * 22)) { val k = size.width / 28; at(size.width / 2, size.height / 2, k) { drawCircle(c(0xFFF3DC), 13f, Offset.Zero); flag(0f, 4f, .8f) } }
                         Spacer(Modifier.width(u * 6))
-                        Text(strings.adventureMapName.format(state.adventureNumber, adventureLevel(state.adventureNumber)), color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp, maxLines = 1)
+                        Text(strings.adventureMapName.format(state.adventureNumber), color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp, maxLines = 1)
                     }
                     Spacer(Modifier.weight(.01f))
                     HudPill(u, "${state.stars}") { star(size.width / 2, size.height / 2, size.width * .44f, c(0xFFC94D), c(0xE0A22B), size.width * .06f) }
@@ -744,7 +761,7 @@ private fun MapComplete(u: Dp, art: Art, img: ImageBitmap, state: AdventureState
             Column(Modifier.padding(top = u * 14), verticalArrangement = Arrangement.spacedBy(u * 8)) {
                 Box(Modifier.fillMaxWidth().height(u * 48).clip(RoundedCornerShape(u * 16))
                     .background(Brush.verticalGradient(listOf(c(0x7ED957), c(0x4FAE2E)))).clickable(onClick = onNext), contentAlignment = Alignment.Center) {
-                    Text(strings.adventureNext.format(adventureLevel(state.adventureNumber + 1)), color = Color.White, fontWeight = FontWeight.Black, fontSize = (u.value * 16).sp)
+                    Text(strings.adventureNext.format(state.adventureNumber + 1), color = Color.White, fontWeight = FontWeight.Black, fontSize = (u.value * 16).sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(u * 10)) {
                     Box(Modifier.weight(1f).height(u * 42).clip(RoundedCornerShape(u * 14))

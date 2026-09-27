@@ -52,6 +52,7 @@ open() {
 }
 
 open;                                                          shot home
+open --ei adv_pos 8 --ei adv_stars 13 --ei adv_fruits 3;       shot home-2
 open --es screen adventure --ei adv_pos 1;                     shot board-1
 adb shell input tap "$WALK_X" "$WALK_Y"; sleep 0.3;            shot board-hop
 sleep 3;                                                       shot board-2
