@@ -54,7 +54,7 @@ jobs:
       - name: Build debug APK in CI
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon
+          ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon
       - name: Upload APK for emulator job
         uses: actions/upload-artifact@v4
         with:
