@@ -1,5 +1,6 @@
 package com.gyosanila.logichild
 
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.Canvas
@@ -38,6 +39,8 @@ import com.gyosanila.logichild.ui.TextDark
 fun PatternMatchScreen(
     startLevel: Int = 1,
     onBack: () -> Unit,
+    /** Non-null = dibuka dari Petualangan: tanpa label level/peta, auto balik bawa rating. */
+    onAdventureDone: ((rating: Int) -> Unit)? = null,
     vm: PatternMatchViewModel = viewModel(),
 ) {
     val strings = LocalStrings.current
@@ -52,9 +55,10 @@ fun PatternMatchScreen(
                 title = strings.playPattern,
                 soundOn = state.soundOn,
                 onToggleSound = vm::toggleSound,
-                onOpenMap = onBack,
+                onBack = if (onAdventureDone != null) onBack else null,
+                onOpenMap = if (onAdventureDone == null) onBack else null,
             )
-            Text(
+            if (onAdventureDone == null) Text(
                 "${strings.level} ${state.level}",
                 color = TextDark,
                 fontSize = 16.sp,
@@ -121,13 +125,21 @@ fun PatternMatchScreen(
                 praise = when (count) { 5 -> strings.praise5; 4 -> strings.praise4; 3 -> strings.praise3; 2 -> strings.praise2; else -> strings.praise1 },
                 showConfetti = count >= 4,
                 confettiTick = state.confettiTick,
-                showNext = state.level < state.unlocked,
-                showReplay = true,
+                showNext = onAdventureDone == null && state.level < state.unlocked,
+                showReplay = onAdventureDone == null,
                 nextLabel = strings.levelNext,
                 replayLabel = strings.playAgain,
                 onNext = vm::nextLevel,
                 onReplay = vm::replay,
             )
+        }
+    }
+    if (onAdventureDone != null) {
+        LaunchedEffect(state.won) {
+            if (state.won) {
+                delay(ADVENTURE_REWARD_MS)
+                onAdventureDone(state.lastRating.coerceIn(1, 5))
+            }
         }
     }
 }

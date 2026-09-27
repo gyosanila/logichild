@@ -139,14 +139,19 @@ private fun MainNav(
     val strings = LocalStrings.current
     val tts = remember { TtsSpeaker(context) }
 
-    var game by rememberSaveable { mutableStateOf(GameChoice.Menu) }
+    // CI screenshot hook: `am start --es screen adventure --ei adv_pos N --ei adv_fruits M`.
+    val launch = (context as? android.app.Activity)?.intent
+    var game by rememberSaveable {
+        mutableStateOf(if (launch?.getStringExtra("screen") == "adventure") GameChoice.Adventure else GameChoice.Menu)
+    }
     var returnToAdventure by remember { mutableStateOf(false) }
+    var earnedStars by remember { mutableStateOf(0) }
     var adventure by remember {
         mutableStateOf(
             AdventureState.fromStored(
-                prefs.getInt("adv_position", 1),
-                prefs.getInt("adv_stars", 0),
-                prefs.getInt("adv_fruits", 0),
+                launch?.getIntExtra("adv_pos", 0)?.takeIf { it > 0 } ?: prefs.getInt("adv_position", 1),
+                launch?.getIntExtra("adv_stars", -1)?.takeIf { it >= 0 } ?: prefs.getInt("adv_stars", 0),
+                launch?.getIntExtra("adv_fruits", -1)?.takeIf { it >= 0 } ?: prefs.getInt("adv_fruits", 0),
                 prefs.getInt("adv_maps_done", 0) > 0,
             ),
         )
@@ -161,7 +166,7 @@ private fun MainNav(
     // Back diblokir selama lock/istirahat — harus lewat "Main Lagi" + soal.
     BackHandler(enabled = game != GameChoice.Menu || locked || breakOverlay) {
         if (!locked && !breakOverlay) {
-            game = GameChoice.Menu
+            game = if (returnToAdventure) GameChoice.Adventure else GameChoice.Menu
             returnToAdventure = false
         }
     }
@@ -209,6 +214,16 @@ private fun MainNav(
         remainingSec = timerMin * 60
     }
 
+    // Selesai main dari Papan: bintang += rating, langsung balik ke Papan.
+    val finishAdventureGame: (Int) -> Unit = { rating ->
+        val next = adventure.withGameRating(rating)
+        adventure = next
+        prefs.edit().putInt("adv_stars", next.stars).apply()
+        earnedStars = rating
+        returnToAdventure = false
+        game = GameChoice.Adventure
+    }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -247,6 +262,8 @@ private fun MainNav(
                         }
                     },
                     onBack = { game = GameChoice.Menu },
+                    earnedStars = earnedStars,
+                    onEarnedShown = { earnedStars = 0 },
                 )
                 GameChoice.RoadmapKart -> RoadmapScreen(
                     emoji = "🚗",
@@ -295,18 +312,22 @@ private fun MainNav(
                 GameChoice.Kart -> KartGameScreen(
                     startLevel = startLevel,
                     onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapKart; returnToAdventure = false },
+                    onAdventureDone = if (returnToAdventure) finishAdventureGame else null,
                 )
                 GameChoice.Fruit -> FruitGameScreen(
                     startLevel = startLevel,
                     onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapFruit; returnToAdventure = false },
+                    onAdventureDone = if (returnToAdventure) finishAdventureGame else null,
                 )
                 GameChoice.Pattern -> PatternMatchScreen(
                     startLevel = startLevel,
                     onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapPattern; returnToAdventure = false },
+                    onAdventureDone = if (returnToAdventure) finishAdventureGame else null,
                 )
                 GameChoice.Color -> ColorMatchScreen(
                     startLevel = startLevel,
                     onBack = { game = if (returnToAdventure) GameChoice.Adventure else GameChoice.RoadmapColor; returnToAdventure = false },
+                    onAdventureDone = if (returnToAdventure) finishAdventureGame else null,
                 )
                 GameChoice.Settings -> SettingsScreen(
                     onBack = { game = GameChoice.Menu },

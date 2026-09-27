@@ -21,19 +21,26 @@ adb shell service check package 2>&1 | grep -q 'found' || {
 }
 
 adb install -r artifacts/app-debug.apk
-adb shell am force-stop "$PKG"
-adb shell am start -n "$PKG/.MainActivity"
-# Allow the splash and first Compose frame to settle on the virtual device.
-sleep 12
-adb exec-out screencap -p > "$OUT_DIR/home.png"
-
-# The primary Adventure card is the first large CTA below the header. Tap its
-# center using the emulator's actual resolution (Pixel 2 profile, portrait).
+# Emulator lambat sering munculin dialog "isn't responding" — tutup sebelum tiap capture.
+close_dialogs() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true; }
+shot() { close_dialogs; sleep 1; adb exec-out screencap -p > "$OUT_DIR/$1.png"; }
 read -r WIDTH HEIGHT < <(adb shell wm size | python3 -c 'import re,sys; s=sys.stdin.read(); m=re.findall(r"(\d+)x(\d+)",s); print(*map(int,m[-1]))')
-X=$((WIDTH / 2))
-Y=$((HEIGHT * 29 / 100))
-adb shell input tap "$X" "$Y"
-sleep 8
-adb exec-out screencap -p > "$OUT_DIR/adventure.png"
+# Tombol JALAN: tengah bawah, pusat ±70 unit dari bawah (lebar layar = 540 unit).
+WALK_X=$((WIDTH / 2)); WALK_Y=$((HEIGHT - WIDTH * 70 / 540))
+
+# open <nama> [extras...] — buka app langsung ke layar tertentu (hook intent di MainActivity).
+open() { adb shell am force-stop "$PKG"; adb shell am start -n "$PKG/.MainActivity" "$@" >/dev/null; sleep 12; }
+
+open;                                                          shot home
+open --es screen adventure --ei adv_pos 1;                     shot board-1
+adb shell input tap "$WALK_X" "$WALK_Y"; sleep 0.3;            shot board-hop
+sleep 3;                                                       shot board-2
+open --es screen adventure --ei adv_pos 9 --ei adv_stars 12;   shot zone-summer
+open --es screen adventure --ei adv_pos 15 --ei adv_stars 30;  shot zone-autumn
+open --es screen adventure --ei adv_pos 19 --ei adv_fruits 4;  shot zone-winter
+adb shell input tap "$WALK_X" "$WALK_Y"; sleep 1.2;            shot apple
+sleep 1;                                                       shot hadiah
+open --es screen adventure --ei adv_pos 23 --ei adv_stars 58;  adb shell input tap "$WALK_X" "$WALK_Y"; sleep 3; shot finish
 adb shell dumpsys activity activities | grep -E 'ResumedActivity|topResumedActivity' > "$OUT_DIR/activity.txt" || true
-file "$OUT_DIR/home.png" "$OUT_DIR/adventure.png"
+adb logcat -d -t 400 '*:E' > "$OUT_DIR/logcat-errors.txt" || true
+ls -la "$OUT_DIR"

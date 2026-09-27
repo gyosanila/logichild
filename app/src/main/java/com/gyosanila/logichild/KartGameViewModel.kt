@@ -36,6 +36,8 @@ data class KartGameUiState(
     val soundOn: Boolean = true,
     val confettiTick: Int = 0,
     val reward: Reward = Reward.NONE,
+    /** Rating permainan terakhir (bukan best) — dipakai bintang petualangan. */
+    val lastRating: Int = 0,
 )
 
 /** Bunyi-bunyian: efek meriah (applause/fanfare/sparkle) + TTS apresiasi. */
@@ -89,6 +91,10 @@ class GameSounds(context: Context) {
 
     fun move() {
         if (enabled) play(sStep, 0.46f)
+    }
+
+    fun sparkle() {
+        if (enabled) play(sSparkle, 0.6f, 1.2f)
     }
 
     fun turn() {
@@ -295,7 +301,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                             .apply()
                         _uiState.update {
                             it.copy(
-                                running = false, won = true,
+                                running = false, won = true, lastRating = rating,
                                 stars = it.stars + (lv.index to newStars),
                                 unlocked = newUnlocked,
                                 confettiTick = it.confettiTick + 1,

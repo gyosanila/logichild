@@ -111,6 +111,8 @@ import kotlin.math.min
 fun KartGameScreen(
     startLevel: Int = 1,
     onBack: (() -> Unit)? = null,
+    /** Non-null = dibuka dari Petualangan: tanpa label level/peta, auto balik bawa rating. */
+    onAdventureDone: ((rating: Int) -> Unit)? = null,
     vm: KartGameViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
@@ -133,9 +135,10 @@ fun KartGameScreen(
             title = strings.playCar,
             soundOn = state.soundOn,
             onToggleSound = vm::toggleSound,
-            onOpenMap = onBack,
+            onBack = if (onAdventureDone != null) onBack else null,
+            onOpenMap = if (onAdventureDone == null) onBack else null,
         )
-        Text(
+        if (onAdventureDone == null) Text(
             "${strings.level} ${state.levelIndex + 1}",
             color = Color.White,
             fontSize = 16.sp,
@@ -200,13 +203,21 @@ fun KartGameScreen(
             },
             showConfetti = true,
             confettiTick = state.confettiTick,
-            showNext = true,
-            showReplay = true,
+            showNext = onAdventureDone == null,
+            showReplay = onAdventureDone == null,
             nextLabel = strings.levelNext,
             replayLabel = strings.playAgain,
             onNext = vm::nextLevel,
             onReplay = vm::resetKart,
         )
+    }
+    if (onAdventureDone != null) {
+        LaunchedEffect(state.won) {
+            if (state.won) {
+                delay(ADVENTURE_REWARD_MS)
+                onAdventureDone(state.lastRating.coerceIn(1, 5))
+            }
+        }
     }
 }
 

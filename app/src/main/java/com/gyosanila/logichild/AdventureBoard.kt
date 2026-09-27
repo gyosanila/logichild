@@ -1,40 +1,35 @@
 package com.gyosanila.logichild
 
-import kotlin.random.Random
-
 /** Pure rules for the 24-stop adventure map; intentionally independent of Android and Compose. */
-class AdventureBoard(private val random: Random = Random.Default) {
-    fun roll(): Int = random.nextInt(from = 1, until = 4)
-
-    fun move(position: Int, steps: Int): AdventureMove {
-        val start = position.coerceIn(1, MAP_LENGTH)
-        val landing = (start + steps.coerceAtLeast(0)).coerceAtMost(MAP_LENGTH)
-        return AdventureMove(landing, tileEffect(landing))
-    }
-
-    /** Resolves one landing only; a bonus's extra movement cannot chain another tile effect. */
-    fun moveAndResolve(position: Int, steps: Int): AdventureMove {
-        val initial = move(position, steps)
-        if (initial.effect != AdventureTileEffect.Bonus) return initial
-        val bonusDestination = (initial.position + BONUS_STEPS).coerceAtMost(MAP_LENGTH)
-        return AdventureMove(bonusDestination, tileEffect(bonusDestination), bonusApplied = true)
-    }
-
-    private fun tileEffect(position: Int): AdventureTileEffect = when (position) {
-        3, 9, 15, 19, 23 -> AdventureTileEffect.Star
-        4, 8, 12, 17, 21 -> AdventureTileEffect.MiniGame
-        6, 18 -> AdventureTileEffect.Bonus
-        7, 14, 20 -> AdventureTileEffect.Collect
-        11, 22 -> AdventureTileEffect.Gift
-        MAP_LENGTH -> AdventureTileEffect.Finish
-        else -> AdventureTileEffect.None
+class AdventureBoard {
+    /** Satu tap JALAN = maju 1 kotak; kotak Bonus menambah 2 kotak tanpa berantai. */
+    fun step(position: Int): AdventureMove {
+        val landing = (position.coerceIn(1, MAP_LENGTH) + 1).coerceAtMost(MAP_LENGTH)
+        val effect = tileEffect(landing)
+        if (effect != AdventureTileEffect.Bonus) return AdventureMove(landing, effect)
+        val bonus = (landing + BONUS_STEPS).coerceAtMost(MAP_LENGTH)
+        return AdventureMove(bonus, tileEffect(bonus), bonusApplied = true)
     }
 
     companion object {
         const val MAP_LENGTH = 24
         const val BONUS_STEPS = 2
+
+        fun tileEffect(position: Int): AdventureTileEffect = when (position) {
+            1 -> AdventureTileEffect.Start
+            3, 9, 15, 19, 23 -> AdventureTileEffect.Star
+            4, 8, 12, 17, 21 -> AdventureTileEffect.MiniGame
+            6, 18 -> AdventureTileEffect.Bonus
+            7, 14, 20 -> AdventureTileEffect.Collect
+            11, 22 -> AdventureTileEffect.Gift
+            MAP_LENGTH -> AdventureTileEffect.Finish
+            else -> AdventureTileEffect.None
+        }
     }
 }
+
+/** Jeda layar reward mini-game sebelum otomatis balik ke papan. */
+const val ADVENTURE_REWARD_MS = 2200L
 
 data class AdventureMove(
     val position: Int,
@@ -42,7 +37,7 @@ data class AdventureMove(
     val bonusApplied: Boolean = false,
 )
 
-enum class AdventureTileEffect { None, Star, MiniGame, Bonus, Collect, Gift, Finish }
+enum class AdventureTileEffect { None, Start, Star, MiniGame, Bonus, Collect, Gift, Finish }
 
 data class AdventureState(
     val position: Int = 1,
@@ -50,14 +45,29 @@ data class AdventureState(
     val fruits: Int = 0,
     val mapComplete: Boolean = false,
 ) {
-    fun toStored(): Map<String, Any> = mapOf(
-        "adv_position" to position,
-        "adv_stars" to stars,
-        "adv_fruits" to fruits,
-        "adv_maps_done" to if (mapComplete) 1 else 0,
-    )
+    /** Tiap 5 apel = 1 baju beruang. Diturunkan dari apel, jadi tidak perlu disimpan & tidak bisa hilang. */
+    val outfits: Int get() = fruits / APPLES_PER_OUTFIT
+
+    /** Efek kotak tempat mendarat. MiniGame tidak menambah apa pun di sini: bintangnya dari [withGameRating]. */
+    fun land(move: AdventureMove): AdventureState {
+        val moved = copy(position = move.position)
+        return when (move.effect) {
+            AdventureTileEffect.Star, AdventureTileEffect.Gift -> moved.copy(stars = stars + 1)
+            AdventureTileEffect.Collect -> moved.copy(fruits = fruits + 1)
+            AdventureTileEffect.Finish -> moved.copy(mapComplete = true)
+            else -> moved
+        }
+    }
+
+    /** Bintang petualangan += rating game (1–5). Contoh: dapat 4 bintang → +4. */
+    fun withGameRating(rating: Int): AdventureState = copy(stars = stars + rating.coerceIn(1, 5))
+
+    /** Main ulang peta yang sudah tamat; bintang & apel tetap. */
+    fun restartMap(): AdventureState = copy(position = 1, mapComplete = false)
 
     companion object {
+        const val APPLES_PER_OUTFIT = 5
+
         fun fromStored(position: Int, stars: Int, fruits: Int, mapComplete: Boolean) = AdventureState(
             position = position.coerceIn(1, AdventureBoard.MAP_LENGTH),
             stars = stars.coerceAtLeast(0),

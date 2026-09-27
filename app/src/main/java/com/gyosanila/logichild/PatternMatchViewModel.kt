@@ -21,6 +21,8 @@ data class PatternUiState(
     val stars: Map<Int, Int> = emptyMap(),
     val won: Boolean = false,
     val reward: Reward = Reward.NONE,
+    /** Rating permainan terakhir (bukan best) — dipakai bintang petualangan. */
+    val lastRating: Int = 0,
     val confettiTick: Int = 0,
     val soundOn: Boolean = true,
 )
@@ -68,7 +70,7 @@ class PatternMatchViewModel(application: Application) : AndroidViewModel(applica
             voice.feedback(rating, prefs.getString("lang", "id") == "en")
             sounds.reward(rating)
             prefs.edit().putInt("pstar_${s.level}", best).putInt("pattern_level", next).putInt("punlocked", next).apply()
-            _uiState.update { it.copy(won = true, stars = it.stars + (s.level to best), unlocked = next, reward = reward, confettiTick = it.confettiTick + 1) }
+            _uiState.update { it.copy(won = true, lastRating = rating, stars = it.stars + (s.level to best), unlocked = next, reward = reward, confettiTick = it.confettiTick + 1) }
         } else {
             _uiState.update { it.copy(mistakes = it.mistakes + 1) }
             voice.tryAgain(prefs.getString("lang", "id") == "en")

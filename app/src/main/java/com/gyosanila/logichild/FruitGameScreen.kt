@@ -1,5 +1,6 @@
 package com.gyosanila.logichild
 
+import kotlinx.coroutines.delay
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
@@ -114,6 +115,8 @@ private fun FruitCommand.color(): Color = when (this) {
 fun FruitGameScreen(
     startLevel: Int = 1,
     onBack: (() -> Unit)? = null,
+    /** Non-null = dibuka dari Petualangan: tanpa label level/peta, auto balik bawa rating. */
+    onAdventureDone: ((rating: Int) -> Unit)? = null,
     vm: FruitGameViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
@@ -134,10 +137,11 @@ fun FruitGameScreen(
             title = strings.playFruit,
             soundOn = state.soundOn,
             onToggleSound = vm::toggleSound,
-            onOpenMap = onBack,
+            onBack = if (onAdventureDone != null) onBack else null,
+            onOpenMap = if (onAdventureDone == null) onBack else null,
         )
 
-        Text(
+        if (onAdventureDone == null) Text(
             "${strings.level} ${state.level}",
             color = Color.White,
             fontSize = 16.sp,
@@ -201,13 +205,21 @@ fun FruitGameScreen(
             },
             showConfetti = false,
             confettiTick = 0,
-            showNext = true,
+            showNext = onAdventureDone == null,
             showReplay = false,
             nextLabel = strings.levelNext,
             replayLabel = strings.playAgain,
             onNext = vm::nextLevel,
             onReplay = {},
         )
+    }
+    if (onAdventureDone != null) {
+        LaunchedEffect(state.won) {
+            if (state.won) {
+                delay(ADVENTURE_REWARD_MS)
+                onAdventureDone(state.lastRating.coerceIn(1, 5))
+            }
+        }
     }
     if (state.crashed) {
         AlertDialog(

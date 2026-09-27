@@ -21,6 +21,8 @@ data class ColorUiState(
     val stars: Map<Int, Int> = emptyMap(),
     val won: Boolean = false,
     val reward: Reward = Reward.NONE,
+    /** Rating permainan terakhir (bukan best) — dipakai bintang petualangan. */
+    val lastRating: Int = 0,
     val confettiTick: Int = 0,
     val soundOn: Boolean = true,
 )
@@ -118,6 +120,7 @@ class ColorMatchViewModel(application: Application) : AndroidViewModel(applicati
             _uiState.update {
                 it.copy(
                     won = true,
+                    lastRating = rating,
                     stars = it.stars + (s.level to newStars),
                     unlocked = newUnlocked,
                     reward = reward,

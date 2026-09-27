@@ -36,6 +36,8 @@ data class FruitUiState(
     val crashed: Boolean = false,
     val exhausted: Boolean = false,
     val reward: Reward = Reward.NONE,
+    /** Rating permainan terakhir (bukan best) — dipakai bintang petualangan. */
+    val lastRating: Int = 0,
     val stars: Map<Int, Int> = emptyMap(),
     val soundOn: Boolean = true,
 )
@@ -250,7 +252,7 @@ class FruitGameViewModel(application: Application) : AndroidViewModel(applicatio
                         .apply()
                     _uiState.update {
                         it.copy(
-                            running = false, won = true, reward = reward,
+                            running = false, won = true, reward = reward, lastRating = rating,
                             unlocked = maxOf(it.unlocked, after.level + 1),
                             stars = it.stars + (after.level to newStars),
                         )
