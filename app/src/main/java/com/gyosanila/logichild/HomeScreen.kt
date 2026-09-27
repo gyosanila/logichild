@@ -87,9 +87,11 @@ fun HomeScreen(
     val season = ((adventure.position - 1) / 6).coerceIn(0, 3)
 
     BoxWithConstraints(Modifier.fillMaxSize().background(c(0x8FD4F7))) {
-        // ponytail: skala lebar-saja (u = lebar/540) seperti Papan; layar sangat pendek bisa terpotong bawah — tambah scroll kalau ada laporan.
-        val u: Dp = maxWidth / 540
-        Canvas(Modifier.fillMaxSize()) { homeBackdrop(art, u.toPx(), time) }
+        // Kanvas 540×960 dimuat utuh di atas banner: u = min(lebar, tinggi). Sisa lebar = latar.
+        val uw: Dp = maxWidth / 540
+        val u: Dp = minOf(uw, maxHeight / 960)
+        Canvas(Modifier.fillMaxSize()) { homeBackdrop(art, uw.toPx(), time) }
+        Box(Modifier.align(Alignment.TopCenter).width(u * 540).height(u * 960)) {
 
         // header: logo + nama + gear bergembok
         Row(Modifier.offset(u * 16, u * 12).width(u * 508).height(u * 52), verticalAlignment = Alignment.CenterVertically) {
@@ -207,6 +209,7 @@ fun HomeScreen(
             MiniCard(u, strings.homeGift, strings.homeGiftSub.format(adventure.fruits, adventure.outfits), onContinue) {
                 apple(art, size.width / 2, size.height / 2 + size.width * .06f, size.width / 22f)
             }
+        }
         }
     }
 }
