@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Logichild — layar turunan</title>
+<style>
+  html,body{margin:0;padding:0;background:#20303f}
+  body{display:flex;justify-content:center;font-family:"DejaVu Sans",Verdana,sans-serif;-webkit-font-smoothing:antialiased}
+  #phone{position:relative;width:540px;height:960px;overflow:hidden;background:#8FD4F7}
+  #bg{position:absolute;left:0;top:0;width:540px;height:340px;z-index:0}
+  #field{position:absolute;left:0;top:300px;width:540px;height:660px;z-index:0;
+         background:linear-gradient(#A6DE78,#82CD58 24%,#5FAE3E 82%,#4E9C38)}
+  #amb{position:absolute;left:0;top:0;width:540px;height:960px;z-index:1}
+  #ui{position:absolute;left:0;top:0;width:540px;height:960px;z-index:5}
+  .hdr{position:absolute;left:16px;right:16px;top:12px;height:52px;display:flex;align-items:center;gap:10px;z-index:8}
+  .rbtn{width:46px;height:46px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+        box-shadow:0 3px 0 #c9dced,0 5px 10px rgba(20,50,80,.2);flex:0 0 auto}
+  .plq{display:flex;flex-direction:column;justify-content:center;height:46px;padding:0 16px;border-radius:15px;
+       background:linear-gradient(#a9744f,#8B5E3C);box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -4px 0 rgba(0,0,0,.22),0 5px 10px rgba(10,35,60,.25)}
+  .plq b{color:#FFF8EC;font-size:16.5px;line-height:18px}
+  .plq s{color:#F6DFC6;font-size:11px;text-decoration:none}
+  .chip{display:flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:14px;background:#fff;
+        box-shadow:0 4px 0 rgba(0,0,0,.10);font-size:12.5px;font-weight:bold;color:#1E3A5F}
+  .card{position:absolute;left:16px;right:16px;background:#fff;border-radius:26px;box-shadow:0 10px 22px rgba(10,35,60,.2)}
+  .mini{position:absolute;background:#fff;border-radius:20px;box-shadow:0 7px 0 rgba(0,0,0,.13),0 10px 16px rgba(10,35,60,.16)}
+  .btn{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:20px;font-weight:bold;color:#fff;
+       background:linear-gradient(#8AE765,#4fae2e);box-shadow:0 6px 0 #3d8a22}
+  .lock{display:flex;align-items:center;justify-content:center;position:absolute;inset:0;background:rgba(30,58,95,.42);border-radius:inherit}
+</style></head>
+<body><div id="phone">
+  <svg id="bg" viewBox="0 0 540 340" width="540" height="340"></svg>
+  <div id="field"></div>
+  <svg id="amb" viewBox="0 0 540 960" width="540" height="960"></svg>
+  <div id="ui"></div>
+</div>
+<script>
+var qs=(location.search||'')+(location.hash||'');
+var S=(qs.match(/s=(\w+)/)||[0,'peta'])[1];
+var NAVY='#1E3A5F', GREY='#7b8fa3', GOLD='#FFC94D';
+var TILE=8, STARS=13;
+
+/* ---------- shared small icons ---------- */
+function starPoly(cx,cy,r,fill,extra){var p=[];for(var i=0;i<10;i++){var a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.46:r;
+  p.push((cx+Math.cos(a)*rr).toFixed(1)+','+(cy+Math.sin(a)*rr).toFixed(1));}
+  return '<polygon points="'+p.join(' ')+'" fill="'+fill+'" '+(extra||'')+'/>';}
+function starSvg(r,fill,size){size=size||20;return '<svg width="'+size+'" height="'+size+'" viewBox="-12 -12 24 24">'+
+  starPoly(0,0,r||9.6,fill||GOLD,'stroke="#E0A22B" stroke-width="1.4"')+'</svg>';}
+function lockIcon(c,s){s=s||14;return '<svg width="'+s+'" height="'+s+'" viewBox="-8 -9 16 18"><path d="M-4.2,-1 v-3.2 a4.2,4.2 0 0 1 8.4,0 v3.2" fill="none" stroke="'+c+'" stroke-width="2.6"/>'+
+  '<rect x="-6.2" y="-1" width="12.4" height="9.4" rx="2.6" fill="'+c+'"/></svg>';}
+function backIcon(){return '<svg width="22" height="22" viewBox="-11 -11 22 22"><path d="M3,-7 L-4,0 L3,7" fill="none" stroke="'+NAVY+'" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+function chevron(c,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="-11 -11 22 22"><path d="M-3,-7 L4,0 L-3,7" fill="none" stroke="'+c+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+function playIcon(c,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="-11 -11 22 22"><path d="M-6,-8 L8,0 L-6,8 Z" fill="'+c+'"/></svg>';}
+function gearIcon(){return '<svg width="26" height="26" viewBox="-13 -13 26 26">'+
+  '<g fill="'+NAVY+'">'+[0,60,120,180,240,300].map(function(a){return '<rect x="-2.6" y="-12.4" width="5.2" height="5.4" rx="1.8" transform="rotate('+a+')"/>';}).join('')+'</g>'+
+  '<circle r="8.6" fill="'+NAVY+'"/><circle r="3.6" fill="#fff"/></svg>';}
+function tulip(){return '<svg width="24" height="24" viewBox="-15 -15 30 30"><path d="M0,12 V0" stroke="#3f8f34" stroke-width="2.6" stroke-linecap="round"/>'+
+  '<path d="M-8,-10 q1,11 8,11 q7,0 8,-11 q-4,5 -8,-3 q-4,8 -8,3 Z" fill="#FF6B6B"/></svg>';}
+function sunI(){return '<svg width="24" height="24" viewBox="-15 -15 30 30"><circle r="6.4" fill="#FFB347"/>'+
+  [0,45,90,135,180,225,270,315].map(function(a){return '<rect x="-1.5" y="-13.4" width="3" height="4.4" rx="1.5" fill="#FFB347" transform="rotate('+a+')"/>';}).join('')+'</svg>';}
+function leafI(){return '<svg width="24" height="24" viewBox="-15 -15 30 30"><path d="M10,-10 C-2,-12 -14,-4 -12,4 C-10,11 2,12 6,4 C9,-2 11,-7 10,-10 Z" fill="#E08A2E"/>'+
+  '<path d="M-9,9 L6,-6" stroke="#8B5E3C" stroke-width="2.2" stroke-linecap="round"/></svg>';}
+function snowI(){return '<svg width="24" height="24" viewBox="-15 -15 30 30"><g stroke="#7EC8F5" stroke-width="3" stroke-linecap="round">'+
+  '<path d="M0,-11 V11 M-9.5,-5.5 L9.5,5.5 M-9.5,5.5 L9.5,-5.5"/></g></svg>';}
+function mapI(s){s=s||30;return '<svg width="'+s+'" height="'+s+'" viewBox="-17 -17 34 34">'+
+  '<path d="M-13,-4 Q-2,10 13,-6" fill="none" stroke="#C8955B" stroke-width="7" stroke-linecap="round" opacity=".35"/>'+
+  '<path d="M-13,-4 Q-2,10 13,-6" fill="none" stroke="#F2D7A3" stroke-width="6" stroke-linecap="round"/>'+
+  '<circle cx="-12" cy="-5" r="5.2" fill="#7ED957" stroke="#fff" stroke-width="2"/>'+
+  '<circle cx="1" cy="4" r="5.2" fill="#FFD24D" stroke="#fff" stroke-width="2"/>'+
+  '<circle cx="13" cy="-6" r="5.2" fill="#FFF3DC" stroke="#fff" stroke-width="2"/></svg>';}
+function chestI(s){s=s||32;return '<svg width="'+s+'" height="'+s+'" viewBox="-17 -17 34 34">'+
+  '<rect x="-14" y="-6" width="28" height="16" rx="5" fill="#C88A3E"/>'+
+  '<path d="M-14,-6 q14,-12 28,0 Z" fill="#E0A550"/>'+
+  '<rect x="-14" y="-8" width="28" height="5" rx="2.4" fill="#8B5E3C"/>'+
+  '<rect x="-3.6" y="-9" width="7.2" height="11" rx="3" fill="#FFD24D" stroke="#8B5E3C" stroke-width="1.6"/></svg>';}
+function bearFace(){return '<svg width="34" height="34" viewBox="-17 -17 34 34">'+
+  '<circle cx="-12" cy="-11" r="6" fill="#8B5E3C"/><circle cx="12" cy="-11" r="6" fill="#8B5E3C"/>'+
+  '<circle cx="0" cy="1" r="14" fill="#8B5E3C"/><ellipse cx="0" cy="6.5" rx="8" ry="6.4" fill="#FFF8EC"/>'+
+  '<circle cx="-5" cy="-2" r="2.8" fill="#503018"/><circle cx="5" cy="-2" r="2.8" fill="#503018"/>'+
+  '<ellipse cx="0" cy="4.4" rx="3" ry="2.4" fill="#503018"/></svg>';}
+function iconColor(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<circle cx="-11" cy="-7" r="12" fill="#FF6B6B"/><circle cx="11" cy="-7" r="12" fill="#4fb0e8"/>'+
+  '<circle cx="-11" cy="13" r="12" fill="#FFC94D"/><circle cx="11" cy="13" r="12" fill="#F7A8C4"/></svg>';}
+function iconPattern(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<rect x="-25" y="-25" width="21" height="21" rx="7" fill="#F7A8C4"/><rect x="0" y="-25" width="21" height="21" rx="7" fill="#A78BFA"/>'+
+  '<rect x="-25" y="0" width="21" height="21" rx="7" fill="#A78BFA"/><rect x="0" y="0" width="21" height="21" rx="7" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5 4"/>'+
+  '<text x="11" y="16" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle">?</text></svg>';}
+function iconCar(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<rect x="-25" y="-7" width="50" height="19" rx="8" fill="#E04747"/><path d="M-15,-7 q4,-13 14,-13 q12,0 15,13 Z" fill="#FF6B6B"/>'+
+  '<rect x="-10" y="-18" width="20" height="11" rx="5" fill="#CFE6F5"/>'+
+  '<circle cx="-14" cy="13" r="7" fill="#503018"/><circle cx="14" cy="13" r="7" fill="#503018"/></svg>';}
+function iconFruit(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<path d="M0,-2 C-13,-14 -20,-3 -17,7 C-15,16 -4,19 0,17 C4,19 15,16 17,7 C20,-3 13,-14 0,-2 Z" fill="#FF6B6B"/>'+
+  '<path d="M1,-9 C4,-17 12,-19 15,-15 C12,-8 6,-7 1,-9 Z" fill="#4fae2e"/></svg>';}
+function iconShape(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<circle cx="-11" cy="-9" r="12" fill="#4fb0e8"/><rect x="1" y="-21" width="22" height="22" rx="5" fill="#FFC94D"/>'+
+  '<path d="M-11,20 L0,0 L11,20 Z" fill="#7ED957"/></svg>';}
+function iconABC(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<text x="0" y="14" font-size="52" font-weight="bold" fill="#A78BFA" text-anchor="middle">A</text></svg>';}
+function iconAnimal(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<circle cx="-10" cy="-8" r="7" fill="#C88A3E"/><circle cx="10" cy="-8" r="7" fill="#C88A3E"/>'+
+  '<circle cx="0" cy="2" r="16" fill="#C88A3E"/><ellipse cx="0" cy="8" rx="9" ry="7" fill="#FFF8EC"/>'+
+  '<circle cx="-6" cy="-2" r="3" fill="#503018"/><circle cx="6" cy="-2" r="3" fill="#503018"/></svg>';}
+function iconPuzzle(){return '<svg width="62" height="62" viewBox="-31 -31 62 62">'+
+  '<rect x="-24" y="-24" width="22" height="22" rx="6" fill="#4fb0e8"/><rect x="2" y="-24" width="22" height="22" rx="6" fill="#7ED957"/>'+
+  '<rect x="-24" y="2" width="22" height="22" rx="6" fill="#FFC94D"/><circle cx="13" cy="13" r="11" fill="#F7A8C4"/></svg>';}
+/* stickers for the reward book */
+function stk(inner,bg){return '<svg width="100%" height="100%" viewBox="-40 -40 80 80">'+
+  '<circle r="38" fill="'+bg+'" opacity=".35"/>'+inner+'</svg>';}
+var STICKERS=[
+ {n:'Pelangi', ic:stk('<path d="M-26,14 a26,26 0 0 1 52,0" fill="none" stroke="#FF6B6B" stroke-width="7"/><path d="M-18,14 a18,18 0 0 1 36,0" fill="none" stroke="#FFC94D" stroke-width="7"/><path d="M-10,14 a10,10 0 0 1 20,0" fill="none" stroke="#7ED957" stroke-width="7"/>','#FFE9A8'), got:1},
+ {n:'Roket', ic:stk('<path d="M0,-28 C9,-18 10,-2 10,8 L-10,8 C-10,-2 -9,-18 0,-28 Z" fill="#E04747"/><circle cy="-6" r="6" fill="#CFE6F5"/><path d="M-10,8 L-18,20 L-6,15 Z M10,8 L18,20 L6,15 Z" fill="#FFC94D"/><path d="M-5,10 q5,14 10,0 Z" fill="#FFB347"/>','#FFD9D9'), got:1},
+ {n:'Bunga', ic:stk('<g>'+[0,72,144,216,288].map(function(a){return '<ellipse cx="0" cy="-14" rx="8.4" ry="11" fill="#FF6B9D" transform="rotate('+a+')"/>';}).join('')+'</g><circle r="7" fill="#FFE066"/><path d="M0,10 v22" stroke="#4fae2e" stroke-width="3.4" stroke-linecap="round"/>','#FFE0EC'), got:1},
+ {n:'Mahkota', ic:stk('<path d="M-24,12 L-24,-12 L-10,0 L0,-18 L10,0 L24,-12 L24,12 Z" fill="#FFC94D" stroke="#E0A22B" stroke-width="2"/><circle cx="0" cy="-18" r="3.4" fill="#E04747"/>','#FFF0C2'), got:1},
+ {n:'Balon', ic:stk('<path d="M0,-24 C13,-24 18,-13 18,-4 C18,7 8,15 0,15 C-8,15 -18,7 -18,-4 C-18,-13 -13,-24 0,-24 Z" fill="#4fb0e8"/><path d="M0,15 q3,10 -2,20" stroke="#8B5E3C" stroke-width="2.4" fill="none"/><ellipse cx="-6" cy="-12" rx="4" ry="6" fill="#fff" opacity=".5"/>','#D6ECFA'), got:1},
+ {n:'Kue', ic:stk('<path d="M-16,22 L-21,-2 L21,-2 L16,22 Z" fill="#F7A8C4"/><path d="M-21,-2 q0,-14 21,-14 q21,0 21,14 q0,8 -10,8 h-22 q-10,0 -10,-8 Z" fill="#FFF8EC"/><circle cx="0" cy="-24" r="5.4" fill="#E04747"/><path d="M0,-19 q0,-4 3,-6" stroke="#4fae2e" stroke-width="2.4" fill="none"/>','#FFE4EE'), got:1},
+ {n:'Bintang', ic:stk('<polygon points="0,-26 7,-8 26,-8 11,4 17,22 0,11 -17,22 -11,4 -26,-8 -7,-8" fill="#FFC94D" stroke="#E0A22B" stroke-width="2"/>','#FFF3CC'), got:1},
+ {n:'Belum', ic:'', got:0}, {n:'Belum', ic:'', got:0}, {n:'Belum', ic:'', got:0, p2:1}, {n:'Belum', ic:'', got:0, p2:1}, {n:'Belum', ic:'', got:0, p2:1}
+];
+var GAMES=[
+ {n:'Cocok Warna', lvl:7, st:21, ic:iconColor(),   c1:'#B49BFB', c2:'#8B6BEA', cat:'warna', lock:0},
+ {n:'Susun Pola',  lvl:5, st:14, ic:iconPattern(), c1:'#FBB4CE', c2:'#EE8FB4', cat:'bentuk', lock:0},
+ {n:'Main Mobil',  lvl:9, st:26, ic:iconCar(),     c1:'#5FBdf0', c2:'#3A97D6', cat:'motorik', lock:0},
+ {n:'Petik Buah',  lvl:4, st:11, ic:iconFruit(),   c1:'#8BDF63', c2:'#5CB93A', cat:'warna', lock:0},
+ {n:'Kenal Bentuk',lvl:3, st:9,  ic:iconShape(),   c1:'#FFD98A', c2:'#F0B03C', cat:'bentuk', lock:0},
+ {n:'Kenal Huruf', lvl:2, st:6,  ic:iconABC(),     c1:'#9BE7FF', c2:'#4fb0e8', cat:'kata', lock:0},
+ {n:'Suara Hewan', lvl:0, st:0,  ic:iconAnimal(),  c1:'#D6B98C', c2:'#B08A55', cat:'kata', lock:1, at:14},
+ {n:'Puzzle',      lvl:0, st:0,  ic:iconPuzzle(),  c1:'#C7B6F7', c2:'#9B86E8', cat:'bentuk', lock:1, at:18},
+ {n:'Hitung Buah', lvl:0, st:0,  ic:iconFruit(),   c1:'#FFB3C7', c2:'#EE8FB4', cat:'angka', lock:1, at:20},
+ {n:'Urut Pola',   lvl:0, st:0,  ic:iconPattern(), c1:'#A8D8F0', c2:'#6FAFD6', cat:'bentuk', lock:1, at:22},
+ {n:'Warna Mobil', lvl:0, st:0,  ic:iconCar(),     c1:'#F5C08A', c2:'#DE9A55', cat:'warna', lock:1, at:24},
+ {n:'Cerita',      lvl:0, st:0,  ic:iconABC(),     c1:'#9AD9B0', c2:'#5FAE7C', cat:'kata', lock:1, at:24}
+];
+var CATS=[['semua','Semua'],['warna','Warna'],['bentuk','Bentuk'],['angka','Angka'],['kata','Kata'],['motorik','Motorik']];
+
+/* ---------- background ---------- */
+(function(){
+  var S=['<defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="#77BEEB"/><stop offset=".6" stop-color="#BFE9FF"/><stop offset="1" stop-color="#E7F8FF"/></linearGradient>'+
+    '<radialGradient id="sg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFF6C2" stop-opacity=".95"/><stop offset="1" stop-color="#FFE066" stop-opacity="0"/></radialGradient></defs>'+
+    '<rect width="540" height="340" fill="url(#skyg)"/>'];
+  function cloud(cx,cy,s,face){var g='<g transform="translate('+cx+','+cy+') scale('+s+')"><ellipse rx="38" ry="20" fill="#fff"/>'+
+    '<ellipse cx="-28" cy="7" rx="25" ry="13" fill="#fff"/><ellipse cx="27" cy="8" rx="27" ry="15" fill="#fff"/>'+
+    '<ellipse cx="5" cy="-11" rx="23" ry="15" fill="#fff"/><ellipse cy="9" rx="38" ry="11" fill="#eaf6ff"/>';
+    if(face) g+='<circle cx="-10" cy="-4" r="3.6" fill="#3a2415"/><circle cx="10" cy="-4" r="3.6" fill="#3a2415"/>'+
+      '<path d="M-7,4 q7,8 14,0" stroke="#3a2415" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    return g+'</g>';}
+  S.push('<circle cx="452" cy="92" r="88" fill="url(#sg)"/><circle cx="452" cy="92" r="28" fill="#FFEB9B"/>');
+  S.push(cloud(96,250,.8,1)); S.push(cloud(300,86,.6,0)); S.push(cloud(470,190,.5,0));
+  document.getElementById('bg').innerHTML=S.join('');
+})();
+(function(){
+  var F=[];
+  function bush(x,y,s){return '<g transform="translate('+x+','+y+') scale('+s+')">'+
+    '<ellipse cy="6" rx="28" ry="7" fill="#000" opacity=".12"/>'+
+    '<circle cx="-15" cy="-7" r="14" fill="#4fae4a"/><circle cx="13" cy="-8" r="15" fill="#4fae4a"/><circle cy="-17" r="16" fill="#5cbb52"/></g>';}
+  function flower(x,y,s,c){var p='';for(var i=0;i<5;i++){var a=i*72*Math.PI/180,ex=Math.cos(a)*5.4,ey=Math.sin(a)*5.4;
+    p+='<ellipse cx="'+ex.toFixed(1)+'" cy="'+ey.toFixed(1)+'" rx="4" ry="3.5" fill="'+c+'" transform="rotate('+(i*72)+','+ex.toFixed(1)+','+ey.toFixed(1)+')"/>';}
+    return '<g transform="translate('+x+','+y+') scale('+s+')"><rect x="-1.3" y="0" width="2.6" height="14" rx="1.3" fill="#3f8f34"/>'+p+'<circle r="3.2" fill="#FFE066"/></g>';}
+  for(var i=0;i<7;i++){ F.push(bush(40+i*78,946+(i%2)*5,.95)); }
+  F.push(bush(6,830,1.0)); F.push(bush(534,812,.95));
+  F.push(flower(80,916,.9,'#FF6B6B')); F.push(flower(300,930,.9,'#FFC94D')); F.push(flower(470,920,.9,'#A78BFA'));
+  /* bear standing at the bottom right, out of the cards' way */
+  F.push('<svg width="150" height="150" x="368" y="768"><image href="mascot.png" width="150" height="150"/></svg>');
+  F.push('<svg width="92" height="92" x="40" y="820"><image href="mascot.png" width="92" height="92"/></svg>');
+  document.getElementById('amb').innerHTML=F.join('');
+})();
+
+/* ---------- chrome ---------- */
+function header(title, sub, right){
+  return '<div class="hdr"><div class="rbtn">'+backIcon()+'</div>'+
+    '<div class="plq"><b>'+title+'</b>'+(sub?'<s>'+sub+'</s>':'')+'</div>'+
+    (right||'')+'</div>';
+}
+var starChip = '<div class="chip" style="margin-left:auto;background:#FFF4D6;color:#8a6d1f;padding:0 12px 0 9px">'+starSvg(9.4,GOLD,19)+STARS+'</div>';
+
+/* ================= 1. PAPAN PETUALANGAN ================= */
+function peta(){
+  var o='';
+  o += header('Papan Petualangan','Peta 1 &middot; Taman 4 Musim', starChip);
+  /* map overview: the real board, whole map, scaled into the card */
+  o += '<div class="card" style="top:76px;height:300px;padding:16px;box-sizing:border-box">'+
+    '<div style="position:relative;height:140px;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 0 4px #f0dcbb">'+
+      '<iframe scrolling="no" src="board.html?v=4&amp;z=1" style="position:absolute;left:0;top:-6px;width:1440px;height:365px;border:0;transform:scale(.353);transform-origin:0 0"></iframe>'+
+      /* pointer on the tile the child is standing on */
+      '<div style="position:absolute;left:194px;top:96px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:14px solid #E04747;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));transform:rotate(8deg)"></div>'+
+      '<div style="position:absolute;left:160px;top:60px;background:#E04747;color:#fff;font-size:11.5px;font-weight:bold;border-radius:11px;padding:4px 9px;box-shadow:0 3px 6px rgba(0,0,0,.25)">kotak 8</div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-top:14px">'+
+      '<div style="width:54px;height:54px;border-radius:17px;background:linear-gradient(#B49BFB,#8B6BEA);display:flex;align-items:center;justify-content:center">'+iconColor()+'</div>'+
+      '<div style="flex:1"><b style="font-size:15px;color:'+NAVY+'">Kotak 8 &middot; Cocok Warna</b>'+
+      '<div style="font-size:12px;color:'+GREY+';margin-top:3px">musim panas &middot; 4 dari 5 bintang</div>'+
+      '<div style="display:flex;gap:3px;margin-top:5px">'+[1,2,3,4].map(function(){return starSvg(8.6,GOLD,17);}).join('')+starSvg(8.6,'#e2e9ef',17)+'</div></div>'+
+      '<div class="btn" style="height:46px;padding:0 16px;font-size:14px">'+playIcon('#fff',17)+' MULAI</div>'+
+    '</div>'+
+    '<div style="font-size:11.5px;color:'+GREY+';margin-top:11px;text-align:center">tap kotak mana saja di peta buat mulai dari kotak itu</div>'+
+  '</div>';
+  /* stats */
+  o += '<div style="position:absolute;left:16px;right:16px;top:390px;display:flex;gap:12px">'+
+    [['8/24','kotak terbuka'],['13','bintang'],['Panas','musim ini']].map(function(s,i){
+      return '<div class="mini" style="position:relative;left:0;width:162px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center">'+
+        '<b style="font-size:19px;color:'+NAVY+'">'+s[0]+'</b><s style="font-size:11px;color:'+GREY+';text-decoration:none;margin-top:2px">'+s[1]+'</s></div>';}).join('')+'</div>';
+  /* seasons */
+  var seas=[['Semi',tulip(),'6/6','selesai','#7ED957',0],['Panas',sunI(),'2/6','aktif','#FFC94D',1],
+            ['Gugur',leafI(),'0/6','terkunci','#c9d4dd',2],['Dingin',snowI(),'0/6','terkunci','#c9d4dd',2]];
+  o += '<div class="card" style="top:478px;height:186px;padding:14px 16px;box-sizing:border-box">'+
+    '<div style="font-size:11.5px;font-weight:bold;letter-spacing:1.4px;color:'+GREY+';margin-bottom:9px">PERJALANAN 4 MUSIM</div>'+
+    seas.map(function(s,i){
+      return '<div style="display:flex;align-items:center;gap:12px;height:38px">'+
+        '<div style="width:30px;height:30px;border-radius:11px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;'+(s[5]===2?'opacity:.45':'')+'">'+s[1]+'</div>'+
+        '<b style="font-size:13.5px;color:'+(s[5]===2?'#a8b8c8':NAVY)+';width:56px">'+s[0]+'</b>'+
+        '<div style="flex:1;height:9px;border-radius:6px;background:#eef2f6;overflow:hidden">'+
+          '<div style="height:100%;width:'+(s[4]==='#7ED957'?100:(s[4]==='#FFC94D'?33:0))+'%;background:'+s[4]+'"></div></div>'+
+        '<div style="font-size:11px;color:'+GREY+';width:74px;text-align:right">'+s[2]+' &middot; '+(s[3]===2||s[5]===2?(s[3]===2?'terkunci':s[3]):s[3])+'</div>'+
+      '</div>';}).join('')+
+  '</div>';
+  /* peta 2 + cta */
+  o += '<div class="card" style="top:676px;height:82px;padding:0 16px;box-sizing:border-box;display:flex;align-items:center;gap:13px">'+
+    '<div style="width:52px;height:52px;border-radius:17px;background:#eef4f9;display:flex;align-items:center;justify-content:center">'+lockIcon('#a8b8c8',22)+'</div>'+
+    '<div style="flex:1"><b style="font-size:14.5px;color:#a8b8c8">Peta 2 &middot; Kebun Raya</b>'+
+    '<div style="font-size:11.5px;color:'+GREY+';margin-top:3px">terbuka di kotak 24 &middot; segera</div></div>'+
+    '<div style="font-size:11px;font-weight:bold;color:#a8b8c8">SOON</div></div>';
+  o += '<div class="btn" style="position:absolute;left:16px;right:16px;top:772px;height:60px;font-size:17px">'+playIcon('#fff',20)+' LANJUT DARI KOTAK 8</div>';
+  return o;
+}
+
+/* ================= 2. HADIAH ================= */
+function hadiah(){
+  var o='';
+  o += header('Hadiah','7 dari 12 stiker', '<div class="chip" style="margin-left:auto;background:#FFF4D6;color:#8a6d1f;padding:0 12px 0 9px">'+chestI(19)+'7</div>');
+  /* featured */
+  o += '<div class="card" style="top:76px;height:206px;padding:16px;box-sizing:border-box;display:flex;align-items:center;gap:16px">'+
+    '<div style="width:132px;height:132px;border-radius:30px;background:linear-gradient(#FFF3CC,#FFE0A3);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -5px 0 rgba(0,0,0,.08)">'+
+      '<div style="width:92px;height:92px">'+STICKERS[0].ic+'</div></div>'+
+    '<div style="flex:1"><div style="font-size:11.5px;font-weight:bold;letter-spacing:1.4px;color:'+GREY+'">STIKER TERBARU</div>'+
+      '<b style="display:block;font-size:22px;color:'+NAVY+';margin-top:6px">'+STICKERS[0].n+'</b>'+
+      '<div style="font-size:12px;color:'+GREY+';margin-top:5px">dari kotak hadiah ke-6</div>'+
+      '<div style="display:flex;gap:6px;margin-top:12px">'+
+        '<div class="chip" style="height:36px;background:#FFF4D6;color:#8a6d1f;font-size:12px">tap buat lihat</div></div></div>'+
+  '</div>';
+  /* grid */
+  o += '<div class="card" style="top:296px;height:376px;padding:14px 16px;box-sizing:border-box">'+
+    '<div style="font-size:11.5px;font-weight:bold;letter-spacing:1.4px;color:'+GREY+';margin-bottom:10px">KOLEKSI STIKER</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px">'+
+    STICKERS.map(function(s,i){
+      return '<div style="position:relative;height:100px;border-radius:20px;background:'+(s.got?'#FFF8E6':'#eef2f6')+';display:flex;align-items:center;justify-content:center">'+
+        (s.got? '<div style="width:74px;height:74px">'+s.ic+'</div>'
+              : '<div style="text-align:center"><div style="opacity:.4">'+lockIcon('#98a9ba',24)+'</div>'+
+                (s.p2? '<div style="font-size:9.5px;color:#9aa9b8;font-weight:bold;margin-top:4px">PETA 2</div>':'')+'</div>')+
+        (i===0? '<div style="position:absolute;inset:-3px;border-radius:23px;border:3px solid #FFC94D"></div>':'')+
+      '</div>';}).join('')+
+    '</div></div>';
+  /* hint */
+  o += '<div class="card" style="top:686px;height:88px;padding:0 16px;box-sizing:border-box;display:flex;align-items:center;gap:13px">'+
+    '<div style="width:52px;height:52px;border-radius:17px;background:#FFF4D6;display:flex;align-items:center;justify-content:center">'+chestI(30)+'</div>'+
+    '<div style="flex:1"><b style="font-size:14.5px;color:'+NAVY+'">2 kejutan lagi menunggu</b>'+
+    '<div style="font-size:11.5px;color:'+GREY+';margin-top:3px">buka kotak hadiah ke-9 dan ke-12 di peta</div></div>'+
+    '<div class="btn" style="height:46px;padding:0 15px;font-size:13.5px">'+playIcon('#fff',16)+' KE PETA</div></div>';
+  return o;
+}
+
+/* ================= 3. SEMUA MINI GAME (banyak game) ================= */
+function games(){
+  var CAT='semua', o='';
+  o += header('Mini Game','12 permainan', starChip);
+  /* category chips */
+  o += '<div style="position:absolute;left:0;right:0;top:76px;height:44px;display:flex;gap:9px;padding:0 16px;overflow:hidden">'+
+    CATS.map(function(c){
+      var on = c[0]===CAT;
+      return '<div class="chip" style="flex:0 0 auto;background:'+(on?'linear-gradient(#8AE765,#4fae2e)':'#fff')+';color:'+(on?'#fff':NAVY)+';box-shadow:0 '+(on?'5px':'4px')+' 0 '+(on?'#3d8a22':'rgba(0,0,0,.10)')+'">'+c[1]+
+        (c[0]!=='semua'?' <span style="opacity:.6;font-weight:normal">'+GAMES.filter(function(g){return g.cat===c[0];}).length+'</span>':'')+'</div>';}).join('')+
+  '</div>';
+  o += '<div style="position:absolute;left:16px;right:16px;top:128px;display:flex;align-items:center;justify-content:space-between">'+
+    '<div class="chip" style="background:#fff">SEMUA PERMAINAN</div>'+
+    '<div class="chip" style="background:rgba(255,255,255,.8);font-weight:normal;letter-spacing:0">urut: terakhir dimainkan</div></div>';
+  /* grid, 2 columns, unlocked first then locked */
+  var order = GAMES.slice().sort(function(a,b){ return (a.lock-b.lock) || (b.st-a.st); });
+  var TOP=172, W=246, H=176, GX=16, GY=16;
+  order.forEach(function(g,i){
+    var x = GX + (i%2)*(W+GY), y = TOP + Math.floor(i/2)*(H+14);
+    o += '<div class="toy" style="position:absolute;left:'+x+'px;top:'+y+'px;width:'+W+'px;height:'+H+'px;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 8px 0 rgba(0,0,0,.15),0 12px 18px rgba(10,35,60,.18)">'+
+      '<div style="height:100px;background:linear-gradient('+g.c1+','+g.c2+');display:flex;align-items:center;justify-content:center;position:relative">'+g.ic+
+        (g.lock? '' : '<div style="position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.94);border-radius:13px;padding:3px 9px 3px 7px;font-size:12.5px;font-weight:bold;color:#8a6d1f">'+starSvg(9,GOLD,17)+g.st+'</div>')+
+      '</div>'+
+      '<div style="padding:9px 14px"><b style="font-size:14.5px;color:'+NAVY+'">'+g.n+'</b>'+
+      '<div style="font-size:11.5px;color:'+GREY+';margin-top:3px">'+(g.lock? 'terbuka di kotak '+g.at : 'Level '+g.lvl+' &middot; '+g.st+' bintang')+'</div></div>'+
+      (g.lock? '<div class="lock" style="border-radius:28px">'+lockIcon('#fff',28)+'</div>' : '')+
+    '</div>';
+  });
+  return o;
+}
+var body = S==='hadiah' ? hadiah() : (S==='games' ? games() : peta());
+document.getElementById('ui').innerHTML = body;
+</script></body></html>

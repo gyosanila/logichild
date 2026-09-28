@@ -74,7 +74,7 @@ import com.gyosanila.logichild.ui.TextDark
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-enum class GameChoice { Menu, Adventure, Kart, Fruit, Pattern, Color, RoadmapKart, RoadmapFruit, RoadmapPattern, RoadmapColor, Settings }
+enum class GameChoice { Menu, Adventure, AllGames, Kart, Fruit, Pattern, Color, RoadmapKart, RoadmapFruit, RoadmapPattern, RoadmapColor, Settings }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -252,6 +252,11 @@ private fun MainNav(
                     ),
                     onContinue = { game = GameChoice.Adventure },
                     onSettings = { mathGate = true },
+                    onAllGames = { game = GameChoice.AllGames },
+                )
+                GameChoice.AllGames -> AllGamesScreen(
+                    onSelectGame = { game = it },
+                    onBack = { game = GameChoice.Menu },
                 )
                 GameChoice.Adventure -> AdventureScreen(
                     state = adventure,

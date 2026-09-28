@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Logichild — Home</title>
+<style>
+  html,body{margin:0;padding:0;background:#20303f}
+  body{display:flex;justify-content:center;font-family:"DejaVu Sans",Verdana,sans-serif;-webkit-font-smoothing:antialiased}
+  #phone{position:relative;width:540px;height:960px;overflow:hidden;background:#8FD4F7}
+  #bg{position:absolute;left:0;top:0;width:540px;height:400px;z-index:0}
+  #field{position:absolute;left:0;top:356px;width:540px;height:604px;z-index:0;
+         background:linear-gradient(#A6DE78,#82CD58 22%,#5FAE3E 78%,#4E9C38)}
+  #amb{position:absolute;left:0;top:0;width:540px;height:960px;z-index:1}
+  /* header */
+  .hdr{position:absolute;left:16px;right:16px;top:12px;height:52px;display:flex;align-items:center;gap:9px;z-index:8}
+  .name{display:flex;flex-direction:column;justify-content:center;height:46px;padding:0 15px;border-radius:15px;
+        background:linear-gradient(#a9744f,#8B5E3C);box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -4px 0 rgba(0,0,0,.22),0 5px 10px rgba(10,35,60,.25)}
+  .name b{color:#FFF8EC;font-size:17px;line-height:19px}
+  .name s{color:#F6DFC6;font-size:11px;text-decoration:none}
+  .gear{width:46px;height:46px;margin-left:auto;border-radius:50%;background:#fff;position:relative;
+        box-shadow:0 3px 0 #c9dced,0 5px 10px rgba(20,50,80,.2);display:flex;align-items:center;justify-content:center}
+  .gear i{position:absolute;right:-4px;bottom:-4px;width:21px;height:21px;border-radius:50%;background:#FFC94D;
+          border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(20,50,80,.2)}
+  /* panggung peta */
+  .stage{position:absolute;left:14px;right:14px;top:72px;height:348px;z-index:4;border-radius:30px;
+         background:linear-gradient(#b07c52,#8B5E3C 70%,#7a4f31);
+         box-shadow:inset 0 3px 0 rgba(255,255,255,.3),inset 0 -6px 0 rgba(0,0,0,.25),0 14px 26px rgba(10,35,60,.28)}
+  .bar{position:absolute;left:10px;right:10px;top:9px;height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;box-sizing:border-box}
+  .bar b{color:#FFF8EC;font-size:18.5px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+  .bar s{color:#F3DFC6;font-size:11.5px;text-decoration:none;display:block;margin-top:1px}
+  .win{position:absolute;left:10px;right:10px;top:62px;height:230px;border-radius:20px;overflow:hidden;
+       box-shadow:inset 0 0 0 5px #f0dcbb,0 6px 12px rgba(0,0,0,.22);
+       background:linear-gradient(#8CC8EF,#C9EDFF 55%,#EAF8FF)}
+  .win iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0}
+  .win .glass{position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,.22))}
+  .strip{position:absolute;left:18px;right:18px;top:302px;display:flex;align-items:center;gap:9px}
+  .seg{flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.3);position:relative}
+  .seg.done{background:#7ED957}.seg.now{background:#FFC94D}
+  .miles{position:absolute;left:18px;right:18px;top:312px;display:flex;justify-content:space-between}
+  .miles span{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+              background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+  .miles span.on{background:#fff;box-shadow:0 0 0 3px #FFC94D,0 3px 6px rgba(0,0,0,.25)}
+  .cta{position:absolute;left:74px;right:74px;top:408px;height:60px;border-radius:22px;z-index:6;
+       display:flex;align-items:center;justify-content:center;gap:11px;font-size:20px;font-weight:bold;color:#fff;
+       background:linear-gradient(#8AE765,#4fae2e);box-shadow:0 6px 0 #3d8a22,0 10px 18px rgba(10,35,60,.3)}
+  /* shelf mainan */
+  .shelf{position:absolute;left:16px;top:476px;z-index:5}
+  .chip{display:flex;align-items:center;gap:8px;height:32px;padding:0 14px;border-radius:13px;background:#fff;
+        font-size:11.5px;font-weight:bold;letter-spacing:1.5px;color:#1E3A5F;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+  .toy{position:absolute;width:246px;border-radius:30px 34px 28px 32px;overflow:hidden;background:#fff;
+       box-shadow:0 9px 0 rgba(0,0,0,.16),0 14px 22px rgba(10,35,60,.2)}
+  .toy .art{height:88px;position:relative;display:flex;align-items:center;justify-content:center}
+  .toy .art .gloss{position:absolute;left:-30px;top:-40px;width:200px;height:110px;border-radius:50%;background:rgba(255,255,255,.2);transform:rotate(-14deg)}
+  .toy .lab{padding:9px 14px 12px;position:relative}
+  .toy .lab b{display:block;font-size:15.5px;color:#1E3A5F;line-height:19px}
+  .toy .lab s{display:block;font-size:11.5px;color:#7b8fa3;text-decoration:none;margin-top:4px}
+  .badge{position:absolute;right:11px;top:11px;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.95);
+         border-radius:13px;padding:3px 9px 3px 7px;font-size:12.5px;font-weight:bold;color:#8a6d1f;box-shadow:0 2px 5px rgba(0,0,0,.15)}
+  /* baris bawah */
+  .mini{position:absolute;height:74px;border-radius:24px;background:#fff;
+        box-shadow:0 8px 0 rgba(0,0,0,.14),0 12px 18px rgba(10,35,60,.18);display:flex;align-items:center;gap:12px;padding:0 15px;box-sizing:border-box;z-index:5}
+  .mini b{font-size:14.5px;color:#1E3A5F;display:block}
+  .mini s{font-size:11.5px;color:#7b8fa3;text-decoration:none;display:block;margin-top:3px}
+</style></head>
+<body><div id="phone">
+  <svg id="bg" viewBox="0 0 540 400" width="540" height="400"></svg>
+  <div id="field"></div>
+  <svg id="amb" viewBox="0 0 540 960" width="540" height="960"></svg>
+  <div id="ui" style="position:absolute;left:0;top:0;width:540px;height:960px;z-index:5"></div>
+  <div class="hdr">
+    <div id="logo"></div>
+    <div class="name"><b>Logichild</b><s>v1.2.0</s></div>
+    <div class="gear" id="gear"></div>
+  </div>
+</div>
+<script>
+var qs=(location.search||'')+(location.hash||'');
+var VAR=(qs.match(/v=(\d)/)||[0,'1'])[1];
+var NAVY='#1E3A5F', GREY='#7b8fa3', GOLD='#FFC94D';
+var TILE=8;                                    /* kotak sekarang (mock: 8 dari 24) */
+
+/* ---------------- icons ---------------- */
+function starPoly(cx,cy,r,fill,extra){var p=[];for(var i=0;i<10;i++){var a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.46:r;
+  p.push((cx+Math.cos(a)*rr).toFixed(1)+','+(cy+Math.sin(a)*rr).toFixed(1));}
+  return '<polygon points="'+p.join(' ')+'" fill="'+fill+'" '+(extra||'')+'/>';}
+function starSvg(r,fill,size){size=size||20;return '<svg width="'+size+'" height="'+size+'" viewBox="-12 -12 24 24">'+
+  starPoly(0,0,r||9.6,fill||GOLD,'stroke="#E0A22B" stroke-width="1.4"')+'</svg>';}
+function gearIcon(s){s=s||26;return '<svg width="'+s+'" height="'+s+'" viewBox="-13 -13 26 26">'+
+  '<g fill="'+NAVY+'">'+[0,60,120,180,240,300].map(function(a){return '<rect x="-2.6" y="-12.4" width="5.2" height="5.4" rx="1.8" transform="rotate('+a+')"/>';}).join('')+'</g>'+
+  '<circle r="8.6" fill="'+NAVY+'"/><circle r="3.6" fill="#fff"/></svg>';}
+function lockIcon(c,s){s=s||14;return '<svg width="'+s+'" height="'+s+'" viewBox="-8 -9 16 18"><path d="M-4.2,-1 v-3.2 a4.2,4.2 0 0 1 8.4,0 v3.2" fill="none" stroke="'+c+'" stroke-width="2.6"/>'+
+  '<rect x="-6.2" y="-1" width="12.4" height="9.4" rx="2.6" fill="'+c+'"/></svg>';}
+function playIcon(c,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="-11 -11 22 22"><path d="M-6,-8 L8,0 L-6,8 Z" fill="'+c+'"/></svg>';}
+function chevron(c){return '<svg width="20" height="20" viewBox="-11 -11 22 22"><path d="M-3,-7 L4,0 L-3,7" fill="none" stroke="'+c+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+function bearHead(c){return '<svg width="30" height="30" viewBox="-16 -16 32 32">'+
+  '<circle cx="-11" cy="-10" r="5.6" fill="'+c+'"/><circle cx="11" cy="-10" r="5.6" fill="'+c+'"/>'+
+  '<circle cx="-11" cy="-10" r="2.6" fill="#F0862F"/><circle cx="11" cy="-10" r="2.6" fill="#F0862F"/>'+
+  '<circle cx="0" cy="1" r="13" fill="'+c+'"/><ellipse cx="0" cy="6" rx="7.6" ry="6" fill="#FFF8EC"/>'+
+  '<circle cx="-4.8" cy="-2" r="2.6" fill="#503018"/><circle cx="4.8" cy="-2" r="2.6" fill="#503018"/>'+
+  '<ellipse cx="0" cy="4" rx="2.8" ry="2.2" fill="#503018"/></svg>';}
+function tulip(){return '<svg width="22" height="22" viewBox="-15 -15 30 30"><path d="M0,12 V0" stroke="#cfe8b0" stroke-width="2.6" stroke-linecap="round"/>'+
+  '<path d="M-8,-10 q1,11 8,11 q7,0 8,-11 q-4,5 -8,-3 q-4,8 -8,3 Z" fill="#FF6B6B"/></svg>';}
+function sunI(){return '<svg width="22" height="22" viewBox="-15 -15 30 30"><circle r="6.4" fill="#FFB347"/>'+
+  [0,45,90,135,180,225,270,315].map(function(a){return '<rect x="-1.5" y="-13.4" width="3" height="4.4" rx="1.5" fill="#FFB347" transform="rotate('+a+')"/>';}).join('')+'</svg>';}
+function leafI(){return '<svg width="22" height="22" viewBox="-15 -15 30 30"><path d="M10,-10 C-2,-12 -14,-4 -12,4 C-10,11 2,12 6,4 C9,-2 11,-7 10,-10 Z" fill="#E08A2E"/>'+
+  '<path d="M-9,9 L6,-6" stroke="#8B5E3C" stroke-width="2.2" stroke-linecap="round"/></svg>';}
+function snowI(){return '<svg width="22" height="22" viewBox="-15 -15 30 30"><g stroke="#BFE6FF" stroke-width="3" stroke-linecap="round">'+
+  '<path d="M0,-11 V11 M-9.5,-5.5 L9.5,5.5 M-9.5,5.5 L9.5,-5.5"/></g></svg>';}
+function mapI(s){s=s||32;return '<svg width="'+s+'" height="'+s+'" viewBox="-17 -17 34 34">'+
+  '<path d="M-13,-4 Q-2,10 13,-6" fill="none" stroke="#C8955B" stroke-width="7" stroke-linecap="round" opacity=".35"/>'+
+  '<path d="M-13,-4 Q-2,10 13,-6" fill="none" stroke="#F2D7A3" stroke-width="6" stroke-linecap="round"/>'+
+  '<circle cx="-12" cy="-5" r="5.2" fill="#7ED957" stroke="#fff" stroke-width="2"/>'+
+  '<circle cx="1" cy="4" r="5.2" fill="#FFD24D" stroke="#fff" stroke-width="2"/>'+
+  '<circle cx="13" cy="-6" r="5.2" fill="#FFF3DC" stroke="#fff" stroke-width="2"/>'+
+  '<path d="M13,-15 v20" stroke="#8B5E3C" stroke-width="2.4"/><path d="M13,-14 l10,3.6 l-10,3.6 Z" fill="#E04747"/></svg>';}
+function chestI(s){s=s||32;return '<svg width="'+s+'" height="'+s+'" viewBox="-17 -17 34 34">'+
+  '<rect x="-14" y="-6" width="28" height="16" rx="5" fill="#C88A3E"/>'+
+  '<path d="M-14,-6 q14,-12 28,0 Z" fill="#E0A550"/>'+
+  '<rect x="-14" y="-8" width="28" height="5" rx="2.4" fill="#8B5E3C"/>'+
+  '<rect x="-3.6" y="-9" width="7.2" height="11" rx="3" fill="#FFD24D" stroke="#8B5E3C" stroke-width="1.6"/>'+
+  '<circle cx="0" cy="-2" r="1.8" fill="#8B5E3C"/></svg>';}
+function iconColor(){return '<svg width="70" height="70" viewBox="-35 -35 70 70">'+
+  '<circle cx="-12" cy="-8" r="13.5" fill="#FF6B6B"/><circle cx="12" cy="-8" r="13.5" fill="#4fb0e8"/>'+
+  '<circle cx="-12" cy="14" r="13.5" fill="#FFC94D"/><circle cx="12" cy="14" r="13.5" fill="#F7A8C4"/>'+
+  '<circle cx="-12" cy="-8" r="4.6" fill="#fff" opacity=".55"/><circle cx="12" cy="14" r="4.6" fill="#fff" opacity=".45"/></svg>';}
+function iconPattern(){var c=[[-27,-27,'#F7A8C4'],[0,-27,'#A78BFA'],[-27,0,'#A78BFA']];
+  return '<svg width="70" height="70" viewBox="-35 -35 70 70">'+
+  '<rect x="-29" y="-29" width="58" height="58" rx="14" fill="rgba(255,255,255,.35)"/>'+
+  c.map(function(v){return '<rect x="'+v[0]+'" y="'+v[1]+'" width="24" height="24" rx="8" fill="'+v[2]+'"/>';}).join('')+
+  '<rect x="0" y="0" width="24" height="24" rx="8" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5 4"/>'+
+  '<text x="12" y="18" font-size="20" font-weight="bold" fill="#fff" text-anchor="middle">?</text></svg>';}
+function iconCar(){return '<svg width="70" height="70" viewBox="-35 -35 70 70">'+
+  '<rect x="-28" y="-8" width="56" height="21" rx="9" fill="#E04747"/><path d="M-17,-8 q5,-15 16,-15 q13,0 17,15 Z" fill="#FF6B6B"/>'+
+  '<rect x="-11" y="-20" width="23" height="13" rx="6" fill="#CFE6F5"/>'+
+  '<circle cx="-16" cy="15" r="8" fill="#503018"/><circle cx="16" cy="15" r="8" fill="#503018"/>'+
+  '<circle cx="-16" cy="15" r="2.8" fill="#fff" opacity=".7"/><circle cx="16" cy="15" r="2.8" fill="#fff" opacity=".7"/>'+
+  '<rect x="-24" y="-3" width="9" height="7" rx="3" fill="#FFE066"/></svg>';}
+function iconFruit(){return '<svg width="70" height="70" viewBox="-35 -35 70 70">'+
+  '<path d="M0,-2 C-15,-16 -23,-3 -20,8 C-17,18 -4,22 0,19 C4,22 17,18 20,8 C23,-3 15,-16 0,-2 Z" fill="#FF6B6B"/>'+
+  '<path d="M-7,-6 C-5,-14 3,-15 7,-13" stroke="#d94b4b" stroke-width="2.6" fill="none" opacity=".65"/>'+
+  '<path d="M1,-10 C5,-20 14,-22 17,-18 C14,-9 7,-8 1,-10 Z" fill="#4fae2e"/>'+
+  '<rect x="-1.8" y="-15" width="3.6" height="9" rx="1.8" fill="#6b4423"/></svg>';}
+
+/* ---------------- background: sky + trees + clouds ---------------- */
+(function(){
+  var S=['<defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="#77BEEB"/><stop offset=".6" stop-color="#BFE9FF"/><stop offset="1" stop-color="#E7F8FF"/></linearGradient>'+
+    '<radialGradient id="sg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFF6C2" stop-opacity=".95"/><stop offset="1" stop-color="#FFE066" stop-opacity="0"/></radialGradient>'+
+    '<linearGradient id="trunk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8B5E3C"/><stop offset="1" stop-color="#6b4423"/></linearGradient></defs>'+
+    '<rect width="540" height="400" fill="url(#skyg)"/>'];
+  function cloud(cx,cy,s,face){var g='<g transform="translate('+cx+','+cy+') scale('+s+')"><ellipse rx="40" ry="21" fill="#fff"/>'+
+    '<ellipse cx="-30" cy="7" rx="26" ry="14" fill="#fff"/><ellipse cx="28" cy="8" rx="29" ry="16" fill="#fff"/>'+
+    '<ellipse cx="5" cy="-12" rx="24" ry="16" fill="#fff"/><ellipse cy="9" rx="40" ry="12" fill="#eaf6ff"/>';
+    if(face) g+='<circle cx="-11" cy="-4" r="4" fill="#3a2415"/><circle cx="11" cy="-4" r="4" fill="#3a2415"/>'+
+      '<path d="M-8,4 q8,9 16,0" stroke="#3a2415" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+      '<ellipse cx="-22" cy="4" rx="4.8" ry="3.2" fill="#FF9C9C" opacity=".7"/><ellipse cx="22" cy="4" rx="4.8" ry="3.2" fill="#FF9C9C" opacity=".7"/>';
+    return g+'</g>';}
+  function tree(x,y,s){return '<g transform="translate('+x+','+y+') scale('+s+')">'+
+    '<path d="M-8,0 q-2,-40 4,-64 q2,-8 6,0 q6,26 4,64 Z" fill="url(#trunk)"/>'+
+    '<path d="M2,-40 q-22,-10 -30,-26" stroke="#6b4423" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+    '<circle cx="-30" cy="-72" r="26" fill="#F7A8C4"/><circle cx="6" cy="-92" r="30" fill="#FBB8D0"/>'+
+    '<circle cx="34" cy="-70" r="25" fill="#F59BBC"/><circle cx="4" cy="-70" r="30" fill="#FFC9DD"/>'+
+    '<circle cx="-14" cy="-96" r="14" fill="#FFDCE9" opacity=".8"/></g>';}
+  S.push('<circle cx="118" cy="300" r="96" fill="url(#sg)"/><circle cx="118" cy="300" r="32" fill="#FFEB9B"/>');
+  S.push(cloud(104,214,.86,1)); S.push(cloud(330,60,.64,0)); S.push(cloud(468,168,.54,0));
+  S.push('<path d="M262,96 q8,-7 16,0 q8,-7 16,0" fill="none" stroke="#5b7b96" stroke-width="2.4" stroke-linecap="round"/>');
+  S.push('<path d="M418,96 q7,-6 14,0 q7,-6 14,0" fill="none" stroke="#5b7b96" stroke-width="2" stroke-linecap="round"/>');
+  S.push(tree(46,392,1.0)); S.push(tree(506,404,.86));
+  document.getElementById('bg').innerHTML=S.join('');
+})();
+
+/* ---------------- ambience over the field ---------------- */
+(function(){
+  var S=[];
+  function bush(x,y,s){return '<g transform="translate('+x+','+y+') scale('+s+')">'+
+    '<ellipse cy="6" rx="30" ry="8" fill="#000" opacity=".12"/>'+
+    '<circle cx="-16" cy="-8" r="15" fill="#4fae4a"/><circle cx="14" cy="-9" r="16" fill="#4fae4a"/><circle cy="-18" r="17" fill="#5cbb52"/>'+
+    '<circle cx="-6" cy="-23" r="7" fill="#8ada7a" opacity=".65"/></g>';}
+  function flower(x,y,s,c){var p='';for(var i=0;i<5;i++){var a=i*72*Math.PI/180,ex=Math.cos(a)*6,ey=Math.sin(a)*6;
+    p+='<ellipse cx="'+ex.toFixed(1)+'" cy="'+ey.toFixed(1)+'" rx="4.2" ry="3.7" fill="'+c+'" transform="rotate('+(i*72)+','+ex.toFixed(1)+','+ey.toFixed(1)+')"/>';}
+    return '<g transform="translate('+x+','+y+') scale('+s+')"><rect x="-1.4" y="0" width="2.8" height="15" rx="1.4" fill="#3f8f34"/>'+p+'<circle r="3.4" fill="#FFE066"/></g>';}
+  function fly(x,y,s,c){return '<g transform="translate('+x+','+y+') scale('+s+') rotate(-12)">'+
+    '<ellipse cx="-7" cy="-6" rx="8" ry="10" fill="'+c+'" opacity=".85" transform="rotate(-24 -7 -6)"/>'+
+    '<ellipse cx="7" cy="-6" rx="8" ry="10" fill="'+c+'" opacity=".85" transform="rotate(24 7 -6)"/>'+
+    '<ellipse rx="2.4" ry="9" fill="#5b3b1e"/></g>';}
+  /* hedge along the bottom + bushes at the edges */
+  for(var i=0;i<7;i++){ S.push(bush(40+i*78, 946+(i%2)*6, .95)); }
+  S.push(bush(4,760,1.1)); S.push(bush(534,742,1.0)); S.push(bush(28,632,.8)); S.push(bush(516,646,.85));
+  S.push(flower(6,404,.75,'#FF6B6B')); S.push(flower(534,428,.75,'#A78BFA'));
+  S.push(flower(268,416,.7,'#FFC94D')); S.push(flower(268,632,.7,'#FF6B6B'));
+  S.push(flower(6,806,.75,'#4fb0e8')); S.push(flower(534,820,.75,'#FFC94D'));
+  S.push(flower(150,930,.9,'#FF6B6B')); S.push(flower(390,930,.9,'#A78BFA'));
+  S.push(fly(268,32,.85,'#FFD24D')); S.push(fly(506,46,.75,'#F7A8C4'));
+  S.push(fly(270,456,.8,'#8AD4F7'));
+  document.getElementById('amb').innerHTML=S.join('');
+})();
+
+/* ---------------- UI ---------------- */
+document.getElementById('logo').innerHTML =
+  '<div style="width:46px;height:46px;border-radius:15px;background:linear-gradient(#FFD98A,#F7B437);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #d99a1e,0 5px 10px rgba(20,50,80,.24)">'+bearHead('#8B5E3C')+'</div>';
+document.getElementById('gear').innerHTML = gearIcon()+'<i>'+lockIcon('#8B5E3C',13)+'</i>';
+
+var GAMES=[
+  {n:'Cocok Warna', lvl:7, st:21, ic:iconColor(),   c1:'#B49BFB', c2:'#8B6BEA', rot:-2.2, dy:0},
+  {n:'Susun Pola',  lvl:5, st:14, ic:iconPattern(), c1:'#FBB4CE', c2:'#EE8FB4', rot:2.0,  dy:16},
+  {n:'Main Mobil',  lvl:9, st:26, ic:iconCar(),     c1:'#5FBdf0', c2:'#3A97D6', rot:2.4,  dy:2},
+  {n:'Petik Buah',  lvl:4, st:11, ic:iconFruit(),   c1:'#8BDF63', c2:'#5CB93A', rot:-1.8, dy:18}
+];
+var SEASON_IC=[tulip(),sunI(),leafI(),snowI()];
+var SEASON_NAME=['semi','panas','gugur','dingin'];
+var CUR_SEASON = Math.min(3, Math.floor((TILE-1)/6));      /* kotak 8 -> musim panas (index 1) */
+
+var U=document.getElementById('ui');
+var html='';
+/* --- panggung: pratinjau peta asli + progres musim + tombol --- */
+html += '<div class="stage">'+
+  '<div class="bar"><div style="flex:1"><b>Lanjutkan Petualangan</b><s>Peta 1 &middot; Taman 4 Musim &middot; kotak '+TILE+' dari 24</s></div>'+
+  '<div style="display:flex;align-items:center;gap:6px;background:#FFF4D6;border-radius:14px;padding:5px 11px 5px 9px">'+starSvg(9.6,GOLD,19)+
+    '<b style="color:#8a6d1f;font-size:15px">13</b></div></div>'+
+  '<div class="win"><iframe scrolling="no" '+(VAR==='2'
+      ? 'src="board.html?v=4&amp;z=1" style="width:1440px;height:365px;top:88px;transform:scale(.347)"'
+      : 'src="board.html?v=1&amp;z=1&amp;walk=1&amp;t=20" style="width:540px;height:960px;top:-463px;transform:scale(.926)"')+
+    '></iframe><div class="glass"></div></div>'+
+  '<div class="strip">'+[0,1,2,3].map(function(i){
+      return '<div class="seg '+(i<CUR_SEASON?'done':(i===CUR_SEASON?'now':''))+'"></div>';}).join('')+'</div>'+
+  '<div class="miles">'+SEASON_IC.map(function(ic,i){
+      return '<span class="'+(i===CUR_SEASON?'on':'')+'">'+ic+'</span>';}).join('')+'</div>'+
+  '</div>'+
+  '<div class="cta" onclick="void 0">'+playIcon('#fff',22)+' LANJUT MAIN</div>';
+/* --- shelf mini game --- */
+html += '<div class="shelf" style="width:508px;display:flex;justify-content:space-between;align-items:center">'+
+  '<div class="chip">MINI GAME</div>'+
+  '<div class="chip" style="background:#FFF4D6;box-shadow:0 4px 0 rgba(0,0,0,.10);color:#8a6d1f;letter-spacing:0;gap:8px">'+
+   'SEMUA 12 PERMAINAN '+chevron('#8a6d1f',16)+'</div></div>';
+var TOPS=[518,532,686,670];
+GAMES.forEach(function(g,i){
+  var x = 16 + (i%2)*(246+16);
+  html += '<div class="toy" style="left:'+x+'px;top:'+TOPS[i]+'px;height:'+(i===0||i===3?160:142)+'px;transform:rotate('+g.rot+'deg)">'+
+    '<div class="art" style="background:linear-gradient('+g.c1+','+g.c2+')"><div class="gloss"></div>'+g.ic+
+    '<div class="badge">'+starSvg(9.4,GOLD,17)+'<span>'+g.st+'</span></div></div>'+
+    '<div class="lab"><b>'+g.n+'</b><s>Level '+g.lvl+' &middot; '+g.st+' bintang</s></div></div>';
+});
+/* --- baris bawah: peta + hadiah, lalu pintu orang tua --- */
+html += '<div class="mini" style="left:16px;width:246px;top:844px">'+mapI(30)+
+  '<div><b style="font-size:12.5px">Papan Petualangan</b><s>Peta 1 &middot; 24 kotak</s></div>'+chevron('#c3d2df')+'</div>'+
+  '<div class="mini" style="left:278px;width:246px;top:844px">'+
+   '<div style="position:absolute;right:-5px;top:-9px;background:#E04747;color:#fff;font-size:11.5px;font-weight:bold;border-radius:12px;padding:4px 9px;box-shadow:0 3px 0 rgba(0,0,0,.18)">2 baru</div>'+
+   chestI(34)+'<div><b style="font-size:12.5px">Hadiah</b><s>2 kejutan menunggu</s></div>'+chevron('#c3d2df')+'</div>'+
+'';
+U.innerHTML = html;
+</script></body></html>

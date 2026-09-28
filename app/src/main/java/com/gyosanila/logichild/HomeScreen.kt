@@ -81,6 +81,7 @@ fun HomeScreen(
     games: List<HomeGame>, // urutan: warna, pola, mobil, buah
     onContinue: () -> Unit,
     onSettings: () -> Unit,
+    onAllGames: () -> Unit = {},
 ) {
     val strings = LocalStrings.current
     val art = remember { Art() }
@@ -178,13 +179,15 @@ fun HomeScreen(
             }
             Spacer(Modifier.weight(1f))
             // ponytail: belum ada layar daftar semua game (baru 4) — pil informatif, jadikan clickable saat layar itu ada.
-            Pill(u, u * 32, c(0xFFF4D6), u * 14) {
-                Text(strings.homeAllGames.format(games.size), color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, style = TIGHT)
+            Box(Modifier.clickable { onAllGames() }) {
+                Pill(u, u * 32, c(0xFFF4D6), u * 14) {
+                    Text(strings.homeAllGames.format(games.size), color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, style = TIGHT)
                 Spacer(Modifier.width(u * 6))
                 Canvas(Modifier.size(u * 16)) {
                     val k = size.width / 22f
                     drawPath(Path().apply { moveTo(8 * k, 4 * k); lineTo(15 * k, 11 * k); lineTo(8 * k, 18 * k) }, c(0x8A6D1F),
                         style = Stroke(3.2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                }
                 }
             }
         }
