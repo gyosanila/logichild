@@ -130,11 +130,12 @@ fun HomeScreen(
             Canvas(Modifier.offset(u * 10, u * 62).width(u * 492).height(u * 230).clip(RoundedCornerShape(u * 20))
                 .border(u * 5, c(0xF0DCBB), RoundedCornerShape(u * 20)).clipToBounds()) {
                 // world y 340..760 (kotak + beruang) mengisi jendela; x fokus sekitar beruang
-                val s = size.height / 420f
+                val s = size.height / 290f
                 val visW = size.width / s
                 val bx = ax(adventure.position - 1)
+                val top = ay(adventure.position - 1) - 190f
                 val cam = (bx - visW * .45f).coerceIn(0f, WORLD_W - visW)
-                withTransform({ translate(0f, -340f * s); scale(s, s, Offset.Zero) }) {
+                withTransform({ translate(0f, -top * s); scale(s, s, Offset.Zero) }) {
                     drawWorld(art, bearImg, numbers, startLabel, adventure, time, visW, cam, adventure.position, adventure.position, 1f)
                 }
                 drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.White.copy(alpha = .22f)), startY = size.height - 70.dp.toPx()),
@@ -179,6 +180,12 @@ fun HomeScreen(
             // ponytail: belum ada layar daftar semua game (baru 4) — pil informatif, jadikan clickable saat layar itu ada.
             Pill(u, u * 32, c(0xFFF4D6), u * 14) {
                 Text(strings.homeAllGames.format(games.size), color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, style = TIGHT)
+                Spacer(Modifier.width(u * 6))
+                Canvas(Modifier.size(u * 16)) {
+                    val k = size.width / 22f
+                    drawPath(Path().apply { moveTo(8 * k, 4 * k); lineTo(15 * k, 11 * k); lineTo(8 * k, 18 * k) }, c(0x8A6D1F),
+                        style = Stroke(3.2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                }
             }
         }
 
@@ -205,7 +212,7 @@ fun HomeScreen(
                     }
                 }
                 Column(Modifier.padding(start = u * 14, end = u * 14, top = u * 9)) {
-                    Text(g.title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 15.5f).sp, lineHeight = (u.value * 19).sp, maxLines = 1, style = TIGHT)
+                    Text(g.title, color = NAVY, fontWeight = FontWeight.Black, fontSize = (u.value * 15.5f).sp, lineHeight = (u.value * 19).sp, maxLines = 1, style = TIGHT)
                     Spacer(Modifier.height(u * 4))
                     Text(strings.homeGameSub.format(g.level, g.stars), color = GREY, fontSize = (u.value * 11.5f).sp, lineHeight = (u.value * 14).sp, maxLines = 1, style = TIGHT)
                 }

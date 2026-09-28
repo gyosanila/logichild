@@ -535,10 +535,10 @@ private fun PersistentBanner() {
             loadAd(childSafeAdRequest())
         }
     }
-    // Slot 50dp (AdSize.BANNER) selalu dipesan di semua layar; AdView tetap terpasang walau lagi retry.
+    // AdView selalu terpasang di semua layar (Home, Papan, game); tidak dilepas saat retry NO_FILL.
     AndroidView(
         factory = { adView },
-        modifier = Modifier.fillMaxWidth().height(50.dp),
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
