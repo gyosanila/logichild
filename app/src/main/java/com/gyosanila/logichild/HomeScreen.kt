@@ -239,7 +239,7 @@ private fun RowScope.MiniCard(u: Dp, title: String, sub: String, onClick: () -> 
                     style = Stroke(3.2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
         }
-        if (badge != null) Text(badge, Modifier.align(Alignment.TopEnd).offset(u * 5, -u * 7)
+        if (badge != null) Text(badge, Modifier.align(Alignment.TopEnd).offset(-u * 8, -u * 9)
             .clip(RoundedCornerShape(u * 12)).background(c(0xE84A4A)).padding(horizontal = u * 8, vertical = u * 3),
             color = Color.White, fontWeight = FontWeight.Bold, fontSize = (u.value * 10.5f).sp)
     }
