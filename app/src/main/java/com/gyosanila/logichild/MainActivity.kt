@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -55,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -79,11 +79,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppActivityHolder.current = this
-        // Fullscreen: sembunyikan status bar & nav bar (immersive, swipe untuk muncul).
+        // Edge-to-edge: latar digambar di balik status & nav bar, konten dipadding safeDrawing (MainNav).
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
         }
         initAds(applicationContext)
         // Android/backup tertentu dapat memulihkan preferences setelah reinstall.
@@ -225,8 +225,13 @@ private fun MainNav(
         game = GameChoice.Adventure
     }
 
+    // Konten di dalam inset (status bar, nav bar, notch); strip di balik bar diwarnai langit
+    // supaya tetap menyatu dengan latar game.
     Column(
-        Modifier.fillMaxSize()
+        Modifier
+            .fillMaxSize()
+            .background(Color(0xFF8FD4F7))
+            .safeDrawingPadding()
     ) {
         if (timerMin > 0 && !breakOverlay && !locked) {
             TimerBar(remainingSec, timerMin * 60)
