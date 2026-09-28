@@ -1,5 +1,9 @@
 package com.gyosanila.logichild
 
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -111,10 +115,10 @@ fun HomeScreen(
         }
 
         // panggung peta
-        Box(Modifier.offset(u * 14, u * 70).width(u * 512).height(u * 336).shadow(12.dp, RoundedCornerShape(u * 30))
+        Box(Modifier.offset(u * 14, u * 72).width(u * 512).height(u * 348).shadow(12.dp, RoundedCornerShape(u * 30))
             .clip(RoundedCornerShape(u * 30)).background(Brush.verticalGradient(0f to c(0xB07C52), .7f to c(0x8B5E3C), 1f to c(0x7A4F31)))
             .clickable(onClick = onContinue)) {
-            Row(Modifier.offset(u * 24, u * 6).width(u * 464).height(u * 52), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.offset(u * 24, u * 9).width(u * 464).height(u * 48), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(strings.homeContinue, color = c(0xFFF8EC), fontWeight = FontWeight.Bold, fontSize = (u.value * 18.5f).sp, lineHeight = (u.value * 22).sp, maxLines = 1)
                     Text(strings.homeContinueSub.format(adventure.adventureNumber, adventure.position), color = c(0xF3DFC6),
@@ -123,7 +127,7 @@ fun HomeScreen(
                 StarChip(u, adventure.stars, c(0xFFF4D6))
             }
             // jendela pratinjau: papan asli, zoom di sekitar beruang (varian 1)
-            Canvas(Modifier.offset(u * 10, u * 60).width(u * 492).height(u * 204).clip(RoundedCornerShape(u * 20))
+            Canvas(Modifier.offset(u * 10, u * 62).width(u * 492).height(u * 230).clip(RoundedCornerShape(u * 20))
                 .border(u * 5, c(0xF0DCBB), RoundedCornerShape(u * 20)).clipToBounds()) {
                 // world y 340..760 (kotak + beruang) mengisi jendela; x fokus sekitar beruang
                 val s = size.height / 420f
@@ -137,13 +141,13 @@ fun HomeScreen(
                     Offset(0f, size.height - 70.dp.toPx()))
             }
             // batang musim
-            Row(Modifier.offset(u * 18, u * 274).width(u * 476), horizontalArrangement = Arrangement.spacedBy(u * 9)) {
+            Row(Modifier.offset(u * 18, u * 302).width(u * 476), horizontalArrangement = Arrangement.spacedBy(u * 9)) {
                 repeat(4) { i ->
                     Box(Modifier.weight(1f).height(u * 9).clip(RoundedCornerShape(u * 6)).background(
                         when { i < season -> c(0x7ED957); i == season -> GOLD; else -> Color.White.copy(alpha = .3f) }))
                 }
             }
-            Row(Modifier.offset(u * 18, u * 290).width(u * 476), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.offset(u * 18, u * 312).width(u * 476), horizontalArrangement = Arrangement.SpaceBetween) {
                 repeat(4) { i ->
                     val on = i == season
                     Box(Modifier.size(u * 27).then(if (on) Modifier.border(u * 3, GOLD, CircleShape) else Modifier).clip(CircleShape)
@@ -155,7 +159,7 @@ fun HomeScreen(
         }
 
         // tombol utama melayang di tepi bawah panggung
-        Row(Modifier.offset(u * 74, u * 394).width(u * 392).height(u * 58).shadow(10.dp, RoundedCornerShape(u * 22))
+        Row(Modifier.offset(u * 74, u * 408).width(u * 392).height(u * 60).shadow(10.dp, RoundedCornerShape(u * 22))
             .clip(RoundedCornerShape(u * 22)).background(Brush.verticalGradient(listOf(c(0x8AE765), c(0x4FAE2E))))
             .clickable(onClick = onContinue), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.size(u * 22)) {
@@ -167,44 +171,49 @@ fun HomeScreen(
         }
 
         // judul seksi
-        Row(Modifier.offset(u * 16, u * 464).width(u * 508), verticalAlignment = Alignment.CenterVertically) {
-            Text(strings.homeMiniGame, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, letterSpacing = (u.value * 1.5f).sp,
-                modifier = Modifier.shadow(2.dp, RoundedCornerShape(u * 13)).clip(RoundedCornerShape(u * 13)).background(Color.White)
-                    .padding(horizontal = u * 14, vertical = u * 8))
+        Row(Modifier.offset(u * 16, u * 476).width(u * 508), verticalAlignment = Alignment.CenterVertically) {
+            Pill(u, u * 32, Color.White, u * 14) {
+                Text(strings.homeMiniGame, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, letterSpacing = (u.value * 1.5f).sp, style = TIGHT)
+            }
             Spacer(Modifier.weight(1f))
-            StarChip(u, games.sumOf { it.stars }, c(0xFFF4D6))
+            // ponytail: belum ada layar daftar semua game (baru 4) — pil informatif, jadikan clickable saat layar itu ada.
+            Pill(u, u * 32, c(0xFFF4D6), u * 14) {
+                Text(strings.homeAllGames.format(games.size), color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, style = TIGHT)
+            }
         }
 
         // rak mainan: tinggi & kemiringan beda
-        val tops = listOf(512, 522, 690, 692)
-        val heights = listOf(160, 152, 152, 156)
+        val tops = listOf(518, 532, 686, 670)
+        val heights = listOf(160, 142, 142, 160)
         val rots = listOf(-2.2f, 2f, 2.4f, -1.8f)
         val cols = listOf(c(0xB49BFB) to c(0x8B6BEA), c(0xFBB4CE) to c(0xEE8FB4), c(0x5FBDF0) to c(0x3A97D6), c(0x8BDF63) to c(0x5CB93A))
         games.take(4).forEachIndexed { i, g ->
             Column(Modifier.offset(u * (16 + (i % 2) * 262), u * tops[i]).width(u * 246).height(u * heights[i])
                 .rotate(rots[i]).shadow(8.dp, RoundedCornerShape(u * 30)).clip(RoundedCornerShape(u * 30)).background(Color.White)
                 .clickable(onClick = g.onClick)) {
-                Box(Modifier.fillMaxWidth().height(u * 84).background(Brush.verticalGradient(listOf(cols[i].first, cols[i].second))),
+                Box(Modifier.fillMaxWidth().height(u * 88).background(Brush.verticalGradient(listOf(cols[i].first, cols[i].second))),
                     contentAlignment = Alignment.Center) {
                     Canvas(Modifier.fillMaxSize()) {
                         drawOval(Color.White.copy(alpha = .2f), Offset(-30 * u.toPx(), -40 * u.toPx()), Size(200 * u.toPx(), 110 * u.toPx()))
                         gameIcon(art, i, size.width / 2, size.height / 2, u.toPx())
                     }
-                    Row(Modifier.align(Alignment.TopEnd).padding(u * 11).clip(RoundedCornerShape(u * 13)).background(Color.White.copy(alpha = .95f))
-                        .padding(horizontal = u * 8, vertical = u * 3), verticalAlignment = Alignment.CenterVertically) {
-                        Canvas(Modifier.size(u * 16)) { star(size.width / 2, size.height / 2, size.width * .46f, GOLD, c(0xE0A22B), 1.4f) }
-                        Text(" ${g.stars}", color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp)
+                    Row(Modifier.align(Alignment.TopEnd).padding(u * 11).height(u * 23).shadow(2.dp, RoundedCornerShape(u * 13)).clip(RoundedCornerShape(u * 13))
+                        .background(Color.White.copy(alpha = .95f)).padding(start = u * 7, end = u * 9), verticalAlignment = Alignment.CenterVertically) {
+                        Canvas(Modifier.size(u * 17)) { star(size.width / 2, size.height / 2, size.width * .46f, GOLD, c(0xE0A22B), 1.4f) }
+                        Spacer(Modifier.width(u * 4))
+                        Text("${g.stars}", color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp, style = TIGHT)
                     }
                 }
-                Column(Modifier.padding(horizontal = u * 14, vertical = u * 8)) {
-                    Text(g.title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 15.5f).sp, lineHeight = (u.value * 19).sp, maxLines = 1)
-                    Text(strings.homeGameSub.format(g.level, g.stars), color = GREY, fontSize = (u.value * 11.5f).sp, lineHeight = (u.value * 14).sp, maxLines = 1)
+                Column(Modifier.padding(start = u * 14, end = u * 14, top = u * 9)) {
+                    Text(g.title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 15.5f).sp, lineHeight = (u.value * 19).sp, maxLines = 1, style = TIGHT)
+                    Spacer(Modifier.height(u * 4))
+                    Text(strings.homeGameSub.format(g.level, g.stars), color = GREY, fontSize = (u.value * 11.5f).sp, lineHeight = (u.value * 14).sp, maxLines = 1, style = TIGHT)
                 }
             }
         }
 
         // baris bawah
-        Row(Modifier.offset(u * 16, u * 862).width(u * 508), horizontalArrangement = Arrangement.spacedBy(u * 16)) {
+        Row(Modifier.offset(u * 16, u * 844).width(u * 508), horizontalArrangement = Arrangement.spacedBy(u * 16)) {
             MiniCard(u, strings.homeBoardTitle, strings.homeBoardSub.format(adventure.adventureNumber), onContinue) { mapIcon(size.width / 34f) }
             MiniCard(u, strings.homeGift, strings.homeGiftSub, onContinue, badge = strings.homeNewBadge) {
                 rewardChest(size.width / 34f)
@@ -215,12 +224,20 @@ fun HomeScreen(
 }
 
 @Composable
-private fun StarChip(u: Dp, n: Int, bg: Color) = Row(Modifier.clip(RoundedCornerShape(u * 14)).background(bg)
-    .padding(start = u * 9, end = u * 11, top = u * 5, bottom = u * 5), verticalAlignment = Alignment.CenterVertically) {
+private fun StarChip(u: Dp, n: Int, bg: Color) = Row(Modifier.height(u * 29).clip(RoundedCornerShape(u * 14)).background(bg)
+    .padding(start = u * 9, end = u * 11), verticalAlignment = Alignment.CenterVertically) {
     Canvas(Modifier.size(u * 19)) { star(size.width / 2, size.height / 2, size.width * .46f, GOLD, c(0xE0A22B), 1.4f) }
     Spacer(Modifier.width(u * 6))
-    Text("$n", color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp)
+    Text("$n", color = c(0x8A6D1F), fontWeight = FontWeight.Bold, fontSize = (u.value * 15).sp, style = TIGHT)
 }
+
+/** Teks tanpa font padding: tinggi pil = ukuran di mockup, bukan melar. */
+private val TIGHT = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+
+@Composable
+private fun Pill(u: Dp, h: Dp, bg: Color, padH: Dp, content: @Composable RowScope.() -> Unit) =
+    Row(Modifier.height(h).shadow(2.dp, RoundedCornerShape(u * 13)).clip(RoundedCornerShape(u * 13)).background(bg).padding(horizontal = padH),
+        verticalAlignment = Alignment.CenterVertically, content = content)
 
 @Composable
 private fun RowScope.MiniCard(u: Dp, title: String, sub: String, onClick: () -> Unit, badge: String? = null, icon: DrawScope.() -> Unit) =
@@ -230,8 +247,9 @@ private fun RowScope.MiniCard(u: Dp, title: String, sub: String, onClick: () -> 
             Canvas(Modifier.size(u * 32), onDraw = icon)
             Spacer(Modifier.width(u * 12))
             Column(Modifier.weight(1f)) {
-                Text(title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp, maxLines = 1)
-                Text(sub, color = GREY, fontSize = (u.value * 11.5f).sp, maxLines = 1)
+                Text(title, color = NAVY, fontWeight = FontWeight.Bold, fontSize = (u.value * 12.5f).sp, maxLines = 1, style = TIGHT)
+                Spacer(Modifier.height(u * 3))
+                Text(sub, color = GREY, fontSize = (u.value * 11.5f).sp, maxLines = 1, style = TIGHT)
             }
             Canvas(Modifier.size(u * 20)) {
                 val k = size.width / 22f
@@ -239,9 +257,9 @@ private fun RowScope.MiniCard(u: Dp, title: String, sub: String, onClick: () -> 
                     style = Stroke(3.2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
         }
-        if (badge != null) Text(badge, Modifier.align(Alignment.TopEnd).offset(-u * 8, -u * 9)
-            .clip(RoundedCornerShape(u * 12)).background(c(0xE84A4A)).padding(horizontal = u * 8, vertical = u * 3),
-            color = Color.White, fontWeight = FontWeight.Bold, fontSize = (u.value * 10.5f).sp)
+        if (badge != null) Text(badge, Modifier.align(Alignment.TopEnd).offset(u * 5, -u * 9).shadow(2.dp, RoundedCornerShape(u * 12))
+            .clip(RoundedCornerShape(u * 12)).background(c(0xE04747)).padding(horizontal = u * 9, vertical = u * 4),
+            color = Color.White, fontWeight = FontWeight.Bold, fontSize = (u.value * 11.5f).sp, style = TIGHT)
     }
 
 /** Langit + matahari + awan + pohon sakura + rumput + pagar semak (home.html #bg/#field/#amb). */
@@ -302,14 +320,21 @@ private fun DrawScope.gameIcon(art: Art, i: Int, cx: Float, cy: Float, k: Float)
         1 -> { drawRoundRect(Color.White.copy(alpha = .35f), Offset(-29f, -29f), Size(58f, 58f), CornerRadius(14f))
             for ((x, y, col) in listOf(Triple(-27f, -27f, 0xF7A8C4L), Triple(0f, -27f, 0xA78BFAL), Triple(-27f, 0f, 0xA78BFAL)))
                 drawRoundRect(c(col), Offset(x, y), Size(24f, 24f), CornerRadius(8f))
-            drawRoundRect(Color.White, Offset(0f, 0f), Size(24f, 24f), CornerRadius(8f), style = Stroke(3f))
-            drawCircle(Color.White, 3f, Offset(12f, 12f)) }
+            drawRoundRect(Color.White, Offset(0f, 0f), Size(24f, 24f), CornerRadius(8f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 4f))))
+            drawContext.canvas.nativeCanvas.drawText("?", 12f, 19f, android.graphics.Paint().apply {
+                color = android.graphics.Color.WHITE; textSize = 20f; isFakeBoldText = true; textAlign = android.graphics.Paint.Align.CENTER; isAntiAlias = true }) }
         2 -> { drawRoundRect(c(0xE04747), Offset(-28f, -8f), Size(56f, 21f), CornerRadius(9f))
             drawPath(Path().apply { moveTo(-17f, -8f); quadraticTo(-12f, -23f, -1f, -23f); quadraticTo(12f, -23f, 16f, -8f); close() }, c(0xFF6B6B))
             drawRoundRect(c(0xCFE6F5), Offset(-11f, -20f), Size(23f, 13f), CornerRadius(6f))
             for (x in listOf(-16f, 16f)) { drawCircle(c(0x503018), 8f, Offset(x, 15f)); drawCircle(Color.White.copy(alpha = .7f), 2.8f, Offset(x, 15f)) }
             drawRoundRect(c(0xFFE066), Offset(-24f, -3f), Size(9f, 7f), CornerRadius(3f)) }
-        else -> apple(art, 0f, 0f, 2.6f)
+        else -> {
+            drawPath(Path().apply { moveTo(0f, -2f); cubicTo(-15f, -16f, -23f, -3f, -20f, 8f); cubicTo(-17f, 18f, -4f, 22f, 0f, 19f)
+                cubicTo(4f, 22f, 17f, 18f, 20f, 8f); cubicTo(23f, -3f, 15f, -16f, 0f, -2f); close() }, c(0xFF6B6B))
+            drawPath(Path().apply { moveTo(-7f, -6f); cubicTo(-5f, -14f, 3f, -15f, 7f, -13f) }, c(0xD94B4B).copy(alpha = .65f), style = Stroke(2.6f))
+            drawPath(Path().apply { moveTo(1f, -10f); cubicTo(5f, -20f, 14f, -22f, 17f, -18f); cubicTo(14f, -9f, 7f, -8f, 1f, -10f); close() }, c(0x4FAE2E))
+            drawRoundRect(c(0x6B4423), Offset(-1.8f, -15f), Size(3.6f, 9f), CornerRadius(1.8f))
+        }
     }
 }
 

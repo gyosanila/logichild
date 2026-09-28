@@ -237,7 +237,7 @@ private fun MainNav(
                 GameChoice.Menu -> HomeScreen(
                     adventure = adventure,
                     games = listOf(
-                        HomeGame(strings.playColor, prefs.getInt("cunlocked", 1), starSum("cstar_")) { game = GameChoice.RoadmapColor },
+                        HomeGame(strings.homeColor, prefs.getInt("cunlocked", 1), starSum("cstar_")) { game = GameChoice.RoadmapColor },
                         HomeGame(strings.playPattern, prefs.getInt("punlocked", 1), starSum("pstar_")) { game = GameChoice.RoadmapPattern },
                         HomeGame(strings.playCar, prefs.getInt("unlocked", 0) + 1, starSum("star_")) { game = GameChoice.RoadmapKart },
                         HomeGame(strings.playFruit, prefs.getInt("fruit_level", 1), starSum("fstar_")) { game = GameChoice.RoadmapFruit },
@@ -519,8 +519,6 @@ private fun LockScreen(strings: AppStrings, onKeepPlaying: () -> Unit) {
 @Composable
 private fun PersistentBanner() {
     val context = LocalContext.current
-    // Container disembunyiin kalau lagi NO_FILL (kode 3) — muncul lagi pas ada iklan.
-    var showBanner by remember { mutableStateOf(true) }
     val adView = remember(context) {
         AdView(context).apply {
             setAdSize(AdSize.BANNER)
@@ -528,26 +526,20 @@ private fun PersistentBanner() {
             adListener = object : com.google.android.gms.ads.AdListener() {
                 override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
                     android.util.Log.w("LogichildAds", "Banner gagal load: code=${error.code} msg=${error.message}")
-                    showBanner = false
                     // NO_FILL → coba lagi 30 dtk kemudian (banner persist wajar retry).
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                         loadAd(childSafeAdRequest())
                     }, 30_000)
                 }
-
-                override fun onAdLoaded() {
-                    showBanner = true
-                }
             }
             loadAd(childSafeAdRequest())
         }
     }
-    if (showBanner) {
-        AndroidView(
-            factory = { adView },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    // Slot 50dp (AdSize.BANNER) selalu dipesan di semua layar; AdView tetap terpasang walau lagi retry.
+    AndroidView(
+        factory = { adView },
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+    )
 }
 
 @Composable
