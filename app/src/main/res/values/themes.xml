@@ -3,8 +3,9 @@
     <style name="Theme.KartCilik" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Full blue: background + status bar + nav bar semua biru (gak ada putih) -->
         <item name="android:windowBackground">#FF8ED6FF</item>
-        <item name="android:statusBarColor">#FF8ED6FF</item>
-        <item name="android:navigationBarColor">#FF8ED6FF</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#FF77BEEB</item>
+        <item name="android:navigationBarColor">#FF62B140</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>
