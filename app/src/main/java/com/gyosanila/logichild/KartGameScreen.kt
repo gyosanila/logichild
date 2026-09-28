@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -125,11 +126,12 @@ fun KartGameScreen(
         if (startLevel > 0) vm.selectLevel(startLevel - 1, force = onAdventureDone != null)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(SkyBlue)
-    ) {
+    Box(Modifier.fillMaxSize().background(SkyBlue)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+        ) {
         Toolbar(
             emoji = "🚗",
             title = strings.playCar,
@@ -218,7 +220,7 @@ fun KartGameScreen(
                 onAdventureDone(state.lastRating.coerceIn(1, 5))
             }
         }
-    }
+}    }
 }
 
 // ─── Papan permainan ──────────────────────────────────────────────

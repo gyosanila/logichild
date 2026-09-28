@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -90,12 +91,11 @@ fun HomeScreen(
     )
     val season = ((adventure.position - 1) / 6).coerceIn(0, 3)
 
-    BoxWithConstraints(Modifier.fillMaxSize().background(c(0x8FD4F7))) {
-        // Kanvas 540×960 dimuat utuh di atas banner: u = min(lebar, tinggi). Sisa lebar = latar.
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         val uw: Dp = maxWidth / 540
-        val u: Dp = minOf(uw, maxHeight / 960)
         Canvas(Modifier.fillMaxSize()) { homeBackdrop(art, uw.toPx(), time) }
-        Box(Modifier.align(Alignment.TopCenter).width(u * 540).height(u * 960)) {
+        val u: Dp = minOf(uw, maxHeight / 960)
+        Box(Modifier.fillMaxSize().safeDrawingPadding()) {
 
         // header: logo + nama + gear bergembok
         Row(Modifier.offset(u * 16, u * 12).width(u * 508).height(u * 52), verticalAlignment = Alignment.CenterVertically) {

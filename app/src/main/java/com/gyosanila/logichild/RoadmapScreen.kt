@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -63,11 +64,12 @@ fun RoadmapScreen(
     val total = unlockedCount.coerceAtLeast(1) + 2
     val scroll = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8CA55)),
-    ) {
+    Box(Modifier.fillMaxSize().background(Color(0xFFF8CA55))) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
+        ) {
         Toolbar(emoji = emoji, title = title, onBack = onBack)
         Text(
             strings.roadmapPick,
@@ -164,7 +166,7 @@ fun RoadmapScreen(
                 .background(Color(0xFFFFEFB2))
                 .padding(vertical = 8.dp),
         )
-    }
+}    }
 }
 
 private data class NodePosition(val x: androidx.compose.ui.unit.Dp, val y: androidx.compose.ui.unit.Dp, val radius: androidx.compose.ui.unit.Dp)
