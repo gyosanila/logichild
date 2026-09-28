@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -82,9 +83,11 @@ class MainActivity : ComponentActivity() {
         // Edge-to-edge: latar digambar di balik status & nav bar, konten dipadding safeDrawing (MainNav).
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = true
-            isAppearanceLightNavigationBars = true
+            isAppearanceLightStatusBars = true   // ikon gelap di atas langit
+            isAppearanceLightNavigationBars = false // ikon putih di atas rumput
         }
+        // Tanpa scrim abu-abu di nav bar 3 tombol, supaya rumput kelihatan.
+        if (android.os.Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
         initAds(applicationContext)
         // Android/backup tertentu dapat memulihkan preferences setelah reinstall.
         // Jangan biarkan lock/splash state dari instalasi lama ikut terbawa.
@@ -225,12 +228,12 @@ private fun MainNav(
         game = GameChoice.Adventure
     }
 
-    // Konten di dalam inset (status bar, nav bar, notch); strip di balik bar diwarnai langit
-    // supaya tetap menyatu dengan latar game.
+    // Konten tetap di dalam inset (status bar, nav bar, notch). Di balik bar: langit di atas, rumput di bawah
+    // (hard stop 50%, jadi strip status bar = langit, strip nav bar + sisi banner = rumput).
     Column(
         Modifier
             .fillMaxSize()
-            .background(Color(0xFF8FD4F7))
+            .background(Brush.verticalGradient(0f to Color(0xFF77BEEB), .5f to Color(0xFF77BEEB), .5f to Color(0xFF62B140), 1f to Color(0xFF62B140)))
             .safeDrawingPadding()
     ) {
         if (timerMin > 0 && !breakOverlay && !locked) {
