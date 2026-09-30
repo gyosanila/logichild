@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -587,7 +588,7 @@ fun AdventureScreen(
         }
 
         // --- HUD ---
-        Column(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().safeDrawingPadding()) {
             Box(Modifier.fillMaxWidth().height(u * 88).background(Brush.verticalGradient(listOf(c(0x7FC3EE), c(0x8FD4F7), Color.Transparent)))) {
                 Row(Modifier.fillMaxSize().padding(horizontal = u * 16), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(u * 44).shadow(4.dp, CircleShape).clip(CircleShape).background(Color.White).clickable(onClick = onBack),
