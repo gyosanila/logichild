@@ -9,6 +9,9 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.FullScreenContentCallback
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 /** Pegangan Activity aktif — dipakai ViewModel untuk menampilkan iklan. */
 object AppActivityHolder {
@@ -95,3 +98,44 @@ fun initAds(context: Context) {
             .build(),
     )
 }
+
+private var throttleInterstitialSeconds = 180
+private var lastInterstitialShowTimeMs = 0L
+
+/** Fetch remote config & parse throttle setting. */
+suspend fun initRemoteConfig(context: Context) {
+    return try {
+        val rc = Firebase.remoteConfig
+        rc.setDefaultsAsync(mapOf("app_settings" to "{\"ad_config\":{\"throttle_interstitial\":180}}"))
+        rc.fetchAndActivate().await()
+        
+        val settingsJson = rc.getString("app_settings")
+        val throttle = try {
+            val config = org.json.JSONObject(settingsJson)
+            config.getJSONObject("ad_config").getInt("throttle_interstitial")
+        } catch (e: Exception) {
+            180
+        }
+        throttleInterstitialSeconds = throttle
+    } catch (e: Exception) {
+        // fallback 180 jika fetch gagal
+    }
+}
+
+/** Validasi throttle sebelum tampil interstitial. */
+fun shouldShowInterstitial(context: Context): Boolean {
+    val nowMs = System.currentTimeMillis()
+    val lastShowMs = context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+        .getLong("last_interstitial_show_ms", 0L)
+    val elapsedSec = (nowMs - lastShowMs) / 1000
+    return elapsedSec >= throttleInterstitialSeconds
+}
+
+/** Update last show time saat interstitial ditampilkan. */
+fun recordInterstitialShow(context: Context) {
+    val nowMs = System.currentTimeMillis()
+    lastInterstitialShowTimeMs = nowMs
+    context.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
+        .edit().putLong("last_interstitial_show_ms", nowMs).apply()
+}
+

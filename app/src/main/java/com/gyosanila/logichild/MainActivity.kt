@@ -118,13 +118,15 @@ class MainActivity : ComponentActivity() {
                     if (splash) {
                         SplashView()
                         LaunchedEffect(Unit) {
+                            initRemoteConfig(this@MainActivity)
                             loadInterstitial(this@MainActivity)
                             delay(1500)
-                            // Fresh install: launch PERTAMA tanpa iklan splash.
-                            // Iklan mulai muncul dari launch berikutnya.
                             val sp = this@MainActivity.getSharedPreferences("kartcilik_prefs", Context.MODE_PRIVATE)
                             val firstRun = !sp.getBoolean("launched_before", false)
-                            if (!firstRun) awaitAndShowInterstitial(this@MainActivity, 2500)
+                            if (!firstRun && shouldShowInterstitial(this@MainActivity)) {
+                                awaitAndShowInterstitial(this@MainActivity, 2500)
+                                recordInterstitialShow(this@MainActivity)
+                            }
                             sp.edit().putBoolean("launched_before", true).apply()
                             splash = false
                         }
