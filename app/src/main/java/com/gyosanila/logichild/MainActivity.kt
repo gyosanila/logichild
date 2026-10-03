@@ -59,6 +59,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -242,6 +243,12 @@ private fun MainNav(
 
     // Konten tetap di dalam inset (status bar, nav bar, notch). Di balik bar: langit di atas, rumput di bawah
     // (hard stop 50%, jadi strip status bar = langit, strip nav bar + sisi banner = rumput).
+    // Papan: layar full sampai bawah, banner menimpa (rumput kelihatan di sisi banner + balik nav bar).
+    // Layar lain: banner di bawah konten (Spacer setinggi banner).
+    var bannerH by remember { mutableStateOf(0.dp) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val fullBleed = game == GameChoice.Adventure
+    Box(Modifier.fillMaxSize()) {
     Column(
         Modifier
             .fillMaxSize()
@@ -303,6 +310,7 @@ private fun MainNav(
                     onBack = { game = GameChoice.Menu },
                     earnedStars = earnedStars,
                     onEarnedShown = { earnedStars = 0 },
+                    bottomInset = bannerH,
                 )
                 GameChoice.RoadmapKart -> RoadmapScreen(
                     emoji = "🚗",
@@ -374,8 +382,11 @@ private fun MainNav(
                 )
             }
         }
-        // Satu PersistentBanner di root semua layar (Home, Papan, dan mini game).
-        PersistentBanner()
+        if (!fullBleed) Spacer(Modifier.height(bannerH))
+    }
+    // Satu PersistentBanner di root semua layar (Home, Papan, dan mini game).
+    Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+        .onSizeChanged { bannerH = with(density) { it.height.toDp() } }) { PersistentBanner() }
     }
 
     if (mathGate) {

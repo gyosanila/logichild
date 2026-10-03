@@ -360,9 +360,9 @@ internal fun DrawScope.drawWorld(
         drawRect(Brush.horizontalGradient(
             0f to c(0xA6DE78), .22f to c(0x8ACD5E), .28f to c(0x8FD24F), .46f to c(0x63B537), .52f to c(0xD3D06A),
             .62f to c(0xC3C259), .72f to c(0xCFD79C), .80f to c(0xE4EDD6), .88f to c(0xF2F9FD), 1f to c(0xDCEBF5),
-            startX = 0f, endX = WORLD_W), Offset(0f, 250f), Size(WORLD_W, 614f))
+            startX = 0f, endX = WORLD_W), Offset(0f, 250f), Size(WORLD_W, 1400f))
         drawRect(Brush.verticalGradient(0f to Color.White.copy(alpha = .3f), .22f to Color.Transparent, .6f to Color.Transparent,
-            1f to Color.Black.copy(alpha = .1f), startY = 250f, endY = 864f), Offset(0f, 250f), Size(WORLD_W, 614f))
+            1f to Color.Black.copy(alpha = .1f), startY = 250f, endY = 864f), Offset(0f, 250f), Size(WORLD_W, 1400f))
         drawPath(art.horizon, Color.White.copy(alpha = .15f))
         for (gi in 0 until 46) {
             val gx = prand(gi * 3.7) * WORLD_W; val gy = 300 + prand(gi * 5.1) * 520; val gs = .7f + prand(gi * 7.3) * .8f
@@ -505,6 +505,8 @@ fun AdventureScreen(
     /** Bintang dari mini-game yang barusan selesai (0 = tidak ada); ditampilkan sekali. */
     earnedStars: Int = 0,
     onEarnedShown: () -> Unit = {},
+    /** Tinggi banner + nav bar yang menimpa bagian bawah layar. */
+    bottomInset: Dp = 0.dp,
 ) {
     val strings = LocalStrings.current
     val context = LocalContext.current
@@ -527,6 +529,7 @@ fun AdventureScreen(
     var chip by remember { mutableStateOf<Pair<Char, Int>?>(null) } // 's' bintang / 'a' apel
     var chipNode by remember { mutableStateOf<Pair<Int, Char>?>(null) } // (nodeIdx, kind) — hadiah spawn di node
     val appleFly = remember { Animatable(1f) }
+    val rewardPop = remember { Animatable(0f) }
     var outfitShow by remember { mutableIntStateOf(0) }
     LaunchedEffect(state.position) { if (!busy) { hopFrom = state.position; hopTo = state.position } }
 
@@ -534,7 +537,7 @@ fun AdventureScreen(
         if (earnedStars > 0) { chip = 's' to earnedStars; sounds.reward(earnedStars); onEarnedShown() }
     }
     LaunchedEffect(chip) { if (chip != null) { delay(1800); chip = null } }
-    LaunchedEffect(chipNode) { if (chipNode != null) { delay(2200); chipNode = null } }
+    LaunchedEffect(chipNode) { if (chipNode != null) { rewardPop.snapTo(0f); rewardPop.animateTo(1f, tween(1400)); chipNode = null } }
 
     fun walk() {
         if (busy || state.position >= AdventureBoard.MAP_LENGTH) return
@@ -571,27 +574,25 @@ fun AdventureScreen(
         // --- dunia (satu Canvas, kamera ikut beruang) ---
         Canvas(Modifier.fillMaxSize()) {
             val t = time
-            val s = (size.height - worldTopPx) / WORLD_H
+            val s = (size.height - bottomInset.toPx() - worldTopPx) / WORLD_H
             val visW = size.width / s
             val f = hop.value
             val i0 = hopFrom - 1; val i1 = hopTo - 1
             val bx = ax(i0) + (ax(i1) - ax(i0)) * f; val by = ay(i0) + (ay(i1) - ay(i0)) * f
             val cam = (bx - 250f * visW / 540f).coerceIn(0f, WORLD_W - visW)
 
-            // Sky + grass di balik status bar
-            drawRect(Brush.verticalGradient(0f to c(0x8FD4F7), .72f to c(0xBFE9FF), 1f to c(0xE7F8FF), endY = 260f), size = Size(size.width, worldTopPx))
-            drawRect(Brush.verticalGradient(0f to Color.White.copy(alpha = .3f), .22f to Color.Transparent, .6f to Color.Transparent,
-                1f to Color.Black.copy(alpha = .1f), startY = worldTopPx, endY = size.height), Offset(0f, worldTopPx), Size(size.width, size.height - worldTopPx))
+            // Langit di balik status bar + HUD = warna langit dunia di y=0 (tanpa sambungan).
+            drawRect(c(0x8FD4F7), size = Size(size.width, worldTopPx + 2f))
 
             withTransform({ translate(0f, worldTopPx); scale(s, s, Offset.Zero) }) {
                 drawWorld(art, bearImg, numbers, startLabel, state, t, visW, cam, hopFrom, hopTo, f)
-            }
-            // Hadiah spawn di node saat maskot land
-            chipNode?.let { (nodeIdx, kind) ->
-                val nodeX = ax(nodeIdx); val nodeY = ay(nodeIdx)
-                val screenX = (nodeX - cam) * s; val screenY = worldTopPx + nodeY * s
-                if (kind == 's') star(screenX, screenY, 20f * u.toPx() / 540f, c(0xFFC94D), c(0xE0A22B), 2f)
-                else apple(art, screenX, screenY, 1.5f * u.toPx() / 540f)
+                // Hadiah muncul di atas kotak tempat beruang mendarat, naik pelan lalu hilang.
+                chipNode?.let { (nodeIdx, kind) ->
+                    val p = rewardPop.value
+                    val x = ax(nodeIdx) - cam; val y = ay(nodeIdx) - 120f - 50f * p
+                    val k = if (p < .2f) p / .2f else 1f
+                    if (kind == 's') star(x, y, 30f * k, c(0xFFC94D), c(0xE0A22B), 4f) else apple(art, x, y, 2.4f * k)
+                }
             }
             // apel terbang ke HUD
             if (appleFly.value < 1f) {
@@ -605,7 +606,7 @@ fun AdventureScreen(
 
         // --- HUD ---
         Column(Modifier.fillMaxWidth().safeDrawingPadding()) {
-            Box(Modifier.fillMaxWidth().height(u * 88).background(Brush.verticalGradient(listOf(c(0x7FC3EE), c(0x8FD4F7), Color.Transparent)))) {
+            Box(Modifier.fillMaxWidth().height(u * 88)) {
                 Row(Modifier.fillMaxSize().padding(horizontal = u * 16), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(u * 44).shadow(4.dp, CircleShape).clip(CircleShape).background(Color.White).clickable(onClick = onBack),
                         contentAlignment = Alignment.Center) {
@@ -657,7 +658,7 @@ fun AdventureScreen(
         }
 
         // --- bawah: papan kayu posisi + tombol JALAN ---
-        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(u * 134)
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset).fillMaxWidth().height(u * 134)
             .background(Brush.verticalGradient(listOf(Color.Transparent, c(0x0E2A12).copy(alpha = .16f))))) {
             Row(Modifier.align(Alignment.BottomStart).padding(start = u * 16, bottom = u * 30).height(u * 40)
                 .shadow(4.dp, RoundedCornerShape(u * 16)).clip(RoundedCornerShape(u * 16))
