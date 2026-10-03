@@ -659,8 +659,11 @@ fun AdventureScreen(
         }
 
         // --- bawah: papan kayu posisi + tombol JALAN ---
-        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset).fillMaxWidth().height(u * 134)
-            .background(Brush.verticalGradient(listOf(Color.Transparent, c(0x0E2A12).copy(alpha = .16f))))) {
+        // Bayangan bawah sampai ujung layar (ikut menutupi rumput di samping banner + balik nav bar).
+        val shadeEnd = with(density) { (u * 134).toPx() }
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(u * 134 + bottomInset)
+            .background(Brush.verticalGradient(listOf(Color.Transparent, c(0x0E2A12).copy(alpha = .16f)), endY = shadeEnd)))
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset).fillMaxWidth().height(u * 134)) {
             Row(Modifier.align(Alignment.BottomStart).padding(start = u * 16, bottom = u * 30).height(u * 40)
                 .shadow(4.dp, RoundedCornerShape(u * 16)).clip(RoundedCornerShape(u * 16))
                 .background(Brush.verticalGradient(listOf(c(0xA9744F), c(0x8B5E3C)))).padding(horizontal = u * 13),
