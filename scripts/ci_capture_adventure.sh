@@ -67,6 +67,8 @@ open --es screen adventure --ei adv_pos 15 --ei adv_stars 30;  shot zone-autumn
 open --es screen adventure --ei adv_pos 19 --ei adv_fruits 4;  shot zone-winter
 adb shell input tap "$WALK_X" "$WALK_Y"; sleep 1.2;            shot apple
 sleep 1;                                                       shot hadiah
+# Kotak 3 = bintang: hadiah muncul di atas kotak (pop 1.4s).
+open --es screen adventure --ei adv_pos 2;  adb shell input tap "$WALK_X" "$WALK_Y"; sleep 0.9; shot reward-star
 # Topi: apel ke-10 (outfit ke-2).
 open --es screen adventure --ei adv_pos 19 --ei adv_fruits 9;  adb shell input tap "$WALK_X" "$WALK_Y"; sleep 2.2; shot hat
 sleep 3;                                                       shot hat-board
