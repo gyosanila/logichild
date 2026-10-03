@@ -576,6 +576,11 @@ fun AdventureScreen(
             val bx = ax(i0) + (ax(i1) - ax(i0)) * f; val by = ay(i0) + (ay(i1) - ay(i0)) * f
             val cam = (bx - 250f * visW / 540f).coerceIn(0f, WORLD_W - visW)
 
+            // Sky + grass di balik status bar
+            drawRect(Brush.verticalGradient(0f to c(0x8FD4F7), .72f to c(0xBFE9FF), 1f to c(0xE7F8FF), endY = 260f), size = Size(size.width, worldTopPx))
+            drawRect(Brush.verticalGradient(0f to Color.White.copy(alpha = .3f), .22f to Color.Transparent, .6f to Color.Transparent,
+                1f to Color.Black.copy(alpha = .1f), startY = worldTopPx, endY = size.height), Offset(0f, worldTopPx), Size(size.width, size.height - worldTopPx))
+
             withTransform({ translate(0f, worldTopPx); scale(s, s, Offset.Zero) }) {
                 drawWorld(art, bearImg, numbers, startLabel, state, t, visW, cam, hopFrom, hopTo, f)
             }
