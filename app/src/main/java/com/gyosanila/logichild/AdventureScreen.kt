@@ -525,6 +525,7 @@ fun AdventureScreen(
     var hopTo by remember { mutableIntStateOf(state.position) }
     var busy by remember { mutableStateOf(false) }
     var chip by remember { mutableStateOf<Pair<Char, Int>?>(null) } // 's' bintang / 'a' apel
+    var chipNode by remember { mutableStateOf<Pair<Int, Char>?>(null) } // (nodeIdx, kind) — hadiah spawn di node
     val appleFly = remember { Animatable(1f) }
     var outfitShow by remember { mutableIntStateOf(0) }
     LaunchedEffect(state.position) { if (!busy) { hopFrom = state.position; hopTo = state.position } }
@@ -533,6 +534,7 @@ fun AdventureScreen(
         if (earnedStars > 0) { chip = 's' to earnedStars; sounds.reward(earnedStars); onEarnedShown() }
     }
     LaunchedEffect(chip) { if (chip != null) { delay(1800); chip = null } }
+    LaunchedEffect(chipNode) { if (chipNode != null) { delay(2200); chipNode = null } }
 
     fun walk() {
         if (busy || state.position >= AdventureBoard.MAP_LENGTH) return
@@ -550,9 +552,9 @@ fun AdventureScreen(
                 val next = state.land(move)
                 onStateChange(next)
                 when (move.effect) {
-                    AdventureTileEffect.Star, AdventureTileEffect.Gift -> { chip = 's' to 1; sounds.sparkle() }
+                    AdventureTileEffect.Star, AdventureTileEffect.Gift -> { chipNode = (move.position - 1) to 's'; chip = 's' to 1; sounds.sparkle() }
                     AdventureTileEffect.Collect -> {
-                        sounds.sparkle(); appleFly.snapTo(0f); appleFly.animateTo(1f, tween(800))
+                        sounds.sparkle(); chipNode = (move.position - 1) to 'a'; appleFly.snapTo(0f); appleFly.animateTo(1f, tween(800))
                         if (next.outfits > state.outfits) { outfitShow = next.outfits; sounds.reward(5) } else chip = 'a' to 1
                     }
                     AdventureTileEffect.MiniGame -> { delay(700); onMiniGame(adventureMiniGame(next.miniGameIndex - 1)) }
@@ -583,6 +585,13 @@ fun AdventureScreen(
 
             withTransform({ translate(0f, worldTopPx); scale(s, s, Offset.Zero) }) {
                 drawWorld(art, bearImg, numbers, startLabel, state, t, visW, cam, hopFrom, hopTo, f)
+            }
+            // Hadiah spawn di node saat maskot land
+            chipNode?.let { (nodeIdx, kind) ->
+                val nodeX = ax(nodeIdx); val nodeY = ay(nodeIdx)
+                val screenX = (nodeX - cam) * s; val screenY = worldTopPx + nodeY * s
+                if (kind == 's') star(screenX, screenY, 20f * u.toPx() / 540f, c(0xFFC94D), c(0xE0A22B), 2f)
+                else apple(art, screenX, screenY, 1.5f * u.toPx() / 540f)
             }
             // apel terbang ke HUD
             if (appleFly.value < 1f) {
