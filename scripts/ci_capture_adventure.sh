@@ -52,6 +52,9 @@ open() {
 }
 
 open; sleep 6;                                                 shot home   # tunggu banner test ad
+open --es screen allgames;                                     shot allgames
+open --es screen roadmapkart;                                  shot roadmap
+for g in kart fruit pattern color; do open --es screen $g;     shot game-$g; done
 open --ei adv_pos 8 --ei adv_stars 13 --ei adv_fruits 3;       shot home-2
 open --es screen adventure --ei adv_pos 1;                     shot board-1
 sleep 4;                                                        shot board-banner

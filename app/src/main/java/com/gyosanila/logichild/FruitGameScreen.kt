@@ -132,6 +132,7 @@ fun FruitGameScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(SkyBlue)
+            .safeDrawingPadding()
     ) {
         Toolbar(
             emoji = "🍎",

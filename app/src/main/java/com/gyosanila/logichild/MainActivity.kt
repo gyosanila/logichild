@@ -17,7 +17,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -144,7 +150,11 @@ private fun MainNav(
     // CI screenshot hook: `am start --es screen adventure --ei adv_pos N --ei adv_fruits M`.
     val launch = (context as? android.app.Activity)?.intent
     var game by rememberSaveable {
-        mutableStateOf(if (launch?.getStringExtra("screen") == "adventure") GameChoice.Adventure else GameChoice.Menu)
+        mutableStateOf(when (val sc = launch?.getStringExtra("screen")) {
+            null -> GameChoice.Menu
+            "adventure" -> GameChoice.Adventure
+            else -> GameChoice.entries.firstOrNull { it.name.equals(sc, true) } ?: GameChoice.Menu // CI hook capture
+        })
     }
     var returnToAdventure by remember { mutableStateOf(false) }
     var earnedStars by remember { mutableStateOf(0) }
@@ -234,13 +244,14 @@ private fun MainNav(
         Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(0f to Color(0xFF77BEEB), .5f to Color(0xFF77BEEB), .5f to Color(0xFF62B140), 1f to Color(0xFF62B140)))
-            .safeDrawingPadding()
     ) {
-        if (timerMin > 0 && !breakOverlay && !locked) {
-            TimerBar(remainingSec, timerMin * 60)
-        }
+        // Tiap layar gambar latarnya sampai ke balik status bar; konten layar pakai safeDrawingPadding sendiri.
+        // Inset nav bar dipegang banner (di bawah), jadi di-consume supaya layar tidak padding dobel.
+        val timerShown = timerMin > 0 && !breakOverlay && !locked
+        if (timerShown) TimerBar(remainingSec, timerMin * 60)
         fun starSum(prefix: String) = prefs.all.filterKeys { it.startsWith(prefix) }.values.sumOf { (it as? Int) ?: 0 }
-        Box(Modifier.weight(1f)) {
+        Box(Modifier.weight(1f).consumeWindowInsets(
+            if (timerShown) WindowInsets.navigationBars.union(WindowInsets.statusBars) else WindowInsets.navigationBars)) {
             when (game) {
                 GameChoice.Menu -> HomeScreen(
                     adventure = adventure,
@@ -402,6 +413,7 @@ private fun TimerBar(remainingSec: Int, totalSec: Int) {
             .fillMaxWidth()
             .background(Color(0xE61B5E20))
     ) {
+        Spacer(Modifier.statusBarsPadding())
         LinearProgressIndicator(
             progress = { progress },
             modifier = Modifier
@@ -551,7 +563,7 @@ private fun PersistentBanner() {
     // AdView selalu terpasang di semua layar (Home, Papan, game); tidak dilepas saat retry NO_FILL.
     AndroidView(
         factory = { adView },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
     )
 }
 

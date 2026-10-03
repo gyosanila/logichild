@@ -50,7 +50,7 @@ fun PatternMatchScreen(
 
     Box(Modifier.fillMaxSize().background(SkyBlue)) {
         PatternGardenDecor()
-        Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             Toolbar(
                 emoji = "🧩",
                 title = strings.playPattern,

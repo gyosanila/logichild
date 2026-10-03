@@ -79,7 +79,7 @@ fun ColorMatchScreen(
         modifier = Modifier.fillMaxSize().background(SkyBlue),
     ) {
         ColorGardenDecor()
-        Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             Toolbar(
                 emoji = "🎨",
                 title = strings.playColor,

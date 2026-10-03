@@ -24,7 +24,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -563,7 +565,7 @@ fun AdventureScreen(
 
     BoxWithConstraints(Modifier.fillMaxSize().background(c(0x8FD4F7))) {
         val u: Dp = maxWidth / 540
-        val worldTopPx = with(density) { (u * 100).toPx() }
+        val worldTopPx = with(density) { (u * 100).toPx() } + WindowInsets.statusBars.getTop(density)
         // --- dunia (satu Canvas, kamera ikut beruang) ---
         Canvas(Modifier.fillMaxSize()) {
             val t = time
