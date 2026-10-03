@@ -574,7 +574,8 @@ fun AdventureScreen(
         // --- dunia (satu Canvas, kamera ikut beruang) ---
         Canvas(Modifier.fillMaxSize()) {
             val t = time
-            val s = (size.height - bottomInset.toPx() - worldTopPx) / WORLD_H
+            // Dunia penuh sampai bawah layar: rumput + hiasannya tembus ke balik banner & nav bar.
+            val s = (size.height - worldTopPx) / WORLD_H
             val visW = size.width / s
             val f = hop.value
             val i0 = hopFrom - 1; val i1 = hopTo - 1
