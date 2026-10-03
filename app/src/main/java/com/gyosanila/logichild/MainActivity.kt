@@ -243,7 +243,14 @@ private fun MainNav(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(0f to Color(0xFF77BEEB), .5f to Color(0xFF77BEEB), .5f to Color(0xFF62B140), 1f to Color(0xFF62B140)))
+            // Strip nav bar (di bawah banner) ikut warna dasar layar aktif.
+            .background(when (game) {
+                GameChoice.AllGames, GameChoice.RoadmapKart, GameChoice.RoadmapFruit,
+                GameChoice.RoadmapPattern, GameChoice.RoadmapColor -> Color(0xFFF8CA55)
+                GameChoice.Kart, GameChoice.Fruit, GameChoice.Settings -> SkyBlue
+                GameChoice.Pattern, GameChoice.Color -> Color(0xFF9BD77F)
+                else -> Color(0xFF62B140) // Home & Papan: rumput
+            })
     ) {
         // Tiap layar gambar latarnya sampai ke balik status bar; konten layar pakai safeDrawingPadding sendiri.
         // Inset nav bar dipegang banner (di bawah), jadi di-consume supaya layar tidak padding dobel.
