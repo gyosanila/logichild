@@ -360,9 +360,9 @@ internal fun DrawScope.drawWorld(
         drawRect(Brush.horizontalGradient(
             0f to c(0xA6DE78), .22f to c(0x8ACD5E), .28f to c(0x8FD24F), .46f to c(0x63B537), .52f to c(0xD3D06A),
             .62f to c(0xC3C259), .72f to c(0xCFD79C), .80f to c(0xE4EDD6), .88f to c(0xF2F9FD), 1f to c(0xDCEBF5),
-            startX = 0f, endX = WORLD_W), Offset(0f, 250f), Size(WORLD_W, 1400f))
+            startX = 0f, endX = WORLD_W), Offset(0f, 250f), Size(WORLD_W, 1600f))
         drawRect(Brush.verticalGradient(0f to Color.White.copy(alpha = .3f), .22f to Color.Transparent, .6f to Color.Transparent,
-            1f to Color.Black.copy(alpha = .1f), startY = 250f, endY = 864f), Offset(0f, 250f), Size(WORLD_W, 1400f))
+            1f to Color.Black.copy(alpha = .1f), startY = 250f, endY = 864f), Offset(0f, 250f), Size(WORLD_W, 1600f))
         drawPath(art.horizon, Color.White.copy(alpha = .15f))
         for (gi in 0 until 46) {
             val gx = prand(gi * 3.7) * WORLD_W; val gy = 300 + prand(gi * 5.1) * 520; val gs = .7f + prand(gi * 7.3) * .8f
@@ -583,9 +583,11 @@ fun AdventureScreen(
             val cam = (bx - 250f * visW / 540f).coerceIn(0f, WORLD_W - visW)
 
             // Langit di balik status bar + HUD = warna langit dunia di y=0 (tanpa sambungan).
-            drawRect(c(0x8FD4F7), size = Size(size.width, worldTopPx + 2f))
+            // Dunia digeser naik setinggi banner + nav bar (ukuran tetap); rumput tetap tembus ke bawah.
+            val wy = worldTopPx - bottomInset.toPx()
+            drawRect(c(0x8FD4F7), size = Size(size.width, wy.coerceAtLeast(0f) + 2f))
 
-            withTransform({ translate(0f, worldTopPx); scale(s, s, Offset.Zero) }) {
+            withTransform({ translate(0f, wy); scale(s, s, Offset.Zero) }) {
                 drawWorld(art, bearImg, numbers, startLabel, state, t, visW, cam, hopFrom, hopTo, f)
                 // Hadiah muncul di atas kotak tempat beruang mendarat, naik pelan lalu hilang.
                 chipNode?.let { (nodeIdx, kind) ->
@@ -598,7 +600,7 @@ fun AdventureScreen(
             // apel terbang ke HUD
             if (appleFly.value < 1f) {
                 val p = appleFly.value
-                val sx = (bx - cam) * s; val sy = worldTopPx + (by - 110) * s
+                val sx = (bx - cam) * s; val sy = wy + (by - 110) * s
                 val ex = size.width - 120 * u.toPx(); val ey = 44 * u.toPx()
                 val x = sx + (ex - sx) * p; val y = sy + (ey - sy) * p - sin(p * PI).toFloat() * 120 * u.toPx()
                 apple(art, x, y, 2.2f * u.toPx() * (1 + .6f * sin(p * PI).toFloat()))
@@ -663,7 +665,7 @@ fun AdventureScreen(
         val shadeEnd = with(density) { (u * 134).toPx() }
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(u * 134 + bottomInset)
             .background(Brush.verticalGradient(listOf(Color.Transparent, c(0x0E2A12).copy(alpha = .16f)), endY = shadeEnd)))
-        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset).fillMaxWidth().height(u * 134)) {
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset + 12.dp).fillMaxWidth().height(u * 134)) {
             Row(Modifier.align(Alignment.BottomStart).padding(start = u * 16, bottom = u * 30).height(u * 40)
                 .shadow(4.dp, RoundedCornerShape(u * 16)).clip(RoundedCornerShape(u * 16))
                 .background(Brush.verticalGradient(listOf(c(0xA9744F), c(0x8B5E3C)))).padding(horizontal = u * 13),

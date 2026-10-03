@@ -39,7 +39,7 @@ read -r WIDTH HEIGHT < <(adb shell wm size | python3 -c 'import re,sys; s=sys.st
 # Tombol JALAN: tengah bawah, pusat ±70 unit dari atas banner (lebar layar = 540 unit).
 # JALAN sekarang di atas banner (50dp) + nav bar (48dp).
 DPI=$(adb shell wm density | grep -o '[0-9]*' | tail -1)
-WALK_X=$((WIDTH / 2)); WALK_Y=$((HEIGHT - WIDTH * 70 / 540 - 98 * DPI / 160))
+WALK_X=$((WIDTH / 2)); WALK_Y=$((HEIGHT - WIDTH * 70 / 540 - 110 * DPI / 160))
 
 # open <nama> [extras...] — buka app langsung ke layar tertentu (hook intent di MainActivity).
 open() {
