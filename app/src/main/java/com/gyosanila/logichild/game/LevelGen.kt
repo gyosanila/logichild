@@ -13,6 +13,20 @@ import kotlin.random.Random
 object LevelGen {
 
     fun generate(index: Int): Level {
+        require(index >= 0) { "Level index must be non-negative" }
+        // First three missions deliberately teach only forward movement.
+        if (index in 0..2) {
+            val distance = index + 1
+            return Level(
+                index = index,
+                width = distance + 1,
+                height = 3,
+                start = Pos(0, 1),
+                startDir = Dir.E,
+                finish = Pos(distance, 1),
+                cones = emptySet(),
+            )
+        }
         val rng = Random(index * 7919L + 13L)
         // Difficulty: makin tinggi level makin sulit, tiap 10 level +5%.
         val tier = index / 10
@@ -21,6 +35,7 @@ object LevelGen {
         val h = minOf(6, 3 + index / 5)      // 3..6
         val coneCount = minOf(12, (1 + index / 2.0 * diff).toInt())
         val minPath = minOf(14, (3 + index / 2.0 * diff).toInt())
+
 
         repeat(300) {
             val start = Pos(0, rng.nextInt(h))      // tepi kiri

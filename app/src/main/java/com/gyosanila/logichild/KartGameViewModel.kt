@@ -11,6 +11,7 @@ import com.gyosanila.logichild.game.Instruction
 import com.gyosanila.logichild.game.KartState
 import com.gyosanila.logichild.game.Level
 import com.gyosanila.logichild.game.LevelGen
+import com.gyosanila.logichild.game.Pos
 import com.gyosanila.logichild.game.Reward
 import com.gyosanila.logichild.ui.StringsEn
 import com.gyosanila.logichild.ui.StringsId
@@ -31,6 +32,8 @@ data class KartGameUiState(
     val won: Boolean = false,
     val crashed: Boolean = false,
     val crashCell: com.gyosanila.logichild.game.Pos? = null,
+    val failedInstructionIndex: Int = -1,
+    val failureCount: Int = 0,
     val unlocked: Int = 0,
     val stars: Map<Int, Int> = emptyMap(),
     val soundOn: Boolean = true,
@@ -197,21 +200,21 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     fun addInstruction(i: Instruction) {
         val s = _uiState.value
-        if (s.running || s.won || s.instructions.size >= 1000) return
+        if (s.running || s.won || s.crashed || s.instructions.size >= 1000) return
         sounds.tap()
         _uiState.update { it.copy(instructions = it.instructions + i) }
     }
 
     fun removeLast() {
         val s = _uiState.value
-        if (s.running || s.won) return
+        if (s.running || s.won || s.crashed) return
         sounds.tap()
         _uiState.update { it.copy(instructions = it.instructions.dropLast(1)) }
     }
 
     fun clearInstructions() {
         val s = _uiState.value
-        if (s.running || s.won) return
+        if (s.running || s.won || s.crashed) return
         sounds.tap()
         _uiState.update { it.copy(instructions = emptyList()) }
     }
@@ -225,7 +228,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
             it.copy(
                 kart = KartState(lv.start, lv.startDir),
                 instructions = emptyList(),
-                crashed = false, crashCell = null, won = false
+                crashed = false, crashCell = null, failedInstructionIndex = -1, won = false
             )
         }
     }
@@ -237,13 +240,13 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
 
     fun play() {
         val s = _uiState.value
-        if (s.running || s.won || s.instructions.isEmpty()) return
+        if (s.running || s.won || s.crashed || s.instructions.isEmpty()) return
         runJob = viewModelScope.launch {
-            _uiState.update { it.copy(running = true, crashed = false, crashCell = null) }
+            _uiState.update { it.copy(running = true, crashed = false, crashCell = null, failedInstructionIndex = -1) }
             var kart = KartState(level.start, level.startDir)
             _uiState.update { it.copy(kart = kart) }
             delay(250)
-            for (instr in s.instructions) {
+            for ((instructionIndex, instr) in s.instructions.withIndex()) {
                 val (next, result) = GameEngine.apply(kart, instr, level)
                 kart = next
                 _uiState.update { it.copy(kart = kart) }
@@ -253,9 +256,16 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                     is StepResult.Crashed -> {
                         sounds.crash()
                         voice.tryAgain(prefs.getString("lang", "id") == "en")
-                        _uiState.update { it.copy(running = false, crashed = true, crashCell = result.at) }
-                        delay(600)
-                        _uiState.update { it.copy(crashed = false, crashCell = null) }
+                        val blocked = Pos(result.at.x + result.dir.dx, result.at.y + result.dir.dy)
+                        val hitCell = if (blocked in level.cones) blocked else result.at
+                        val failures = _uiState.value.failureCount + 1
+                        prefs.edit().putInt("kart_fail_${level.index}", failures).apply()
+                        _uiState.update {
+                            it.copy(
+                                running = false, crashed = true, crashCell = hitCell,
+                                failedInstructionIndex = instructionIndex, failureCount = failures,
+                            )
+                        }
                         return@launch
                     }
                     is StepResult.Won -> {
@@ -328,6 +338,7 @@ class KartGameViewModel(application: Application) : AndroidViewModel(application
                 kart = KartState(lv.start, lv.startDir),
                 instructions = emptyList(),
                 running = false, won = false, crashed = false, crashCell = null,
+                failedInstructionIndex = -1, failureCount = prefs.getInt("kart_fail_$index", 0),
             )
         }
     }

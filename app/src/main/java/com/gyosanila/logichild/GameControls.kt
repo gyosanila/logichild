@@ -96,6 +96,7 @@ data class StepSpec(
     val color: Color,
     val emoji: String? = null,
     val icon: ImageVector? = null,
+    val failed: Boolean = false,
 )
 
 /**
@@ -120,6 +121,7 @@ fun GameController(
     deleteLabel: String,
     strings: AppStrings,
     modifier: Modifier = Modifier,
+    resetSuggested: Boolean = false,
 ) {
     Column(modifier = modifier) {
         StepStrip(
@@ -142,6 +144,7 @@ fun GameController(
             playEnabled = playEnabled,
             resetEnabled = resetEnabled,
             strings = strings,
+            resetSuggested = resetSuggested,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -196,8 +199,10 @@ private fun StepStrip(
                     steps.forEach { s ->
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = s.color,
-                            modifier = Modifier.size(38.dp),
+                            color = if (s.failed) Color(0xFFFF435A) else s.color,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .then(if (s.failed) Modifier.border(3.dp, Color(0xFFFFD54F), RoundedCornerShape(10.dp)) else Modifier),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (s.emoji != null) {
@@ -242,12 +247,13 @@ private fun ControllerNav(
     playEnabled: Boolean,
     resetEnabled: Boolean,
     strings: AppStrings,
+    resetSuggested: Boolean,
     modifier: Modifier = Modifier,
 ) {
     if (controllerType == "simple") {
-        SimpleController(dirCmds, actionCmds, onPlay, onReset, canEdit, playEnabled, resetEnabled, strings, modifier)
+        SimpleController(dirCmds, actionCmds, onPlay, onReset, canEdit, playEnabled, resetEnabled, strings, modifier, resetSuggested)
     } else {
-        KartStyleController(dirCmds, actionCmds, onPlay, onReset, canEdit, playEnabled, resetEnabled, strings, modifier)
+        KartStyleController(dirCmds, actionCmds, onPlay, onReset, canEdit, playEnabled, resetEnabled, strings, modifier, resetSuggested)
     }
 }
 
@@ -264,6 +270,7 @@ private fun KartStyleController(
     resetEnabled: Boolean,
     strings: AppStrings,
     modifier: Modifier = Modifier,
+    resetSuggested: Boolean = false,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
@@ -338,8 +345,8 @@ private fun KartStyleController(
                 Spacer(Modifier.width(26.dp))
                 BigRoundButton(
                     label = strings.cmdReset,
-                    color = Color(0xFF90A4AE),
-                    darker = Color(0xFF607D8B),
+                    color = if (resetSuggested) Color(0xFFFFD54F) else Color(0xFF90A4AE),
+                    darker = if (resetSuggested) Color(0xFFD49B00) else Color(0xFF607D8B),
                     icon = Icons.Filled.Refresh,
                     enabled = resetEnabled,
                     size = 64.dp,
@@ -366,6 +373,7 @@ private fun SimpleController(
     resetEnabled: Boolean,
     strings: AppStrings,
     modifier: Modifier = Modifier,
+    resetSuggested: Boolean = false,
 ) {
     Column(modifier = modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -431,7 +439,7 @@ private fun SimpleController(
             Spacer(Modifier.width(8.dp))
             Surface(
                 shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
+                color = if (resetSuggested) Color(0xFFFFD54F) else Color.White.copy(alpha = 0.9f),
                 onClick = onReset,
                 enabled = resetEnabled,
                 modifier = Modifier.size(52.dp),

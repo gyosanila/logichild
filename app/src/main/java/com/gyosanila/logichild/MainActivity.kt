@@ -173,7 +173,7 @@ private fun MainNav(
             ),
         )
     }
-    var startLevel by rememberSaveable { mutableStateOf(1) }
+    var startLevel by rememberSaveable { mutableStateOf(launch?.getIntExtra("level", 1) ?: 1) }
     var mathGate by remember { mutableStateOf(false) }
 
     // Timer layar: countdown + progress bar + auto istirahat + kunci layar

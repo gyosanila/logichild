@@ -88,6 +88,7 @@ import com.gyosanila.logichild.game.Level
 import com.gyosanila.logichild.game.LevelGen
 import com.gyosanila.logichild.game.Pos
 import com.gyosanila.logichild.game.Reward
+import com.gyosanila.logichild.game.Dir
 import com.gyosanila.logichild.game.GameEngine
 import com.gyosanila.logichild.game.StepResult
 import com.gyosanila.logichild.ui.AppStrings
@@ -150,6 +151,29 @@ fun KartGameScreen(
                 .fillMaxWidth()
                 .padding(vertical = 6.dp),
         )
+        val showHint = level.index <= 2 || state.failureCount >= 3
+        val boardMessage = when {
+            state.crashed && state.crashCell in level.cones -> strings.carCrashCone
+            state.crashed -> strings.carCrashEdge
+            showHint -> strings.carHintForward
+            else -> null
+        }
+        if (boardMessage != null) {
+            Surface(
+                color = if (state.crashed) Color(0xFFFFE0E4) else Color.White.copy(alpha = 0.9f),
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    boardMessage,
+                    color = if (state.crashed) Color(0xFFB3263D) else TextDark,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                )
+            }
+        }
         GameBoard(
             level = level,
             kart = state.kart,
@@ -158,6 +182,7 @@ fun KartGameScreen(
             instructions = state.instructions,
             // Ghost sesuai mode shadow (auto=1-5, on=semua, off=tidak).
             showGhost = !state.running && !state.won && rememberShadowMode().let { it == "on" || (it == "auto" && state.levelIndex < 5) },
+            showHint = showHint && !state.running && !state.won,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -171,13 +196,16 @@ fun KartGameScreen(
                 CmdSpec(strings.cmdRight, BerryPurple, Color(0xFF7B4FD8), icon = Icons.Filled.RotateRight, onClick = { vm.addInstruction(Instruction.RIGHT) }),
             ),
             actionCmds = emptyList(),
-            steps = state.instructions.map { StepSpec(color = instrColor(it), icon = instrIcon(it)) },
+            steps = state.instructions.mapIndexed { index, instruction ->
+                StepSpec(color = instrColor(instruction), icon = instrIcon(instruction), failed = index == state.failedInstructionIndex)
+            },
             onRemoveLast = vm::removeLast,
             onPlay = vm::play,
             onReset = vm::resetKart,
-            canEdit = !state.running && !state.won,
-            playEnabled = !state.running && !state.won && state.instructions.isNotEmpty(),
+            canEdit = !state.running && !state.won && !state.crashed,
+            playEnabled = !state.running && !state.won && !state.crashed && state.instructions.isNotEmpty(),
             resetEnabled = !state.running,
+            resetSuggested = state.crashed,
             hintText = strings.hintStripCar,
             deleteLabel = strings.deleteOne,
             strings = strings,
@@ -233,6 +261,7 @@ private fun GameBoard(
     crashCell: Pos?,
     instructions: List<Instruction>,
     showGhost: Boolean,
+    showHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var shake by remember(crashed) { mutableStateOf(0f) }
@@ -273,7 +302,7 @@ private fun GameBoard(
         animationSpec = tween(durationMillis = 380, easing = FastOutSlowInEasing),
         label = "kartCell",
     )
-    val targetAngle = kart.dir.angleDeg
+    val targetAngle = isoAngle(kart.dir)
     val animAngle by animateFloatAsState(
         targetValue = targetAngle,
         animationSpec = tween(200),
@@ -284,34 +313,52 @@ private fun GameBoard(
     // dari posisi level sebelumnya.
     key(level.index) {
         Canvas(modifier = modifier.fillMaxSize()) {
-            val pad = 10f
-            val cell = min(
-                (size.width - pad * 2f) / level.width,
-                (size.height - pad * 2f) / level.height,
+            val pad = 12f
+            val tile = min(
+                (size.width - pad * 2f) * 2f / (level.width + level.height),
+                (size.height - pad * 2f) / ((level.width + level.height) * 0.25f + 0.36f),
             )
-            val ox = (size.width - cell * level.width) / 2f
-            val oy = (size.height - cell * level.height) / 2f
+            val depth = tile * 0.32f
+            val boardW = (level.width + level.height) * tile * 0.5f
+            val boardH = (level.width + level.height) * tile * 0.25f + depth
+            val left = (size.width - boardW) / 2f
+            val top = (size.height - boardH) / 2f
+            val originX = left + tile * 0.5f + (level.height - 1) * tile * 0.5f
+            val originY = top + tile * 0.25f
+            fun center(x: Float, y: Float) = Offset(
+                originX + (x - y) * tile * 0.5f,
+                originY + (x + y) * tile * 0.25f,
+            )
 
-            drawBoard(level, cell, ox, oy)
+            drawBoard(level, tile, originX, originY)
+
+            if (showHint) {
+                val route = findHintRoute(level, kart.pos).take(2)
+                route.forEachIndexed { index, step ->
+                    val p = center(step.first.x.toFloat(), step.first.y.toFloat())
+                    drawHintTile(p, tile, step.second, 1f - index * 0.18f)
+                }
+            }
 
             // Bayangan (shadow) preview posisi akhir
             if (showGhost && ghost != null) {
-                val gx = ox + (ghost.pos.x + 0.5f) * cell
-                val gy = oy + (ghost.pos.y + 0.5f) * cell
+                val ghostCenter = center(ghost.pos.x.toFloat(), ghost.pos.y.toFloat())
+                val gx = ghostCenter.x
+                val gy = ghostCenter.y
                 drawCircle(
                     SunYellow.copy(alpha = 0.45f),
-                    cell * 0.46f,
+                    tile * 0.28f,
                     Offset(gx, gy),
-                    style = Stroke(cell * 0.06f),
+                    style = Stroke(tile * 0.035f),
                 )
                 drawIntoCanvas { canvas ->
                     canvas.saveLayer(
-                        Rect(gx - cell, gy - cell, gx + cell, gy + cell),
+                        Rect(gx - tile, gy - tile, gx + tile, gy + tile),
                         Paint().apply { alpha = 0.35f },
                     )
-                    rotate(ghost.dir.angleDeg, pivot = Offset(gx, gy)) {
+                    rotate(isoAngle(ghost.dir), pivot = Offset(gx, gy)) {
                         translate(gx, gy) {
-                            drawKart(cell)
+                            drawKart(tile * 0.66f)
                         }
                     }
                     canvas.restore()
@@ -319,75 +366,172 @@ private fun GameBoard(
             }
 
             crashCell?.let { c ->
-                val cx = ox + (c.x + 0.5f) * cell
-                val cy = oy + (c.y + 0.5f) * cell
-                drawCircle(Color(0xFFFF5252), cell * 0.5f, Offset(cx, cy))
+                val p = center(c.x.toFloat(), c.y.toFloat())
+                val cx = p.x
+                val cy = p.y
+                drawCircle(Color(0xFFFF5252), tile * 0.34f, Offset(cx, cy), style = Stroke(tile * 0.07f))
                 // tanda silang putih
-                val t = cell * 0.16f
-                drawLine(Color.White, Offset(cx - t, cy - t), Offset(cx + t, cy + t), strokeWidth = cell * 0.09f)
-                drawLine(Color.White, Offset(cx + t, cy - t), Offset(cx - t, cy + t), strokeWidth = cell * 0.09f)
+                val t = tile * 0.11f
+                drawLine(Color.White, Offset(cx - t, cy - t), Offset(cx + t, cy + t), strokeWidth = tile * 0.045f)
+                drawLine(Color.White, Offset(cx + t, cy - t), Offset(cx - t, cy + t), strokeWidth = tile * 0.045f)
             }
 
-            val cx = ox + animCell.x * cell
-            val cy = oy + animCell.y * cell
+            val kartCenter = center(animCell.x - 0.5f, animCell.y - 0.5f)
+            val cx = kartCenter.x
+            val cy = kartCenter.y
             // PENTING: pivot rotasi = pusat mobil, BUKAN pusat canvas.
             // Default DrawScope.rotate = canvas center → mobil yang menghadap
             // E/S/W terlempar keluar sel (bahkan keluar layar).
             rotate(animAngle, pivot = Offset(cx, cy)) {
                 translate(cx + shake, cy) {
-                    drawKart(cell)
+                    drawKart(tile * 0.66f)
                 }
             }
         }
     }
 }
 
-private fun DrawScope.drawBoard(level: Level, cell: Float, ox: Float, oy: Float) {
-    for (y in 0 until level.height) {
-        for (x in 0 until level.width) {
-            val color = if ((x + y) % 2 == 0) GrassGreen else GrassDark
-            drawRoundRect(
-                color = color,
-                topLeft = Offset(ox + x * cell + 2f, oy + y * cell + 2f),
-                size = Size(cell - 4f, cell - 4f),
-                cornerRadius = CornerRadius(10f),
-            )
+private fun findHintRoute(level: Level, from: Pos): List<Pair<Pos, Dir>> {
+    val queue = ArrayDeque<Pos>()
+    val previous = mutableMapOf<Pos, Pair<Pos, Dir>?>()
+    queue.add(from)
+    previous[from] = null
+    while (queue.isNotEmpty()) {
+        val current = queue.removeFirst()
+        if (current == level.finish) break
+        for (dir in Dir.entries) {
+            val next = Pos(current.x + dir.dx, current.y + dir.dy)
+            if (next.x !in 0 until level.width || next.y !in 0 until level.height || next in level.cones || next in previous) continue
+            previous[next] = current to dir
+            queue.addLast(next)
         }
     }
-    // Finish: pola bendera catur
-    val fx = ox + level.finish.x * cell
-    val fy = oy + level.finish.y * cell
-    val seg = cell / 4f
-    for (i in 0 until 4) {
-        for (j in 0 until 4) {
-            val color = if ((i + j) % 2 == 0) FinishWhite else FinishBlack
-            drawRect(color, Offset(fx + i * seg + 2f, fy + j * seg + 2f), Size(seg, seg))
+    if (level.finish !in previous) return emptyList()
+    val reversed = mutableListOf<Pair<Pos, Dir>>()
+    var cursor = level.finish
+    while (cursor != from) {
+        val link = previous[cursor] ?: break
+        reversed += cursor to link.second
+        cursor = link.first
+    }
+    return reversed.asReversed()
+}
+
+private fun DrawScope.drawHintTile(center: Offset, tile: Float, dir: Dir, alpha: Float) {
+    drawIsoDiamond(center, tile * 0.58f, Color.White.copy(alpha = 0.94f * alpha), Color(0xFFE03B70).copy(alpha = alpha))
+    val (dx, dy) = when (dir) {
+        Dir.E -> 0.894f to 0.447f
+        Dir.N -> 0.894f to -0.447f
+        Dir.S -> -0.894f to 0.447f
+        Dir.W -> -0.894f to -0.447f
+    }
+    val px = -dy
+    val py = dx
+    val len = tile * 0.18f
+    val half = tile * 0.075f
+    val tip = Offset(center.x + dx * len, center.y + dy * len)
+    val base = Offset(center.x - dx * len * 0.65f, center.y - dy * len * 0.65f)
+    val path = Path().apply {
+        moveTo(tip.x, tip.y)
+        lineTo(base.x + px * half, base.y + py * half)
+        lineTo(base.x + px * half * 0.45f, base.y + py * half * 0.45f)
+        lineTo(center.x - dx * len * 0.12f + px * half * 0.45f, center.y - dy * len * 0.12f + py * half * 0.45f)
+        lineTo(center.x - dx * len * 0.12f - px * half * 0.45f, center.y - dy * len * 0.12f - py * half * 0.45f)
+        lineTo(base.x - px * half, base.y - py * half)
+        close()
+    }
+    drawPath(path, Color(0xFFD72660).copy(alpha = alpha))
+}
+
+private fun isoAngle(dir: Dir): Float = when (dir) {
+    Dir.N -> 63.4f
+    Dir.E -> 116.6f
+    Dir.S -> 243.4f
+    Dir.W -> 296.6f
+}
+
+private fun DrawScope.drawBoard(level: Level, tile: Float, originX: Float, originY: Float) {
+    fun center(x: Float, y: Float) = Offset(
+        originX + (x - y) * tile * 0.5f,
+        originY + (x + y) * tile * 0.25f,
+    )
+
+    // Draw from back to front so the raised isometric faces layer naturally.
+    for (sum in 0..(level.width + level.height - 2)) {
+        for (y in 0 until level.height) {
+            val x = sum - y
+            if (x !in 0 until level.width) continue
+            val p = center(x.toFloat(), y.toFloat())
+            drawIsoBlock(p, tile, Color(0xFF9BE3A5), Color(0xFF6CC97C), Color(0xFF58B169))
         }
     }
-    // Cone
-    for (c in level.cones) {
-        val cx = ox + (c.x + 0.5f) * cell
-        val cy = oy + (c.y + 0.5f) * cell
-        val r = cell * 0.38f
-        drawCircle(ShadowColor, r, Offset(cx, cy + r * 0.15f))
-        val cone = Path().apply {
-            moveTo(cx, cy - r * 1.15f)
-            lineTo(cx - r, cy + r * 0.85f)
-            lineTo(cx + r, cy + r * 0.85f)
+
+    // Start marker: blue tile inset, finish: pink tile inset + checkered flag.
+    val start = center(level.start.x.toFloat(), level.start.y.toFloat())
+    drawIsoDiamond(start, tile * 0.68f, Color(0xFF75C8F4), Color(0xFF4CA6D8))
+    val goal = center(level.finish.x.toFloat(), level.finish.y.toFloat())
+    drawIsoDiamond(goal, tile * 0.68f, Color(0xFFFFA5C0), Color(0xFFE66F96))
+    val poleX = goal.x + tile * 0.12f
+    val poleY = goal.y - tile * 0.52f
+    drawLine(Color(0xFF795548), Offset(poleX, poleY), Offset(poleX, goal.y - tile * 0.08f), tile * 0.035f)
+    val flag = Path().apply {
+        moveTo(poleX, poleY)
+        lineTo(poleX + tile * 0.30f, poleY + tile * 0.07f)
+        lineTo(poleX, poleY + tile * 0.20f)
+        close()
+    }
+    drawPath(flag, Color.White)
+    drawLine(Color(0xFF222222), Offset(poleX + tile * 0.10f, poleY + tile * 0.035f), Offset(poleX + tile * 0.20f, poleY + tile * 0.06f), tile * 0.045f)
+    drawLine(Color(0xFF222222), Offset(poleX + tile * 0.10f, poleY + tile * 0.12f), Offset(poleX + tile * 0.20f, poleY + tile * 0.095f), tile * 0.045f)
+
+    // Cones are the only obstacles; keep decorative plants off the playable tiles.
+    for (cone in level.cones) {
+        val p = center(cone.x.toFloat(), cone.y.toFloat())
+        drawOval(ShadowColor.copy(alpha = 0.35f), topLeft = Offset(p.x - tile * 0.22f, p.y + tile * 0.10f), size = Size(tile * 0.44f, tile * 0.18f))
+        val body = Path().apply {
+            moveTo(p.x, p.y - tile * 0.33f)
+            lineTo(p.x - tile * 0.23f, p.y + tile * 0.15f)
+            quadraticTo(p.x, p.y + tile * 0.22f, p.x + tile * 0.23f, p.y + tile * 0.15f)
             close()
         }
-        drawPath(cone, ConeOrange)
-        drawCircle(Color.White, r * 0.28f, Offset(cx, cy + r * 0.1f))
+        drawPath(body, Color(0xFFFF8A32))
+        drawLine(Color.White, Offset(p.x - tile * 0.13f, p.y + tile * 0.01f), Offset(p.x + tile * 0.13f, p.y + tile * 0.01f), tile * 0.07f)
+        drawLine(Color(0xFFB9521B), Offset(p.x - tile * 0.23f, p.y + tile * 0.15f), Offset(p.x + tile * 0.23f, p.y + tile * 0.15f), tile * 0.045f)
     }
-    // Penanda start
-    val sx = ox + (level.start.x + 0.5f) * cell
-    val sy = oy + (level.start.y + 0.5f) * cell
-    drawCircle(
-        Color.White.copy(alpha = 0.55f),
-        cell * 0.42f,
-        Offset(sx, sy),
-        style = Stroke(3f),
-    )
+}
+
+private fun DrawScope.drawIsoBlock(center: Offset, tile: Float, top: Color, left: Color, right: Color) {
+    val halfH = tile * 0.25f
+    val depth = tile * 0.32f
+    val north = Offset(center.x, center.y - halfH)
+    val east = Offset(center.x + tile * 0.5f, center.y)
+    val south = Offset(center.x, center.y + halfH)
+    val west = Offset(center.x - tile * 0.5f, center.y)
+    val leftFace = Path().apply {
+        moveTo(west.x, west.y); lineTo(south.x, south.y)
+        lineTo(south.x, south.y + depth); lineTo(west.x, west.y + depth); close()
+    }
+    val rightFace = Path().apply {
+        moveTo(east.x, east.y); lineTo(south.x, south.y)
+        lineTo(south.x, south.y + depth); lineTo(east.x, east.y + depth); close()
+    }
+    drawPath(leftFace, left)
+    drawPath(rightFace, right)
+    val topFace = Path().apply {
+        moveTo(north.x, north.y); lineTo(east.x, east.y); lineTo(south.x, south.y); lineTo(west.x, west.y); close()
+    }
+    drawPath(topFace, top)
+    drawPath(topFace, Color(0xFF4FA062), style = Stroke(width = tile * 0.012f))
+}
+
+private fun DrawScope.drawIsoDiamond(center: Offset, tile: Float, top: Color, side: Color) {
+    val h = tile * 0.25f
+    val path = Path().apply {
+        moveTo(center.x, center.y - h); lineTo(center.x + tile * 0.5f, center.y)
+        lineTo(center.x, center.y + h); lineTo(center.x - tile * 0.5f, center.y); close()
+    }
+    drawPath(path, side)
+    drawPath(path, top, style = Stroke(tile * 0.035f))
 }
 
 private fun DrawScope.drawKart(cell: Float) {
